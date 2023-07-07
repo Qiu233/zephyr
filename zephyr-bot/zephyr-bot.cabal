@@ -1,0 +1,131 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.35.1.
+--
+-- see: https://github.com/sol/hpack
+
+name:           zephyr-bot
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/zephyr-bot#readme>
+homepage:       https://github.com/githubuser/zephyr-bot#readme
+bug-reports:    https://github.com/githubuser/zephyr-bot/issues
+author:         Author name here
+maintainer:     example@example.com
+copyright:      2023 Author name here
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/zephyr-bot
+
+library
+  exposed-modules:
+      Lib
+      Zephyr.Utils.Binary
+      Zephyr.Utils.Binary.Get
+      Zephyr.Utils.Binary.Put
+      Zephyr.Utils.Binary.Types
+  other-modules:
+      Paths_zephyr_bot
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      HTTP
+    , HsOpenSSL
+    , aeson
+    , array
+    , async
+    , base >=4.7 && <5
+    , base64-bytestring
+    , bytestring
+    , cryptonite
+    , hashmap
+    , lens
+    , mtl
+    , network
+    , proto-lens
+    , proto-lens-runtime
+    , random
+    , stm
+    , template-haskell
+    , text
+    , time
+    , transformers
+    , utf8-string
+    , zlib
+  default-language: Haskell2010
+
+executable zephyr-bot-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_zephyr_bot
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      HTTP
+    , HsOpenSSL
+    , aeson
+    , array
+    , async
+    , base >=4.7 && <5
+    , base64-bytestring
+    , bytestring
+    , cryptonite
+    , hashmap
+    , lens
+    , mtl
+    , network
+    , proto-lens
+    , proto-lens-runtime
+    , random
+    , stm
+    , template-haskell
+    , text
+    , time
+    , transformers
+    , utf8-string
+    , zephyr-bot
+    , zlib
+  default-language: Haskell2010
+
+test-suite zephyr-bot-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_zephyr_bot
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      HTTP
+    , HsOpenSSL
+    , aeson
+    , array
+    , async
+    , base >=4.7 && <5
+    , base64-bytestring
+    , bytestring
+    , cryptonite
+    , hashmap
+    , lens
+    , mtl
+    , network
+    , proto-lens
+    , proto-lens-runtime
+    , random
+    , stm
+    , template-haskell
+    , text
+    , time
+    , transformers
+    , utf8-string
+    , zephyr-bot
+    , zlib
+  default-language: Haskell2010
