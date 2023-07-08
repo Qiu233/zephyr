@@ -1,13 +1,12 @@
 name:                zephyr-bot
 version:             0.1.0.0
-github:              "githubuser/zephyr-bot"
+github:              "Qiu233/zephyr-bot"
 license:             BSD3
-author:              "Author name here"
-maintainer:          "example@example.com"
-copyright:           "2023 Author name here"
+author:              "Qiu"
+maintainer:          "lopi258@outlook.com"
+copyright:           "2023 Qiu"
 
 extra-source-files:
-- README.md
 - CHANGELOG.md
 
 # Metadata used when publishing your package
@@ -17,7 +16,7 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/githubuser/zephyr-bot#readme>
+description:         Haskell re-implementation of QQBot licence.
 
 dependencies:
 - base >= 4.7 && < 5
@@ -29,6 +28,7 @@ dependencies:
 - random
 - async
 - array
+- memory >= 0.18.0
 - text
 - hashmap
 - bytestring
@@ -79,3 +79,5 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - zephyr-bot
+    - hspec
+    - hspec-expectations
