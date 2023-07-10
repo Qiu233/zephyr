@@ -342,6 +342,10 @@ test525 = do
     testHex "052500160001053600108E1BA3B1AC1FB5897673087E183136A9" $
         t525 =<< t536 constGUID
 
+test544 :: IO ()
+test544 = do
+    printHex =<< t544 2 9 (fromIntegral constUIN) constGUID constSDKVERSION
+
 
 
 tlvTest :: SpecWith ()
@@ -360,4 +364,4 @@ tlvTest = do
             0x188, 0x191, 0x193, 0x194,
             0x197, 0x198, 0x202, 0x400,
             0x401, 0x511, 0x516, 0x521,
-            0x525])
+            0x525, 0x544])
