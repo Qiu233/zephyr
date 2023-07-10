@@ -15,6 +15,7 @@ import Data.Maybe (fromMaybe)
 import Data.List (elemIndex)
 import Zephyr.Utils.Common
 import Text.Read (readMaybe)
+import System.Random (randomIO)
 
 
 putlv16be :: B.ByteString -> Put
@@ -44,7 +45,7 @@ tlvPack packetType bodyBuilder = pure . runPut $ do
 t1 :: MonadIO m => Word32 -> B.ByteString -> m B.ByteString
 t1 uin ip = liftIO $ do
     time <- getEpochTime
-    r <- randDefault
+    r <- randomIO
     tlvPack 0x01 $ do
         put16be 1
         put32be r
@@ -181,7 +182,7 @@ t104 data_ =
 t106 :: MonadIO m => Word32-> Word32-> Word32-> Word32-> B.ByteString-> Bool-> B.ByteString-> B.ByteString-> Word32-> m B.ByteString
 t106 uin salt app_id sso_ver password_md5
         guid_available guid tgtgt_key wtf = liftIO $ do
-    r <- randDefault
+    r <- randomIO
     time <- getEpochTime
     _guid <- if guid == nil then randBytes 16 else pure guid
     let key = tea16KeyFromBytes . B.fromStrict . md5Of_ . runPut $ do

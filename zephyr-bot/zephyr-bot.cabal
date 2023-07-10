@@ -23,8 +23,10 @@ source-repository head
 
 library
   exposed-modules:
-      Lib
+      Zephyr.Core.ClientApp
       Zephyr.Core.Device
+      Zephyr.Core.Device.QIMEI
+      Zephyr.Core.Device.Types
       Zephyr.Encrypt.QQTea
       Zephyr.Internal.TLV
       Zephyr.Internal.TLV.T544
@@ -44,9 +46,9 @@ library
       src
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
-      HTTP
-    , HsOpenSSL
+      HsOpenSSL
     , aeson
+    , aeson-pretty
     , array
     , async
     , base >=4.7 && <5
@@ -54,6 +56,8 @@ library
     , bytestring
     , cryptonite
     , hashmap
+    , http-client
+    , http-client-tls
     , lens
     , memory >=0.18.0
     , mtl
@@ -78,9 +82,9 @@ executable zephyr-bot-exe
       app
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      HTTP
-    , HsOpenSSL
+      HsOpenSSL
     , aeson
+    , aeson-pretty
     , array
     , async
     , base >=4.7 && <5
@@ -88,6 +92,8 @@ executable zephyr-bot-exe
     , bytestring
     , cryptonite
     , hashmap
+    , http-client
+    , http-client-tls
     , lens
     , memory >=0.18.0
     , mtl
@@ -119,9 +125,9 @@ test-suite zephyr-bot-test
       test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      HTTP
-    , HsOpenSSL
+      HsOpenSSL
     , aeson
+    , aeson-pretty
     , array
     , async
     , base >=4.7 && <5
@@ -131,6 +137,8 @@ test-suite zephyr-bot-test
     , hashmap
     , hspec
     , hspec-expectations
+    , http-client
+    , http-client-tls
     , lens
     , memory >=0.18.0
     , mtl

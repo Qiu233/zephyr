@@ -36,13 +36,15 @@ dependencies:
 - base64-bytestring
 - zlib
 - aeson
+- aeson-pretty
 - cryptonite
 - proto-lens
 - proto-lens-runtime
 - stm
 - network
 - HsOpenSSL
-- HTTP
+- http-client
+- http-client-tls
 
 ghc-options:
 - -Wall
@@ -78,6 +80,6 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - zephyr-bot
     - hspec
     - hspec-expectations
+    - zephyr-bot
