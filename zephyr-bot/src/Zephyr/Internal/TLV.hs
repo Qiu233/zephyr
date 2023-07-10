@@ -1,4 +1,5 @@
 {-# LANGUAGE TypeApplications #-}
+{-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Internal.TLV where
 import Control.Monad.Cont
 import Data.Word
@@ -8,7 +9,7 @@ import Zephyr.Utils.Binary
 import Data.Int
 import Zephyr.Utils.Time
 import Zephyr.Utils.Random
-import Zephyr.Utils.Codec (md5Of, md5Of_, md5OfU8)
+import Zephyr.Utils.Codec (md5Of_, md5OfU8)
 import Data.Bits
 import Zephyr.Encrypt.QQTea
 import Data.Maybe (fromMaybe)

@@ -5,7 +5,6 @@ import qualified Data.ByteString.Lazy as B
 import Data.Word
 import Numeric (readHex)
 import qualified Data.ByteString.Lazy.UTF8 as UTF8
-import Text.Printf (printf)
 
 slice :: Int -> Int -> [a] -> [a]
 slice s e = take (e - s) . drop s

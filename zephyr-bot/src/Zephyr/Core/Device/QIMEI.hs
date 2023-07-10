@@ -1,10 +1,12 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE NoFieldSelectors #-}
 module Zephyr.Core.Device.QIMEI (
     Payload,
     genRandomPayloadByDevice,
     requestQImei,
+    requestQImei_,
     aesEncrypt,
     aesDecrypt
 ) where
@@ -29,7 +31,7 @@ import qualified Data.ByteString.Lazy as B
 import qualified Data.ByteString.Base64.Lazy as Base64
 import qualified Data.ByteString as SB
 import Zephyr.Utils.Common
-import Data.Maybe (fromJust, fromMaybe)
+import Data.Maybe (fromJust)
 import Crypto.Error (throwCryptoError)
 import Zephyr.Utils.Random
 import qualified Data.List as List
@@ -42,8 +44,6 @@ import Zephyr.Utils.Time
 import qualified Crypto.PubKey.RSA.PKCS15 as PKCS15
 import Zephyr.Utils.Codec (md5OfU8)
 import Crypto.Data.Padding
-
-
 
 aesEncrypt :: B.ByteString -> B.ByteString -> B.ByteString
 aesEncrypt src' key' = do
@@ -270,11 +270,14 @@ requestQImei ver dev = do
             }
     response <- liftIO $ postJson "https://snowflake.qq.com/ola/android" body
     let resp = Aeson.decode $ responseBody response :: Maybe ReqResp
-    resp' <- maybe (ExceptT.throwError $ "Failed to decode response: \n" ++ show response) pure resp
-    if code resp' == 0 then do
-        let respInner = Aeson.decode $ aesDecrypt (utf8ToBytes $ data_ resp') cryptKey :: Maybe ReqRespInner
+    ReqResp data_ code <- maybe (ExceptT.throwError $ "Failed to decode response: \n" ++ show response) pure resp
+    if code == 0 then do
+        let respInner = Aeson.decode $ aesDecrypt (utf8ToBytes data_) cryptKey :: Maybe ReqRespInner
         case respInner of
-            Just respInner' -> pure (q16 respInner', q36 respInner')
-            Nothing -> ExceptT.throwError $ "Bad json format detected: " ++ show resp'
+            Just (ReqRespInner q16 q36) -> pure (q16, q36)
+            Nothing -> ExceptT.throwError $ "Bad json format detected: " ++ data_
     else
-        ExceptT.throwError $ "Code != 0: " ++ show resp'
+        ExceptT.throwError $ "Code != 0: " ++ show code
+
+requestQImei_ :: CA.ClientApp -> Dev.Device -> IO (Either String (String, String))
+requestQImei_ ver dev = do ExceptT.runExceptT $ requestQImei ver dev

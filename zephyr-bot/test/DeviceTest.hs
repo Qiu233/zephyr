@@ -4,11 +4,9 @@ module DeviceTest where
 import Test.Hspec
 import Common
 import Zephyr.Core.Device
-import Zephyr.Utils.Common
 import Zephyr.Core.Device.QIMEI
 import Zephyr.Core.ClientApp (androidPhone)
 import Control.Monad.Trans.Except (runExceptT)
-import qualified Data.ByteString.Lazy as B
 
 device :: Device
 device = generateDevice 1234567890

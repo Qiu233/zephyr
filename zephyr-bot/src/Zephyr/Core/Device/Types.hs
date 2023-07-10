@@ -1,6 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeApplications #-}
+{-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Core.Device.Types where
 
 
@@ -8,7 +9,6 @@ import Data.Word
 import qualified Data.ByteString.Lazy as B
 import Text.Printf
 import Control.Lens
-import Control.Monad.IO.Class
 import Zephyr.Utils.Codec (md5OfU8, md5Of_)
 import Zephyr.Utils.Common (utf8ToBytes)
 import Prelude hiding (product)
@@ -17,7 +17,6 @@ import Zephyr.Utils.GUID
 import Data.Int
 import Control.Monad.Trans.State as State
 import Control.Monad (replicateM)
-import Control.Monad.State (lift)
 import System.Random (mkStdGen, Random (randoms, randomR), RandomGen)
 
 
@@ -75,7 +74,7 @@ generateDevice uin = do
         _device_name = "HIM188MOE"
         _board = "MIRAI-YYDS"
         _brand = "OICQX"
-        _model = "Qiu 2020"
+        _model = "Zephyr 2023"
         _bootloader = "U-boot"
         _fingerprint =
             printf "%s/%s/%s:10/%s/%d:user/release-keys"
@@ -87,7 +86,7 @@ generateDevice uin = do
             :: String
         _boot_id = show $ createGUID hash
         _proc_version =
-            printf "Linux version 4.19.71-%d (Qiu)"
+            printf "Linux version 4.19.71-%d (Zephyr)"
             (runGet_ get16be $ B.drop 4 hash)
             :: String
         _base_band = ""

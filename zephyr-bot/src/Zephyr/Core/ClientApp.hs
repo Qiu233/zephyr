@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Core.ClientApp where
 import qualified Data.ByteString.Lazy as B
 import Control.Lens
