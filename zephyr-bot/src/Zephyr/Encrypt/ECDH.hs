@@ -1,5 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
 module Zephyr.Encrypt.ECDH (
     EncryptECDH(..),
     generateKey,

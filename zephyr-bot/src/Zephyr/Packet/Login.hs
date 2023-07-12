@@ -1,13 +1,13 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Use camelCase" #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Packet.Login where
 import Zephyr.Engine.Context
 import Data.Word
 import qualified Data.ByteString.Lazy as B
 import Control.Lens
 import Zephyr.Core.ClientApp
-import Zephyr.Utils.Binary (runPut)
 import qualified Zephyr.Core.Signature as Sig
 import Zephyr.Utils.Binary.Put
 import qualified Zephyr.Encrypt.ECDH as ECDH
@@ -37,7 +37,7 @@ buildLoginPacket :: ContextIOT m => LoginCmd -> Word8 -> B.ByteString -> m B.Byt
 buildLoginPacket cmd type_ body = do
     uin_ <- use uin
     sub_id_ <- use $ client_app . sub_id
-    let (uin__, cmdid__ :: Word16, subappid__) = if cmd == WTLogin_TransEMP
+    let (uin__, cmdid__, subappid__) = if cmd == WTLogin_TransEMP
             then (0, 0x812, 537065138)
             else (uin_, 0x810, sub_id_)
     b2 <- if type_ == 2
