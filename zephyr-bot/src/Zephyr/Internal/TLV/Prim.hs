@@ -1,34 +1,29 @@
-{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Internal.TLV.Prim where
 import Control.Monad.Cont
 import Data.Word
 import qualified Data.ByteString.Lazy as B
 import Zephyr.Utils.Binary
-import Data.Int
 import Zephyr.Utils.Time
 import Zephyr.Utils.Random
 import Zephyr.Utils.Codec (md5Of_, md5OfU8)
 import qualified Zephyr.Internal.TLV.T544.ASM as T544ASM
-import Data.Bits
 import Zephyr.Encrypt.QQTea
-import Data.Maybe (fromMaybe)
-import Data.List (elemIndex)
 import Zephyr.Utils.Common
-import Text.Read (readMaybe)
 import System.Random (randomIO)
 import Zephyr.Internal.TLV.Internal
 
-t1 :: MonadIO m => Word32 -> B.ByteString -> m B.ByteString
+t1 :: MonadIO m => Word32 -> (Word8, Word8, Word8, Word8) -> m B.ByteString
 t1 uin ip = liftIO $ do
     time <- getEpochTime
     r <- randomIO
+    let (a,b,c,d) = ip
     tlvPack 0x01 $ do
         put16be 1
         put32be r
         put32be uin
         put32be $ fromIntegral time
-        putbs ip
+        putbs $ B.pack [a,b,c,d]
         put16be 0
 
 t1b :: MonadIO m => Word32-> Word32-> Word32-> Word32-> Word32-> Word32-> Word32-> m B.ByteString
@@ -53,10 +48,10 @@ t1d misc_bitmap =
         put32be 0
 
 
-t1f :: MonadIO m => Bool-> String-> String-> String-> String-> Word16-> m B.ByteString
-t1f is_root os_name os_version sim_operator_name apn network_type =
+t1f :: MonadIO m => String-> String-> String-> String-> Word16-> m B.ByteString
+t1f os_name os_version sim_operator_name apn network_type =
     tlvPack 0x1f $ do
-        put8 (if is_root then 1 else 0)
+        put8 0
         putlvs16be os_name
         putlvs16be os_version
         put16be network_type
@@ -85,14 +80,14 @@ t10a arr =
         putbs arr -- the body is arr itself
 
 t16 :: MonadIO m => Word32-> Word32-> Word32-> B.ByteString-> String-> String-> B.ByteString-> m B.ByteString
-t16 sso_version app_id sub_app_id guid apk_id apk_version_name apk_sign =
+t16 sso_version app_id sub_app_id guid apk_id apk_version apk_sign =
     tlvPack 0x16 $ do
         put32be sso_version
         put32be app_id
         put32be sub_app_id
         putbs guid
         putlvs16be apk_id
-        putlvs16be apk_version_name
+        putlvs16be apk_version
         putlv16be apk_sign
 
 t16a :: MonadIO m => B.ByteString -> m B.ByteString
@@ -141,13 +136,13 @@ t52d dev_info =
     tlvPack 0x52d $ do
         putbs dev_info
 
-t100 :: MonadIO m => Word32 -> Word32 -> Word32 -> m B.ByteString
-t100 sso_version protocol main_sig_map =
+t100 :: MonadIO m => Word32 -> Word32 -> Word32 -> Word32 -> m B.ByteString
+t100 sso_version app_id sub_id main_sig_map =
     tlvPack 0x100 $ do
         put16be 1
         put32be sso_version
-        put32be 16
-        put32be protocol
+        put32be app_id
+        put32be sub_id
         put32be 0
         put32be main_sig_map
 
@@ -156,32 +151,32 @@ t104 data_ =
     tlvPack 0x104 $ do
         putbs data_
 
-t106 :: MonadIO m => Word32-> Word32-> Word32-> Word32-> B.ByteString-> Bool-> B.ByteString-> B.ByteString-> Word32-> m B.ByteString
-t106 uin salt app_id sso_ver password_md5
-        guid_available guid tgtgt_key wtf = liftIO $ do
+t106 :: MonadIO m => Word32-> Word32-> Word32-> Word32-> B.ByteString-> B.ByteString-> B.ByteString-> m B.ByteString
+t106 uin app_id sub_id sso_ver password_md5
+        guid tgtgt_key = liftIO $ do
     r <- randomIO
     time <- getEpochTime
     _guid <- if guid == nil then randBytes 16 else pure guid
     let key = tea16KeyFromBytes . B.fromStrict . md5Of_ . runPut $ do
             putbs password_md5
             putbs $ B.pack [0,0,0,0]
-            put32be (if salt == 0 then uin else salt)
+            put32be uin
         body = runPut $ do
             put16be 4
             put32be r
             put32be sso_ver
-            put32be 16 -- appId
+            put32be app_id
             put32be 0  -- client version
-            put64be $ fromIntegral (if uin == 0 then salt else uin)
+            put64be $ fromIntegral uin
             put32be $ fromIntegral time
             putbs $ B.pack [0,0,0,0] -- fake ip
             put8 0x1
             putbs password_md5
             putbs tgtgt_key
-            put32be wtf
-            put8 (if guid_available then 1 else 0)
+            put32be 0
+            put8 1
             putbs _guid
-            put32be app_id
+            put32be sub_id
             put32be 1
             putlvs16be $ show uin
             put16be 0
@@ -202,9 +197,9 @@ t108 ksid =
         putbs ksid
 
 t109 :: MonadIO m => String -> m B.ByteString
-t109 android_id =
+t109 imei =
     tlvPack 0x109 $ do
-        putbss . md5OfU8 $ android_id
+        putbss . md5OfU8 $ imei
 
 t116 :: MonadIO m => Word32 -> Word32 -> m B.ByteString
 t116 misc_bitmap sub_sig_map =
@@ -222,7 +217,7 @@ t124 os_type os_version sim_info apn =
         putls os_version
         put16be 2
         putls sim_info
-        putl $ B.pack [] -- TODO:
+        put16be 0
         putls apn
     where
         putl = putlv16LimitedBE 16
@@ -290,13 +285,13 @@ t147 :: MonadIO m => Word32 -> String -> B.ByteString -> m B.ByteString
 t147 app_id apk_version_name apk_signature_md5 =
     tlvPack 0x147 $ do
         put32be app_id
-        putlvs16LimitedBE 32 apk_version_name
-        putlv16LimitedBE 32 apk_signature_md5
+        putlvs16be apk_version_name
+        putlv16be apk_signature_md5
 
-t154 :: MonadIO m => Word16 -> m B.ByteString
+t154 :: MonadIO m => Word32 -> m B.ByteString
 t154 sq =
     tlvPack 0x154 $ do
-        put32be $ fromIntegral sq
+        put32be sq
 
 t166 :: MonadIO m => Word8 -> m B.ByteString
 t166 image_type =
@@ -367,19 +362,19 @@ t202 wifi_bssid wifi_ssid =
         putlvs16LimitedBE 32 wifi_ssid
 
 
-t400 :: MonadIO m => B.ByteString-> Word64-> B.ByteString-> B.ByteString-> Word64-> Word64-> B.ByteString-> m B.ByteString
-t400 g uin guid dpwd j2 j3 rand_seed = liftIO $ do
+t400 :: MonadIO m => Word64-> B.ByteString-> m B.ByteString
+t400 uin guid = liftIO $ do
     time <- getEpochTime
-    let body = runPut $ do
+    rs <- randBytes 16
+    tlvPack 0x400 $ do
             put16be 1
             put64be uin
             putbs guid
-            putbs dpwd
-            put32be $ fromIntegral j2
-            put32be $ fromIntegral j3
+            putbs rs
+            put32be 1
+            put32be 16
             put32be $ fromIntegral time
-            putbs rand_seed
-    qqteaEncrypt (tea16KeyFromBytes g) body >>= tlvPack 0x400 . putbs
+            putbs $ B.pack [] -- ?
 
 
 t401 :: MonadIO m => B.ByteString -> m B.ByteString
@@ -394,24 +389,16 @@ t511 domains = do
     tlvPack 0x511 $ do
         put16be . fromIntegral $ length arr2
         forM_ arr2 $ \d -> do
-            let index_of = fromMaybe (-1) $ elemIndex '(' d
-                index_of2 = fromMaybe (-1) $ elemIndex ')' d
-            if index_of /= 0 || index_of2 <= 0 then do
-                put8 0x01
-                putlvs16be d
-            else do
-                fromMaybe (pure ()) $ (readMaybe @Int32 $ slice (index_of + 1) index_of2 d) >>= \i -> Just $ do
-                    let b = if (1048576 .&. i) > 0 then 1 else 0
-                    put8 (if (i .&. 134217728) > 0 then b .|. 2 else b)
-                    putlvs16be $ sliceToEnd (index_of2 + 1) d
+            put8 0x01
+            putlvs16be d
 
 t516 :: MonadIO m => m B.ByteString
 t516 = tlvPack 0x516 $ put32be 0
 
-t521 :: MonadIO m => Word32 -> m B.ByteString
-t521 i =
+t521 :: MonadIO m => m B.ByteString
+t521 =
     tlvPack 0x521 $ do
-        put32be i
+        put32be 0
         put16be 0
 
 t525 :: MonadIO m => B.ByteString -> m B.ByteString

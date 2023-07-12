@@ -46,14 +46,14 @@ data Device = Device {
     _sim :: String,
     _os_type :: String,
     _mac_address :: String,
-    _ip_address :: String,
+    _ip_address :: (Word8, Word8, Word8, Word8),
     _wifi_bssid :: String,
     _wifi_ssid :: String,
     _imei :: String,
     _android_id :: String,
     _apn :: String,
     _os_version :: OSVersion,
-    _imsi_md5 :: B.ByteString,
+    _imsi :: B.ByteString,
     _guid :: GUID,
     _qimei16 :: String,
     _qimei36 :: String
@@ -99,13 +99,13 @@ generateDevice uin = do
             (B.index hash 8)
             (B.index hash 9)
             :: String
-        _ip_address = "10.0." ++ show (B.index hash 10) ++ "." ++ show (B.index hash 11)
+        _ip_address = (10, 0, B.index hash 10, B.index hash 11)
         _wifi_bssid = _mac_address
         _wifi_ssid = printf "TP-LINK-%X" uin :: String
     let (_imei, _) = randIMEI pg
     let _apn = "wifi"
         _os_version = OSVersion _incremental "10" "REL" 29
-    let _imsi_md5 = B.pack $ take 16 $ randoms pg
+    let _imsi = B.pack $ take 16 $ randoms pg
     let _guid = createGUID $ B.fromStrict . md5Of_ $
                     (utf8ToBytes _imei <> utf8ToBytes _mac_address)
         _qimei16 = ""

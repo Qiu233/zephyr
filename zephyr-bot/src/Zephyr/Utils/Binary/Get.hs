@@ -145,3 +145,6 @@ getbsToUTF8 len = UTF8.toString <$> getbs len
 
 getListOfBE :: BinGet a => Int -> Get [a]
 getListOfBE len = replicateM len getbe
+
+isEmpty :: Get Bool
+isEmpty = Get $ \bs -> Success (B.null bs) bs

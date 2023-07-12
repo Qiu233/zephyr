@@ -1,6 +1,6 @@
 module Zephyr.Utils.GUID (
     GUID,
-    getGUIDBytes,
+    guidBytes,
     createGUID
 ) where
 import Data.Word
@@ -14,7 +14,7 @@ newtype GUID = GUID (Word32, Word32, Word32, Word32)
 
 instance Show GUID where
     show g = do
-        let s = getGUIDBytes g
+        let s = guidBytes g
             a = encodeHex $ B.take 4 s
             b = encodeHex $ B.take 2 $ B.drop 4 s
             c = encodeHex $ B.take 2 $ B.drop 6 s
@@ -22,8 +22,8 @@ instance Show GUID where
             e = encodeHex $ B.drop 10 s
         printf "%s-%s-%s-%s-%s" a b c d e
         
-getGUIDBytes :: GUID -> B.ByteString
-getGUIDBytes (GUID (a,b,c,d)) = do
+guidBytes :: GUID -> B.ByteString
+guidBytes (GUID (a,b,c,d)) = do
     runPut $ do
             put32le a
             put32le b

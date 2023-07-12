@@ -3,6 +3,7 @@
 module Zephyr.Core.ClientApp where
 import qualified Data.ByteString.Lazy as B
 import Control.Lens
+import Data.Word (Word32)
 
 
 data ClientApp = ClientApp {
@@ -12,15 +13,15 @@ data ClientApp = ClientApp {
     _version :: String,
     _ver :: String,
     _sign :: B.ByteString,
-    _build_time :: Int,
-    _app_id :: Int,
-    _sub_id :: Int,
-    _bitmap :: Int,
-    _main_sig_map :: Int,
-    _sub_sig_map :: Int,
+    _build_time :: Word32,
+    _app_id :: Word32,
+    _sub_id :: Word32,
+    _bitmap :: Word32,
+    _main_sig_map :: Word32,
+    _sub_sig_map :: Word32,
     _sdk_ver :: String,
     _display :: String,
-    _ssover :: Int
+    _ssover :: Word32
 } deriving (Show, Eq)
 
 $(makeLenses ''ClientApp)

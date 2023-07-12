@@ -38,8 +38,6 @@ dependencies:
 - aeson
 - aeson-pretty
 - cryptonite
-- proto-lens
-- proto-lens-runtime
 - stm
 - network
 - HsOpenSSL

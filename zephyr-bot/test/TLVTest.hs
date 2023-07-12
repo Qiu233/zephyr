@@ -80,7 +80,7 @@ constOSTYPE = "android"
 
 test1 :: IO ()
 test1 = do
-    printHex =<< t1 constUIN (B.pack [192, 168, 1, 1])
+    printHex =<< t1 constUIN (192, 168, 1, 1)
 
 test1b :: IO ()
 test1b = do
@@ -95,7 +95,7 @@ test1d = do
 test1f :: IO ()
 test1f = do
     testHex "001F002D000007616E64726F69640005372E312E32000200104368696E61204D6F62696C652047534D0000000477696669" $
-        t1f constISROOT constOSNAME constOSVERSION "China Mobile GSM" constAPN 2
+        t1f constOSNAME constOSVERSION "China Mobile GSM" constAPN 2
 
 test2 :: IO ()
 test2 = do
@@ -163,7 +163,7 @@ test52d = do
 test100 :: IO ()
 test100 = do
     testHex "0100001600010000000F000000100000000200000000021410E0" $
-        t100 constSSOVERSION 2 constMAINSIGMAP
+        t100 constSSOVERSION 16 2 constMAINSIGMAP
 
 test104 :: IO ()
 test104 = do
@@ -172,8 +172,8 @@ test104 = do
 
 test106 :: IO ()
 test106 = do
-    printHex =<< t106 constUIN 0 constAPPID constSSOVERSION (B.pack [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-            True constGUID constTGTGTKey 0
+    printHex =<< t106 constUIN 16 constSUBAPPID constSSOVERSION (B.pack [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+            constGUID constTGTGTKey
 
 test107 :: IO ()
 test107 = do
@@ -295,9 +295,6 @@ test202 = do
     testHex "02020022001030303A35303A35363A43303A30303A30000E3C756E6B6E6F776E20737369643E" $
         t202 constWIFIBSSID constWIFISSID
 
-test400 :: IO ()
-test400 = do
-    printHex =<< t400 constGUID (fromIntegral constUIN) constGUID constGUID 2 2 constGUID
 
 test401 :: IO ()
 test401 = do
@@ -332,11 +329,6 @@ test516 :: IO ()
 test516 = do
     testHex "0516000400000000" t516
 
-test521 :: IO ()
-test521 = do
-    testHex "05210006000000060000" $
-        t521 6
-
 test525 :: IO ()
 test525 = do
     testHex "052500160001053600108E1BA3B1AC1FB5897673087E183136A9" $
@@ -362,6 +354,6 @@ tlvTest = do
             0x144, 0x145, 0x147, 0x154,
             0x166, 0x174, 0x177, 0x187,
             0x188, 0x191, 0x193, 0x194,
-            0x197, 0x198, 0x202, 0x400,
-            0x401, 0x511, 0x516, 0x521,
+            0x197, 0x198, 0x202,
+            0x401, 0x511, 0x516,
             0x525, 0x544])
