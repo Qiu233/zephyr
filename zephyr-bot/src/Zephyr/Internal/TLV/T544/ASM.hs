@@ -19,13 +19,9 @@ import qualified Crypto.Cipher.RC4 as RC4
 import qualified Data.ByteArray as BArr
 import Zephyr.Utils.Binary
 import Zephyr.Internal.TLV.T544.HardCoded
-import Zephyr.Utils.Common
 import Zephyr.Utils.Time (getEpochTimeMS)
 import Zephyr.Utils.Codec
 import Zephyr.Utils.Random
-import qualified Debug.Trace as Debug
-import GHC.Stack
-import Text.Printf
 import System.Random (randomIO)
 
 
@@ -115,7 +111,7 @@ sub_ab a b = do
     let ib_ = b .&. 0xff
     let ic_ = b .>. 8 .&. 0xff
     let id_ = b .>. 16 .&. 0xff
-    ((getAt' ia_) .<. 24) .|. (getAt' ib_) .|. ((getAt' ic_) .<. 8) .|. ((getAt' id_) .<. 16)
+    (getAt' ia_ .<. 24) .|. getAt' ib_ .|. (getAt' ic_ .<. 8) .|. (getAt' id_ .<. 16)
     where
         getAt x y = a !! fromIntegral x !! fromIntegral y
         getAt' x = fromIntegral $ getAt (div x 16) (rem x 16) :: Word32
@@ -233,6 +229,7 @@ emptyRegState = RegState {
     _r15 = 0
 }
 
+-- | Analyzed by New Bing, this procedure works like a variant of chacha20 algorithm.
 sub_ad' :: State (T544State, RegState) ()
 sub_ad' = do
     r10     <<=         10
@@ -420,7 +417,8 @@ refresh = do
 
 whileM :: Monad m => m Bool -> m a -> m [a]
 whileM p_ f = go
-    where go = do
+    where 
+        go = do
             x <- p_
             if x
                 then do
@@ -447,8 +445,7 @@ encrypt' = do
     whileM_ (uses _4 (> 0)) $ do
         zoom _1 $ do
             sp <- use p
-            when (sp == 0) $ do
-                refresh
+            when (sp == 0) refresh
         os <- use $ _1 . s
         let sb = B.unpack $ runPut $ mapM_ put32le os
         whileM_ (uses (_1 . p) (/= 64) <&&> uses _4 (/= 0)) $ do

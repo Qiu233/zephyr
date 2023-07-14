@@ -4,7 +4,6 @@
 {-# HLINT ignore "Redundant id" #-}
 module Zephyr.Packet.TLVBuilder where
 
-import qualified Zephyr.Internal.TLV as T
 import Zephyr.Engine.Context
 import qualified Data.ByteString.Lazy as B
 import Control.Lens hiding (Context)
@@ -25,7 +24,7 @@ import Data.Word
 import Zephyr.Utils.Time (getEpochTime)
 import Zephyr.Utils.Codec (md5Lazy, md5OfU8)
 import Control.Monad
-import qualified Zephyr.Internal.TLV.T544.ASM as T544
+import qualified Zephyr.Internal.TLV.T544 as T544
 import System.Random (randomIO)
 
 lv :: Put -> Put

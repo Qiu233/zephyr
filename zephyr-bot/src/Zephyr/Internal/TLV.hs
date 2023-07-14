@@ -1,5 +1,5 @@
 module Zephyr.Internal.TLV (
-    module Zephyr.Internal.TLV.Prim
+    module Zephyr.Internal.TLV.T544
 ) where
     
-import Zephyr.Internal.TLV.Prim
+import Zephyr.Internal.TLV.T544
