@@ -5,6 +5,7 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Use camelCase" #-}
+{-# LANGUAGE RecordWildCards #-}
 module Zephyr.Internal.TLV.T544.ASM where
 
 
@@ -25,6 +26,7 @@ import Zephyr.Utils.Random
 import qualified Debug.Trace as Debug
 import GHC.Stack
 import Text.Printf
+import System.Random (randomIO)
 
 
 type Word128 = (Word32, Word32, Word32, Word32)
@@ -142,13 +144,13 @@ sub_f a b c = do
                 let ax'' = ax' `xor` w_0
                 Just (ax'', (bx + 1, w_1, w_2, w_3, ax''))
 
-sub_aa :: Word32 -> [[[[Word8]]]] -> [Word8] -> Word8 -> Word8
+sub_aa :: Word32 -> [[[[Word8]]]] -> B.ByteString -> Word8 -> Word8
 sub_aa a b c d = do
     let dx = (al4 .<. 9) + fromIntegral (d .&. 15 .<. 4)
-    let di = fromIntegral $ (c !! fromIntegral al4) .>. 4 :: Word32
+    let di = fromIntegral $ (c `B.index` fromIntegral al4) .>. 4 :: Word32
     let ax = fromIntegral (d .&. (15 .<. 4)) + (al4 .<. 9) + di :: Word32
     let r1 = getAt ax .<. 4
-    let dx' = dx + fromIntegral ((c !! fromIntegral al4) .&. 15) + 256
+    let dx' = dx + fromIntegral ((c `B.index` fromIntegral al4) .&. 15) + 256
     r1 .|. getAt dx'
     where
         al4 = a .&. 15 :: Word32
@@ -168,28 +170,21 @@ makeLenses ''T544State
 emptyT544State :: T544State
 emptyT544State = T544State [] [] 0 0
 
-transformInner :: [Word8] -> [[Word8]] -> [Word8]
+transformInner :: B.ByteString -> [[Word8]] -> B.ByteString
 transformInner a b = do
-    let r = List.unfoldr inner (0, 1)
-    r ++ drop (length r) a
+    B.pack $ zipWith compute [0..] [1,3..41]
     where
-        inner (si, cnt) = if cnt >= 43
-        then Nothing
-        else do
-            let asi = fromIntegral $ a !! si :: Word32
+        compute si cnt = do
+            let asi = fromIntegral $ a `B.index` si :: Word32
             let ai = ((cnt - 1) .&. 31 .<. 4) + (asi .>. 4) :: Word32
             let bi = (cnt .&. 31 .<. 4) + (asi .&. 15) :: Word32
-            let t = ((b !! fromIntegral (div ai 16) !! fromIntegral (rem ai 16)) .<. 4) .|. (b !! fromIntegral (div bi 16) !! fromIntegral (rem bi 16))
-            Just (t, (si + 1, cnt + 2))
+            ((b !! fromIntegral (div ai 16) !! fromIntegral (rem ai 16)) .<. 4) .|. (b !! fromIntegral (div bi 16) !! fromIntegral (rem bi 16))
 
-transformInner' :: MonadState [Word8] m => [[Word8]] -> m ()
-transformInner' b = modify (`transformInner` b)
-
-initState :: [Word8] -> [Word8] -> State T544State ()
+initState :: B.ByteString -> B.ByteString -> State T544State ()
 initState b c = do
-    let w1 = runGet_ get128le $ B.pack b
-    let w2 = runGet_ get128le $ B.pack (drop 16 b)
-    let w3 = runGet_ ((,) <$> get32le <*> get32le) $ B.pack c
+    let w1 = runGet_ get128le b
+    let w2 = runGet_ get128le (B.drop 16 b)
+    let w3 = runGet_ ((,) <$> get32le <*> get32le) c
     let t = [
             1634760805, 857760878, 2036477234, 1797285236,
             w1 ^. _1, w1 ^. _2, w1 ^. _3, w1 ^. _4,
@@ -481,7 +476,7 @@ tencentEncryptionA :: B.ByteString -> B.ByteString -> B.ByteString -> B.ByteStri
 tencentEncryptionA inputData key data_ = do
     let t544State = emptyT544State
     flip evalState t544State $ do
-            initState (B.unpack key) (B.unpack data_)
+            initState key data_
             encrypt (B.unpack inputData) <&> B.pack
 
 _tencentEncryptB :: [Word32] -> State B.ByteString ()
@@ -499,29 +494,29 @@ _tencentEncryptB p2 = do
     where
         get4 n = (p2 !! (n*4), p2 !! (n*4+1), p2 !! (n*4+2), p2 !! (n*4+3))
 
-tencentEncryptB' :: [Word8] -> State ([Word8], B.ByteString, [Word8]) ()
+tencentEncryptB' :: B.ByteString -> State (B.ByteString, B.ByteString, B.ByteString) ()
 tencentEncryptB' m = do
     let w = sub_f tableE tableF tableB
     _2 .= B.replicate 16 0
-    _3 .= replicate 21 0
+    _3 .= B.replicate 21 0
     [0..20] `forM_` \i -> do
         when ((i .&. 0xf) == 0) $ do
-            _2 <~ uses _1 B.pack
+            _2 <~ use _1
             zoom _2 $ _tencentEncryptB w
             zoom _1 $ do
                 let inner j = do
                         ix j += 1
-                        v <- gets (!! j)
+                        v <- gets (`B.index` j)
                         when (j >=0 && v == 0) $ do
                             inner (j-1)
                 inner 15
-        buf <- uses _2 B.unpack
-        _3 . ix i .= sub_aa (fromIntegral i) tableA buf (m !! i)
+        buf <- use _2
+        _3 . ix i .= sub_aa (fromIntegral i) tableA buf (m `B.index` i)
 
-tencentEncryptB :: [Word8] -> [Word8] -> ([Word8], [Word8])
+tencentEncryptB :: B.ByteString -> B.ByteString -> B.ByteString
 tencentEncryptB c m = do
-    let t = execState (tencentEncryptB' m) (c, B.pack [], [])
-    (t ^. _1, t ^. _3)
+    let t = execState (tencentEncryptB' m) (c, B.empty, B.empty)
+    t ^. _3
 
 tencentCrc32 :: [Word32] -> [Word8] -> Word32
 tencentCrc32 a b = do
@@ -529,93 +524,63 @@ tencentCrc32 a b = do
             (complement 0) (fmap fromIntegral b)
     complement c
 
-data SignState = SignState {
-    _input :: B.ByteString,
-    _crcData :: B.ByteString,
-    _kt :: B.ByteString
+data SignDeps = SignDeps {
+    _timeMS :: Int,
+    _r1 :: Word8,
+    _r2 :: Word8,
+    _b1 :: Word8,
+    _b2 :: Word8,
+    _nonce :: Word32,
+    _addition :: Word8
 }
 
-makeLenses ''SignState
+testSignDeps :: SignDeps
+testSignDeps = SignDeps 1689306385790 95 87 113 37 2882093107 1
+
 
 sign :: (MonadIO m) => B.ByteString -> m B.ByteString
 sign i = do
-    is <- liftIO $ execStateT sign' (SignState i B.empty B.empty)
-    pure $ is ^. kt
+    deps <- SignDeps
+        <$> (getEpochTimeMS <&> (`rem` 1000000))
+        <*> (randPickB keyTable <&> (+50))
+        <*> (randPickB keyTable <&> (+50))
+        <*> randPickB table2
+        <*> randPickB table2
+        <*> randomIO
+        <*> randRUntil (0, 8) (\x -> (x .&. 1) /= 0)
+    pure $ sign' deps i
+    where
+        randPickB table = do
+            t <- randR (0, B.length table - 1)
+            pure $ B.index table t
 
-sign' :: HasCallStack => StateT SignState IO ()
-sign' = do
-    --timeMS <- liftIO $ getEpochTimeMS <&> (`rem` 1000000) . fromIntegral
-    let timeMS = fromIntegral ((1689306385790::Int) `rem` 1000000)
-    let tbs = runPut (put32be timeMS)
-    input <>= tbs
-    crcData .= tbs <> B.replicate 17 0
-    kt .= B.replicate 40 0
+        randRUntil r cond = do
+            t <- randR r
+            if cond t then pure t else randRUntil r cond
 
-    key <- zoom kt $ do
-        -- r1 <- randPickB keyTable <&> (+ 50)
-        -- r2 <- randPickB keyTable <&> (+ 50)
-        -- ix 0 .= r1
-        -- ix 1 .= r2
-        -- ix 2 .= r2 + 20
-        -- ix 3 .= r2 + 40
-        ix 0 .= 95
-        ix 1 .= 87
-        ix 2 .= 107
-        ix 3 .= 127
-
-        ix 12 .= 0
-        ix 13 .= 0
-        raw <- gets (B.take 4) >>= \x -> pure (B.packZipWith xor key2 x)
-        let ys = (B.take 2 . B.drop 2 $ raw) <> B.take 4 key1 <> B.take 2 raw
-        pure $ (BArr.pack @BArr.ScrubbedBytes) . B.unpack $ ys
+computeKey :: B.ByteString -> B.ByteString
+computeKey kt4 = do
+    let key = do
+            let raw = B.packZipWith xor key2 kt4
+            let ys = (B.take 2 . B.drop 2 $ raw) <> B.take 4 key1 <> B.take 2 raw
+            (BArr.pack @BArr.ScrubbedBytes) . B.unpack $ ys
     let (_, encKey) = RC4.combine (RC4.initialize key) key
-    zoom kt $ overBS 4 (B.pack $ BArr.unpack encKey)
-    zoom crcData $ overBy 4 $ do
-        put64le 0x6EEDCF0DC4675540
-    (input .=) =<< tencentEncryptionA <$>
-        use input <*>
-        uses kt (sliceB 4 36) <*>
-        uses crcData (sliceB 4 12)
-    hash <- md5Lazy <$> use input
-    zoom crcData $ do
-        ix 2 .= 1
-        ix 4 .= 1
-    uses kt (B.take 4) >>= \x ->
-        zoom crcData $ do
-            overBS 5 x
-            overBy 9 $ put32be timeMS
-            overBS 13 (B.take 8 hash)
-    crc <- tencentCrc32 tab <$> uses crcData (B.unpack . B.drop 2)
-    zoom kt $ do
-        overBy 36 $ put32le crc
-    crcData . ix 0 <~ uses kt (`B.index` 36)
-    crcData . ix 1 <~ uses kt (`B.index` 39)
-    -- nonce <- randBytes 4
-    let nonce = B.pack [0xAB,0xC9,0x40,0x33]
-    zoom kt $ do
-        overBS 0 nonce
-        overBS 4 =<< gets (B.take 4)
-        overBS 8 =<< gets (B.take 8)
-    crcData %= (\x -> B.pack (transformInner (B.unpack x) transFormTableEncode))
-    (kt', us) <- tencentEncryptB <$> uses kt (B.unpack . B.take 16) <*> uses crcData B.unpack
-    kt %= (B.pack kt' <>) . B.drop 16
-    let encrypted = transformInner us transformTableDecode
-    zoom kt $ do
-        ix 0 .= 0x0C
-        ix 1 .= 0x05
-        overBS 2 nonce
-        overBS 6 (B.pack encrypted)
-        overBy 27 $ put32le 0
-        --ix 31 <~ randPickB table2
-        --ix 32 <~ randPickB table2
-        ix 31 .= 113
-        ix 32 .= 37
-        --addition <- randRUntil (0, 8) (\x -> (x .&. 1) /= 0)
-        let addition = 1
-        ix 33 <~ (geti 31 <&> (.&. 0xff) . (+ addition))
-        ix 34 <~ (geti 32 <&> (+) (((9-addition) .&. 0xff) + 1))
-        overBy 35 $ put32le 0
-    kt %= B.take 39
+    B.fromStrict $ BArr.convert encKey
+
+sign' :: SignDeps -> B.ByteString -> B.ByteString
+sign' SignDeps{..} input_ = do
+    runPut $ do
+        put8 0x0C
+        put8 0x05
+        putbs nonce
+        putbs encrypted
+        put32le 0
+        put8 _b1
+        put8 _b2
+        put8 $ _b1 + (_addition .&. 0xff)
+        -- TODO: precedence here is different from oicq but is consistent to cq-http
+        -- Since oicq is transpiled from cq-http, I decided to keep this
+        put8 $ _b2 + ((9-_addition) .&. 0xff) + 1
     where
         overBS pos src = do
             let vs = B.unpack src
@@ -624,13 +589,29 @@ sign' = do
             zipWithM_ (.=) ixs vs
         overBy pos gen = do
             overBS pos $ runPut gen
-        geti n = gets (`B.index` n)
-        sliceB b e = B.take (e - b) . B.drop b
-
-        randPickB table = do
-            i <- randR (0, B.length table - 1)
-            pure $ B.index table i
-
-        randRUntil r cond = do
-            i <- randR r
-            if cond i then pure i else randRUntil r cond
+        timeMS = fromIntegral (_timeMS`rem` 1000000)
+        tbs = runPut (put32be timeMS)
+        mn = runPut $ put64le 0x6EEDCF0DC4675540
+        kt4 = runPut $ do
+            put8 _r1
+            put8 _r2
+            put8 $ _r2 + 20
+            put8 $ _r2 + 40
+        encKey = computeKey kt4
+        input = tencentEncryptionA (input_ <> tbs) (B.take 32 $ encKey <> B.replicate 32 0) mn
+        hash = md5Lazy input
+        ms = (tbs <> mn <> B.replicate 9 0) &~ do
+            ix 2 .= 1
+            ix 4 .= 1
+            overBy 5 $ do
+                putbs kt4
+                put32be timeMS
+                putbs (B.take 8 hash)
+        crc = tencentCrc32 tab (B.unpack . B.drop 2 $ ms)
+        ms_ = ms &~ do
+            ix 0 .= fromIntegral (crc .&. 0xff)
+            ix 1 .= fromIntegral (crc .>. 24)
+        nonce = runPut $ put32le _nonce
+        ms__ = transformInner ms_ transFormTableEncode
+        us = tencentEncryptB (B.take 16 $ B.cycle nonce) ms__
+        encrypted = transformInner us transformTableDecode
