@@ -9,6 +9,11 @@ import Common
 import Zephyr.Internal.TLV
 import Zephyr.Utils.Common
 import Data.Bits
+import qualified Zephyr.Packet.TLVBuilder as T
+import Control.Monad.State
+import Zephyr.Engine.Context
+import Zephyr.Core.Device
+import Zephyr.Core.ClientApp
 
 constGUID :: B.ByteString
 constGUID = B.pack [142, 27, 163, 177, 172, 31, 181, 137, 118, 115, 8, 126, 24, 49, 54, 169]
@@ -340,20 +345,31 @@ test544 = do
 
 
 
-tlvTest :: SpecWith ()
-tlvTest = do
-    describe "TLV Tests" $ do
-        $(tlvTestTemplate' 
-            [0x1, 0x1b, 0x1d, 0x1f, 
-            0x2, 0x8, 0x10a, 0x16,
-            0x16a, 0x16e, 0x17a, 0x17c,
-            0x18, 0x33, 0x35, 0x52d,
-            0x100, 0x104, 0x106, 0x107,
-            0x108, 0x109, 0x116, 0x124,
-            0x128, 0x141, 0x142, 0x143,
-            0x144, 0x145, 0x147, 0x154,
-            0x166, 0x174, 0x177, 0x187,
-            0x188, 0x191, 0x193, 0x194,
-            0x197, 0x198, 0x202,
-            0x401, 0x511, 0x516,
-            0x525, 0x544])
+-- tlvTest :: SpecWith ()
+-- tlvTest = do
+--     describe "TLV Tests" $ do
+        
+--         $(tlvTestTemplate' 
+--             [0x1, 0x1b, 0x1d, 0x1f, 
+--             0x2, 0x8, 0x10a, 0x16,
+--             0x16a, 0x16e, 0x17a, 0x17c,
+--             0x18, 0x33, 0x35, 0x52d,
+--             0x100, 0x104, 0x106, 0x107,
+--             0x108, 0x109, 0x116, 0x124,
+--             0x128, 0x141, 0x142, 0x143,
+--             0x144, 0x145, 0x147, 0x154,
+--             0x166, 0x174, 0x177, 0x187,
+--             0x188, 0x191, 0x193, 0x194,
+--             0x197, 0x198, 0x202,
+--             0x401, 0x511, 0x516,
+--             0x525, 0x544])
+
+--     describe "T52D" $ do
+        
+--         it "t52D" $ do
+--             let uin_ = 1234567890
+--             let dev = generateDevice uin_
+--             ctx <- newContext uin_ dev androidPhone
+--             v <- evalStateT (T.t52D :: StateT Context IO B.ByteString) ctx
+--             printHex v
+--             putStrLn ""

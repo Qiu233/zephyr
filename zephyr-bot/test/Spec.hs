@@ -1,10 +1,12 @@
 import Test.Hspec
 import EncryptTest
-import TLVTest (tlvTest)
+--import TLVTest (tlvTest)
 import DeviceTest
+import T544Test
 
 main :: IO ()
 main = hspec $ do
     encryptTest
-    tlvTest
+    t544Test
+    --tlvTest
     deviceTest

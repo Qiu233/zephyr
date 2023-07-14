@@ -22,15 +22,55 @@ import Zephyr.Encrypt.QQTea (qqteaEncrypt, tea16KeyFromBytes)
 import Control.Concurrent.STM (readTVarIO)
 import Zephyr.Utils.Random
 import Data.Word
+import Zephyr.Utils.Time (getEpochTime)
+import Zephyr.Utils.Codec (md5Lazy, md5OfU8)
+import Control.Monad
+import qualified Zephyr.Internal.TLV.T544.ASM as T544
+import System.Random (randomIO)
+
+lv :: Put -> Put
+lv p = do
+    let s = runPut p
+    put16be $ fromIntegral $ B.length s
+    putbs s
+
+lvbs :: B.ByteString -> Put
+lvbs = lv . putbs
+
+lvu8 :: String -> Put
+lvu8 = lv . pututf8
+
+packTLV :: Word16 -> Put -> B.ByteString
+packTLV t p = runPut $ do
+    put16be t
+    lv p
+
+packTLV_ :: (Monad m) => Word16 -> Put -> m B.ByteString
+packTLV_ t p = pure $ packTLV t p
 
 t1 :: ContextIOT m => m B.ByteString
 t1 = do
-    ip <- use $ device . ip_address
+    (a,b,c,d) <- use $ device . ip_address
     uin_ <- fromIntegral <$> use uin
-    T.t1 uin_ ip
+    time_ <- fromIntegral <$> getEpochTime
+    r <- randomIO
+    packTLV_ 0x01 $ do
+        put16be 1
+        put32be r
+        put32be uin_
+        put32be time_
+        put8 a
+        put8 b
+        put8 c
+        put8 d
+        put16be 0
 
 t8 :: ContextIOT m => m B.ByteString
-t8 = T.t8 2052
+t8 = do
+    packTLV_ 0x08 $ do
+        put16be 0
+        put32be 2052
+        put16be 0
 
 
 t16 :: ContextIOT m => m B.ByteString
@@ -41,30 +81,70 @@ t16 = do
     id_ <- use $ client_app . id
     ver_ <- use $ client_app . ver
     sign_ <- use $ client_app . sign
-    T.t16 7 app_id_ sub_id_ guid_ id_ ver_ sign_
+    packTLV_ 0x16 $ do
+        put32be 7
+        put32be app_id_
+        put32be sub_id_
+        putbs guid_
+        lvu8 id_
+        lvu8 ver_
+        lvbs sign_
 
 t18 :: ContextIOT m => m B.ByteString
 t18 = do
     app_id_ <- use $ client_app . app_id
     uin_ <- fromIntegral <$> use uin
-    T.t18 app_id_ uin_
+    packTLV_ 0x18 $ do
+        put16be 1
+        put32be 1536
+        put32be app_id_
+        put32be 0
+        put32be uin_
+        put16be 0
+        put16be 0
 
 t1B :: ContextIOT m => m B.ByteString
-t1B = T.t1b 0 0 3 4 72 2 2
+t1B = do
+    packTLV_ 0x1B $ do
+        put32be 0
+        put32be 0
+        put32be 3
+        put32be 4
+        put32be 72
+        put32be 2
+        put32be 2
+        put16be 0
 
 t1D :: ContextIOT m => m B.ByteString
-t1D = T.t1d 184024956
+t1D = do
+    packTLV_ 0x1D $ do
+        put8 1
+        put32be 184024956
+        put32be 0
+        put8 0
+        put32be 0
 
 t1F :: ContextIOT m => m B.ByteString
-t1F = T.t1f "android" "7.1.2" "China Mobile GSM" "wifi" 2
+t1F = do
+    packTLV_ 0x1F $ do
+        put8 0
+        lvu8 "android"
+        lvu8 "7.1.2"
+        put16be 2
+        lvu8 "China Mobile GSM"
+        lvu8 ""
+        lvu8 "wifi"
 
 t33 :: ContextIOT m => m B.ByteString
 t33 = do
     guid_ <- guidBytes <$> use (device . guid)
-    T.t33 guid_
+    packTLV_ 0x33 $ do
+        putbs guid_
 
 t35 :: ContextIOT m => m B.ByteString
-t35 = T.t35 8
+t35 = do
+    packTLV_ 0x35 $ do
+        put32be 8
 
 t100 :: ContextIOT m => m B.ByteString
 t100 = do
@@ -72,26 +152,61 @@ t100 = do
     app_id_ <- use $ client_app . app_id
     sub_id_ <- use $ client_app . sub_id
     main_sig_map_ <- use $ client_app . main_sig_map
-    T.t100 ssover_ app_id_ sub_id_ main_sig_map_
+    packTLV_ 0x100 $ do
+        put16be 1
+        put32be ssover_
+        put32be app_id_
+        put32be sub_id_
+        put32be 0
+        put32be main_sig_map_
 
 t104 :: ContextIOT m => m B.ByteString
 t104 = do
     t104_ <- use $ signature . Sig.t104
-    T.t104 t104_
+    packTLV_ 0x104 $ do
+        putbs t104_
 
 t106 :: ContextIOT m => B.ByteString -> m B.ByteString
 t106 md5pass = do
-    uin_ <- fromIntegral <$> use uin
+    uin_ <- use uin
     app_id_ <- use $ client_app . app_id
     sub_id_ <- use $ client_app . sub_id
     ssover_ <- use $ client_app . ssover
     guid_ <- guidBytes <$> use (device . guid)
     tgtgt_ <- use $ signature . tgtgt
-    T.t106 uin_ app_id_ sub_id_ ssover_ md5pass guid_ tgtgt_
+    r <- randomIO
+    time <- getEpochTime
+    let body_ = runPut $ do
+            put16be 4
+            put32be r
+            put32be ssover_
+            put32be app_id_
+            put32be 0
+            put64be uin_
+            put32be $ fromIntegral time
+            put32be 0 -- dummy ip
+            put8 1
+            putbs md5pass
+            putbs tgtgt_
+            put32be 0
+            put8 1
+            putbs guid_
+            put32be sub_id_
+            put32be 1
+            lvu8 $ show uin_
+            put16be 0
+    let key_ = md5Lazy $ B.concat [md5pass, B.pack [0,0,0,0], runPut $ put32be $ fromIntegral uin_]
+    enc <- qqteaEncrypt (tea16KeyFromBytes key_) body_
+    packTLV_ 0x106 $ do
+        putbs enc
 
 t107 :: ContextIOT m => m B.ByteString
 t107 = do
-    T.t107 0
+    packTLV_ 0x107 $ do
+        put16be 0
+        put8 0
+        put16be 0
+        put8 1
 
 t108 :: ContextIOT m => m B.ByteString
 t108 = do
@@ -102,54 +217,83 @@ t108 = do
                 name_ <- use $ client_app . name
                 pure $ utf8ToBytes $ printf "|%s|%s" imei_ name_
             else pure ksid_
-    T.t108 ksid__
+    packTLV_ 0x108 $ do
+        putbs ksid__
 
 t109 :: ContextIOT m => m B.ByteString
 t109 = do
     imei_ <- use $ device . imei
-    T.t109 imei_
+    packTLV_ 0x109 $ do
+        putbs . B.fromStrict $ md5OfU8 imei_
 
 t10A :: ContextIOT m => m B.ByteString
 t10A = do
     tgt_ <- use $ signature . tgt
-    T.t10a tgt_
+    packTLV_ 0x10A $ do
+        putbs tgt_
 
 t116 :: ContextIOT m => m B.ByteString
 t116 = do
     bitmap_ <- use $ client_app . bitmap
     sub_sig_map_ <- use $ client_app . sub_sig_map
-    T.t116 bitmap_ sub_sig_map_
+    packTLV_ 0x116 $ do
+        put8 0
+        put32be bitmap_
+        put32be sub_sig_map_
+        put8 1
+        put32be 1600000226
 
 t124 :: ContextIOT m => m B.ByteString
 t124 = do
     os_type_ <- use $ device . os_type
-    version_ <- use $ client_app . version
+    release_ <- use $ device . os_version . release
     sim_ <- use $ device . sim
     apn_ <- use $ device . apn
-    T.t124 os_type_ version_ sim_ apn_
+    packTLV_ 0x124 $ do
+        lvu8 $ take 16 os_type_
+        lvu8 $ take 16 release_
+        put16be 2
+        lvu8 $ take 16 sim_
+        put16be 0
+        lvu8 $ take 16 apn_
 
 t128 :: ContextIOT m => m B.ByteString
 t128 = do
     model_ <- use $ device . model
     guid_ <- guidBytes <$> use (device . guid)
     brand_ <- use $ device . brand
-    T.t128 False True False 16777216 model_ guid_ brand_
+    packTLV_ 0x128 $ do
+        put16be 0
+        put8 0
+        put8 1
+        put8 0
+        put32be 16777216
+        lvu8 $ take 32 model_
+        lvbs $ B.take 16 guid_
+        lvu8 $ take 16 brand_
 
 t141 :: ContextIOT m => m B.ByteString
 t141 = do
     sim_ <- use $ device . sim
     apn_ <- use $ device . apn
-    T.t141 sim_ apn_
+    packTLV_ 0x141 $ do
+        put16be 1
+        lvu8 sim_
+        put16be 2
+        lvu8 apn_
 
 t142 :: ContextIOT m => m B.ByteString
 t142 = do
     id_ <- use $ client_app . id
-    T.t142 id_
+    packTLV_ 0x142 $ do
+        put16be 0
+        lvu8 $ take 32 id_
 
 t143 :: ContextIOT m => m B.ByteString
 t143 = do
     d2_ <- use $ signature . d2
-    T.t143 d2_
+    packTLV_ 0x143 $ do
+        putbs d2_
 
 t144 :: ContextIOT m => m B.ByteString
 t144 = do
@@ -159,104 +303,133 @@ t144 = do
             put16be 5
             putbs bs
     vs <- qqteaEncrypt (tea16KeyFromBytes tgtgt_) s
-    pure $ runPut $ do -- TODO: rewrite
-        put16be 0x144
-        put16be $ fromIntegral $ B.length vs
+    packTLV_ 0x144 $ do
         putbs vs
 
 t145 :: ContextIOT m => m B.ByteString
 t145 = do
     guid_ <- guidBytes <$> use (device . guid)
-    T.t145 guid_
+    packTLV_ 0x145 $ do
+        putbs guid_
 
 t147 :: ContextIOT m => m B.ByteString
 t147 = do
     app_id_ <- use $ client_app . app_id
     version_ <- use $ client_app . version
     sign_ <- use $ client_app . sign
-    T.t147 app_id_ version_ sign_
+    packTLV_ 0x147 $ do
+        put32be app_id_
+        lvu8 version_
+        lvbs sign_
 
 t154 :: ContextIOT m => m B.ByteString
 t154 = do
     seqV <- use seq
     seq_ <- liftIO (readTVarIO seqV)
-    T.t154 (seq_ + 1)
-            
+    packTLV_ 0x154 $ do
+        put32be $ seq_ + 1
+
 t16E :: ContextIOT m => m B.ByteString
 t16E = do
     model_ <- use $ device . model
-    T.t16e (utf8ToBytes model_)
+    packTLV_ 0x16E $ do
+        pututf8 model_
 
 t174 :: ContextIOT m => m B.ByteString
 t174 = do
     t174_ <- use $ signature . Sig.t174
-    T.t174 t174_
+    packTLV_ 0x174 $ do
+        putbs t174_
 
 t177 :: ContextIOT m => m B.ByteString
 t177 = do
     build_time_ <- use $ client_app . build_time
     sdk_ver_ <- use $ client_app . sdk_ver
-    T.t177 build_time_ sdk_ver_
+    packTLV_ 0x177 $ do
+        put8 1
+        put32be build_time_
+        lvu8 sdk_ver_
 
 t17A :: ContextIOT m => m B.ByteString
 t17A = do
-    T.t17a 9
+    packTLV_ 0x17A $ do
+        put32be 9
 
 t17C :: ContextIOT m => String -> m B.ByteString
 t17C code = do
-    T.t17c code
+    packTLV_ 0x17C $ do
+        lvu8 code
 
 t187 :: ContextIOT m => m B.ByteString
 t187 = do
     mac_address_ <- use $ device . mac_address
-    T.t187 mac_address_
+    packTLV_ 0x187 $ do
+        putbs $ B.fromStrict $ md5OfU8 mac_address_
 
 t188 :: ContextIOT m => m B.ByteString
 t188 = do
     android_id_ <- use $ device . android_id
-    T.t188 android_id_
+    packTLV_ 0x188 $ do
+        putbs $ B.fromStrict $ md5OfU8 android_id_
 
 t191 :: ContextIOT m => m B.ByteString
 t191 = do
-    T.t191 0x82
+    packTLV_ 0x191 $ do
+        put8 0x82
 
 t193 :: ContextIOT m => String -> m B.ByteString
 t193 ticket = do
-    T.t193 ticket
+    packTLV_ 0x193 $ do
+        pututf8 ticket
 
 t194 :: ContextIOT m => m B.ByteString
 t194 = do
     imsi_ <- use $ device . imsi
-    T.t194 imsi_
+    packTLV_ 0x194 $ do
+        putbs imsi_
 
 t197 :: ContextIOT m => m B.ByteString
 t197 = do
-    T.t197
+    packTLV_ 0x197 $ do
+        lvbs $ B.pack [0]
 
 t198 :: ContextIOT m => m B.ByteString
 t198 = do
-    T.t198
+    packTLV_ 0x197 $ do
+        lvbs $ B.pack [0]
 
 t202 :: ContextIOT m => m B.ByteString
 t202 = do
     wifi_bssid_ <- use $ device . wifi_bssid
     wifi_ssid_ <- use $ device . wifi_ssid
-    T.t202 wifi_bssid_ wifi_ssid_
+    packTLV_ 0x202 $ do
+        lvu8 $ take 16 wifi_bssid_
+        lvu8 $ take 32 wifi_ssid_
 
 t400 :: ContextIOT m => m B.ByteString
 t400 = do
     uin_ <- use uin
     guid_ <- guidBytes <$> use (device . guid)
-    T.t400 uin_ guid_
+    rs <- randBytes 16
+    time <- fromIntegral <$> getEpochTime
+    packTLV_ 0x400 $ do
+        put16be 1
+        put64be uin_
+        putbs guid_
+        putbs rs
+        put32be 1
+        put32be 16
+        put32be time
 
 t401 :: ContextIOT m => m B.ByteString
 t401 = do
     rs <- randBytes 16
-    T.t401 rs
+    packTLV_ 0x401 $ do
+        putbs rs
 
 t511 :: ContextIOT m => m B.ByteString
 t511 = do
-    T.t511 [
+    let ds = [
             "aq.qq.com",
             "buluo.qq.com",
             "connect.qq.com",
@@ -280,29 +453,36 @@ t511 = do
             "v.qq.com",
             "vip.qq.com",
             "y.qq.com"
-        ]
+            ]
+    packTLV_ 0x511 $ do
+        put16be $ fromIntegral $ length ds
+        forM_ ds $ \d -> do
+            put8 1
+            lvu8 d
 
 t516 :: ContextIOT m => m B.ByteString
 t516 = do
-    T.t516
+    packTLV_ 0x516 $ do
+        put32be 0
 
 t521 :: ContextIOT m => m B.ByteString
 t521 = do
-    T.t521
+    packTLV_ 0x521 $ do
+        put32be 0
+        put16be 0
 
 t525 :: ContextIOT m => m B.ByteString
 t525 = do
-    T.t525 $ runPut $ do
+    packTLV_ 0x525 $ do
+        put16be 1
         put16be 0x536
-        put16be 2
-        put8 0x1
-        put8 0x0
+        lvbs $ B.pack [1, 0]
 
 t52D :: ContextIOT m => m B.ByteString
 t52D = do
     d <- use device
 
-    T.t52d $ PL.encodeMessage_ [
+    let ds = PL.encodeMessage_ [
             1 `PL.putLenUTF8` (d ^. bootloader),
             2 `PL.putLenUTF8` (d ^. proc_version),
             3 `PL.putLenUTF8` (d ^. os_version . codeName),
@@ -314,22 +494,41 @@ t52D = do
             7 `PL.putLenUTF8` (d ^. android_id),
             8 `PL.putLenUTF8` (d ^. base_band),
             9 `PL.putPVUInt32` (d ^. os_version . incremental)
-        ]
+            ]
+    packTLV_ 0x52D $ do
+        putbs ds
 
 t544 :: ContextIOT m => Word32 -> Word32 -> m B.ByteString
 t544 v subCmd = do
     uin_ <- use uin
     guid_ <- guidBytes <$> use (device . guid)
     sdk_ver_ <- use $ client_app . sdk_ver
-    T.t544 v subCmd uin_ guid_ sdk_ver_
+    let salt = runPut $ do
+            if v == 2 then do
+                put32be 0
+                lvbs guid_
+                lvu8 sdk_ver_
+                put32be subCmd
+                put32be 0
+            else do
+                put64be uin_
+                lvbs guid_
+                lvu8 sdk_ver_
+                put32be subCmd
+    vs <- T544.sign salt
+    packTLV_ 0x544 $ do
+        putbs vs
 
 t545 :: ContextIOT m => m B.ByteString
 t545 = do
     qimei16_ <- use $ device . qimei16
     imei_ <- use $ device . imei
-    T.t545 (if null qimei16_ then imei_ else qimei16_)
+    let vs = (if null qimei16_ then imei_ else qimei16_)
+    packTLV_ 0x545 $ do
+        pututf8 vs
 
 t547 :: ContextIOT m => m B.ByteString
 t547 = do
     t547_ <- use $ signature . Sig.t547
-    T.t547 t547_
+    packTLV_ 0x547 $ do
+        putbs t547_

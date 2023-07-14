@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Use camelCase" #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Packet.Login where
 import Zephyr.Engine.Context
@@ -35,6 +36,7 @@ loginCmdCode Client_CorrectTime = "Client.CorrectTime"
 
 buildLoginPacket :: ContextIOT m => LoginCmd -> Word8 -> B.ByteString -> m B.ByteString
 buildLoginPacket cmd type_ body = do
+    seq_ <- nextSeq
     uin_ <- use uin
     sub_id_ <- use $ client_app . sub_id
     let (uin__, cmdid__, subappid__) = if cmd == WTLogin_TransEMP
@@ -74,7 +76,6 @@ buildLoginPacket cmd type_ body = do
     imei_ <- use $ device . imei
     apk_name_ <- use $ client_app . name
     let ksid = printf "|%s|%s" imei_ apk_name_ :: String
-    seq_ <- readSeq
     tgt_ <- use $ signature . Sig.tgt
     session_ <- use $ signature . Sig.session
     qimei16_ <- use $ device . qimei16
@@ -91,9 +92,7 @@ buildLoginPacket cmd type_ body = do
                 put32be 4
                 put16be $ fromIntegral $ length ksid + 2
                 pututf8 ksid
-                withLength32Desc $ if null qimei16_
-                    then putbs B.empty
-                    else pututf8 qimei16_
+                withLength32Desc $ pututf8 qimei16_
             withLength32Desc_ b2
     sso <- case type_ of
         1 -> do

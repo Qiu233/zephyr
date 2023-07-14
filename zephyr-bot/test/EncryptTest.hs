@@ -1,8 +1,10 @@
+{-# LANGUAGE RecordWildCards #-}
 module EncryptTest where
 import Zephyr.Encrypt.QQTea
 import Test.Hspec
 import Data.Maybe (fromJust)
 import Zephyr.Utils.Common
+import Zephyr.Encrypt.ECDH
 import Common
 
 constKey :: TeaKey
@@ -11,10 +13,10 @@ constKey = tea16KeyFromBytes $ fromJust $ decodeHex "2D624E782A4D55BAA5B97418A0F
 encryptTest :: SpecWith ()
 encryptTest = do
     describe "Encrypt Tests" $ do
-        -- it "keygen test" $ do
-        --     EncryptECDH {..} <- generateDefaultKey
-        --     printHex initial_shared_key
-        --     printHex public_key
+        it "keygen test" $ do
+            EncryptECDH {..} <- generateDefaultKey
+            printHex _shared_key
+            printHex _public_key
 
         it "single enc test" $ do
             shouldBe (tea16Encrypt constKey 0x12345678) 0xE6CC2CF01893FE29

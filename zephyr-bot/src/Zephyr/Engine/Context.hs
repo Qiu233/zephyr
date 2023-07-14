@@ -1,5 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Engine.Context where
@@ -25,7 +26,7 @@ data Context = Context {
     _seq :: TVar Word32
 }
 
-class (MonadState Context m, MonadIO m) => ContextIOT m
+type ContextIOT m = (MonadState Context m, MonadIO m)
 
 $(makeLenses ''Context)
 
@@ -36,7 +37,7 @@ newContext _uin _device _client_app = do
     _ecdh <- generateDefaultKey
     pure $ Context {..}
 
-readSeq :: ContextIOT m => m Word32
-readSeq = do
+nextSeq :: ContextIOT m => m Word32
+nextSeq = do
     seq_ <- use seq
-    liftIO $ readTVarIO seq_
+    liftIO $ atomically $ stateTVar seq_ (\x -> (x, x+1))

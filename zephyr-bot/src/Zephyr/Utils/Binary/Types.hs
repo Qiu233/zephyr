@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE GADTs #-}
 module Zephyr.Utils.Binary.Types (
     PutM, Put , Get(..),
     DecodeResult(..),

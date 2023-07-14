@@ -5,6 +5,7 @@ import qualified Data.ByteString.Lazy as B
 import Data.Word
 import Numeric (readHex)
 import qualified Data.ByteString.Lazy.UTF8 as UTF8
+import Data.Maybe (fromJust)
 
 slice :: Int -> Int -> [a] -> [a]
 slice s e = take (e - s) . drop s
@@ -24,6 +25,9 @@ decodeHex s =
     where
         part _ [] = []
         part n xs = take n xs : part n (drop n xs)
+
+decodeHex_ :: String -> UTF8.ByteString
+decodeHex_ = fromJust . decodeHex
 
 encodeHex :: B.ByteString -> String
 encodeHex =
