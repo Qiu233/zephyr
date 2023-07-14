@@ -578,6 +578,7 @@ sign' SignDeps{..} input_ = do
         -- TODO: precedence here is different from oicq but is consistent to cq-http
         -- Since oicq is transpiled from cq-http, I decided to keep this
         put8 $ _b2 + ((9-_addition) .&. 0xff) + 1
+        put32le 0
     where
         overBS pos src = do
             let vs = B.unpack src
@@ -608,7 +609,7 @@ sign' SignDeps{..} input_ = do
         ms_ = ms &~ do
             ix 0 .= fromIntegral (crc .&. 0xff)
             ix 1 .= fromIntegral (crc .>. 24)
-        nonce = runPut $ put32le _nonce
+        nonce = runPut $ put32be _nonce
         ms__ = transformInner ms_ transFormTableEncode
         us = tencentEncryptB (B.take 16 $ B.cycle nonce) ms__
         encrypted = transformInner us transformTableDecode

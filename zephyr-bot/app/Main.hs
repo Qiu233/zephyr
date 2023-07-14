@@ -11,7 +11,7 @@ import Control.Lens hiding (Context)
 import Zephyr.Utils.Common
 import Zephyr.Core.Device.Types
 import Zephyr.Core.ClientApp (androidPhone)
-import Zephyr.Packet.Login (passwordLoginPacket)
+import Zephyr.Packet.Login
 import Control.Monad.State
 import Zephyr.Utils.Codec (md5OfU8)
 import qualified Data.ByteString.Lazy as B
@@ -33,10 +33,11 @@ runTCPClient host port client = withSocketsDo $ do
 clientMain :: (ContextIOT m) => B.ByteString -> m ()
 clientMain md5pass = do
     v <- passwordLoginPacket md5pass
+    s <- syncTimeDiffPacket
     liftIO $ print $ B.length v
     liftIO $ putStrLn $ encodeHex v
-    liftIO $ runTCPClient "msfwifi.3g.qq.com" "8080" $ \sock -> do
-        sendAll sock v
+    liftIO $ runTCPClient "120.233.17.147" "8080" $ \sock -> do
+        sendAll sock s
         putStrLn "Waiting:"
         vs <- recv sock 1024
         print $ B.length vs

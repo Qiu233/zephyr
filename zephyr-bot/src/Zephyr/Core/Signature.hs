@@ -5,6 +5,7 @@ module Zephyr.Core.Signature where
 import qualified Data.ByteString.Lazy as B
 import Zephyr.Utils.Random (randBytes)
 import Control.Lens
+import Data.Word
 
 data BigDataChannel = BigDataChannel {
     _ip :: String,
@@ -28,7 +29,7 @@ data Signature = Signature {
     _qrsig :: B.ByteString,
     _big_data :: BigDataChannel,
     _emp_time :: Int,
-    _time_diff :: Int
+    _time_diff :: Word32
 }
 
 $(makeLenses ''Signature)

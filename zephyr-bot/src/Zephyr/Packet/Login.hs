@@ -19,6 +19,8 @@ import Text.Printf
 import Prelude hiding (seq)
 import Zephyr.Utils.Random
 import qualified Zephyr.Packet.TLVBuilder as T
+import qualified Debug.Trace as Debug
+import Zephyr.Utils.Common (encodeHex)
 
 data LoginCmd =
     WTLogin_Login |
@@ -94,6 +96,7 @@ buildLoginPacket cmd type_ body = do
                 pututf8 ksid
                 withLength32Desc $ pututf8 qimei16_
             withLength32Desc_ b2
+    Debug.traceM (show (B.length sso') ++ "\n" ++ encodeHex sso')
     sso <- case type_ of
         1 -> do
             d2key_ <- use $ signature . Sig.d2key
@@ -146,4 +149,9 @@ passwordLoginPacket md5pass = do
             put16be 9
             put16be 25
             putbs tlvs
+    Debug.traceM (show (B.length body_) ++ "\n" ++ encodeHex body_)
     buildLoginPacket WTLogin_Login 2 body_
+
+syncTimeDiffPacket :: ContextIOT m => m B.ByteString
+syncTimeDiffPacket = do
+    buildLoginPacket Client_CorrectTime 0 $ runPut $ put32be 0

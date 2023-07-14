@@ -74,7 +74,7 @@ generateDevice uin = do
         _device_name = "HIM188MOE"
         _board = "MIRAI-YYDS"
         _brand = "OICQX"
-        _model = "Zephyr 2023"
+        _model = "Konata 2020"
         _bootloader = "U-boot"
         _fingerprint =
             printf "%s/%s/%s:10/%s/%d:user/release-keys"
@@ -86,7 +86,7 @@ generateDevice uin = do
             :: String
         _boot_id = show $ createGUID hash
         _proc_version =
-            printf "Linux version 4.19.71-%d (Zephyr)"
+            printf "Linux version 4.19.71-%d (konata@takayama.github.com)"
             (runGet_ get16be $ B.drop 4 hash)
             :: String
         _base_band = ""
