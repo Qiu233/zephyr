@@ -126,8 +126,8 @@ putbss = putbs . B.fromStrict
 pututf8 :: String -> Put
 pututf8 s = putbs (UTF8.fromString s)
 
-putList :: BinPut a => [a] -> Put
-putList = mapM_ putle
+putListBE :: BinPut a => [a] -> Put
+putListBE = mapM_ putbe
 
 -- putPrefLE :: (BinPut a, BinPut b) => (a -> b) -> a -> Put
 -- putPrefLE f a = do

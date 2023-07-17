@@ -67,7 +67,7 @@ qqteaEncrypt key text = do
             putbs text
             putbs $ B.pack [0,0,0,0, 0,0,0]
     let work_block = runGet_ (getListOfBE @Word64 (div plain_len 8)) plain_text
-    pure $ runPut $ putList $ compute_work work_block
+    pure $ runPut $ putListBE $ compute_work work_block
     where
         len = fromIntegral $ B.length text ::Int
         fill_count = 9 - ((len + 1) `rem` 8)
@@ -80,7 +80,7 @@ qqteaEncrypt key text = do
 qqteaDecrypt :: TeaKey -> B.ByteString -> B.ByteString
 qqteaDecrypt key text =
     let work_block = runGet_ (getListOfBE @Word64 (div len 8)) text
-        rst = runPut . putList $ compute_work work_block
+        rst = runPut . putListBE $ compute_work work_block
         begin = fromIntegral (B.head rst .&. 7) + 3
     in B.drop begin $ B.dropEnd 7 rst
     where

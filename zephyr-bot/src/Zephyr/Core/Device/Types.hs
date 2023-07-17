@@ -66,8 +66,8 @@ generateDevice uin = do
     let uinStr = show uin
     let pg = mkStdGen $ fromIntegral uin
     let hash = B.fromStrict . md5OfU8 $ uinStr
-    let _android_id = printf "OICQX.%d%d.%d%d" (runGet_ get16be hash) (B.index hash 2) (B.index hash 3) (head uinStr) :: String
-    let _incremental = runGet_ get32be hash
+    let _android_id = printf "OICQX.%d%d.%d%c" (runGet_ get16be hash) (B.index hash 2) (B.index hash 3) (head uinStr) :: String
+    let _incremental = runGet_ get32be $ B.drop 12 hash
 
     let _display = _android_id
         _product = "MRS4S"
@@ -93,7 +93,7 @@ generateDevice uin = do
         _sim = "T-Mobile"
         _os_type = "android"
         _mac_address =
-            printf "00:50:%X:%X:%X:%X"
+            printf "00:50:%02X:%02X:%02X:%02X"
             (B.index hash 6)
             (B.index hash 7)
             (B.index hash 8)
@@ -106,8 +106,7 @@ generateDevice uin = do
     let _apn = "wifi"
         _os_version = OSVersion _incremental "10" "REL" 29
     let _imsi = B.pack $ take 16 $ randoms pg
-    let _guid = createGUID $ B.fromStrict . md5Of_ $
-                    (utf8ToBytes _imei <> utf8ToBytes _mac_address)
+    let _guid = createGUID $ B.fromStrict . md5OfU8 $ (_imei ++ _mac_address)
         _qimei16 = ""
         _qimei36 = ""
     Device{..}
@@ -123,4 +122,3 @@ randIMEI g = do --TODO: rewrite this
             let (r, p') = randomR @Int32 (0, 9) p
             let to_add = (r & (if even i then (*2) else id)) & (\x -> (if x >= 10 then rem x 10 +1 else x))
             put (i+1, sum' + to_add, str ++ show to_add, p')
-

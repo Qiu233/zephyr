@@ -96,7 +96,6 @@ buildLoginPacket cmd type_ body = do
                 pututf8 ksid
                 withLength32Desc $ pututf8 qimei16_
             withLength32Desc_ b2
-    Debug.traceM (show (B.length sso') ++ "\n" ++ encodeHex sso')
     sso <- case type_ of
         1 -> do
             d2key_ <- use $ signature . Sig.d2key

@@ -16,6 +16,10 @@ import Control.Monad.State
 import Zephyr.Utils.Codec (md5OfU8)
 import qualified Data.ByteString.Lazy as B
 import Zephyr.Core.Device.QIMEI
+import Control.Concurrent.STM
+import Zephyr.Utils.Binary
+import Control.Exception
+import Zephyr.Engine.Packet.Parse
 
 
 runTCPClient :: HostName -> ServiceName -> (Socket -> IO a) -> IO a
@@ -32,16 +36,47 @@ runTCPClient host port client = withSocketsDo $ do
 
 clientMain :: (ContextIOT m) => B.ByteString -> m ()
 clientMain md5pass = do
+    buffer <- liftIO $ newTVarIO B.empty
+    let getP = getPacket buffer
     v <- passwordLoginPacket md5pass
     s <- syncTimeDiffPacket
     liftIO $ print $ B.length v
     liftIO $ putStrLn $ encodeHex v
+    ctx <- get
     liftIO $ runTCPClient "120.233.17.147" "8080" $ \sock -> do
         sendAll sock s
+        vs <- getP sock
+        sso <- parsePacket ctx vs
+        let p = _payload sso
+        print $ B.length p
+        putStrLn $ encodeHex p
+        
+        sendAll sock v
         putStrLn "Waiting:"
-        vs <- recv sock 1024
-        print $ B.length vs
-        putStrLn $ encodeHex vs
+        bs <- recv sock 1024
+        print $ B.length bs
+        putStrLn $ encodeHex bs
+
+
+getPacket :: TVar B.ByteString -> Socket -> IO B.ByteString
+getPacket v sock = do
+    vs <- recv sock 1024
+    when (B.null vs) $ error  "Connection closed"
+    atomically $ modifyTVar v (<> vs)
+    r <- atomically $ stateTVar v $ \x -> do
+        if B.length x >= 4 then do
+            let contentM = runGetInner (do
+                    len <- get32be
+                    getbs $ fromIntegral (len - 4)) x
+            case contentM of
+                TooFewBytes -> (B.empty, x)
+                Success y r -> (y, r)
+        else
+            (B.empty, x)
+    if B.null r then
+        getPacket v sock
+    else
+        pure r
 
 main :: IO ()
 main = do
@@ -56,4 +91,4 @@ main = do
                 ctx & device . qimei16 .~ q16
                     & device . qimei36 .~ q36
             ) imeis
-    evalStateT (clientMain password) ctx_
+    evalStateT (clientMain password) ctx

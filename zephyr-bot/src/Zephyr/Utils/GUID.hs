@@ -8,7 +8,8 @@ import Text.Printf
 import Zephyr.Utils.Binary
 import qualified Data.ByteString.Lazy as B
 import Zephyr.Utils.Common
-    
+import Data.Char (toLower)
+
 newtype GUID = GUID (Word32, Word32, Word32, Word32)
     deriving (Eq)
 
@@ -20,8 +21,8 @@ instance Show GUID where
             c = encodeHex $ B.take 2 $ B.drop 6 s
             d = encodeHex $ B.take 2 $ B.drop 8 s
             e = encodeHex $ B.drop 10 s
-        printf "%s-%s-%s-%s-%s" a b c d e
-        
+        toLower <$> printf "%s-%s-%s-%s-%s" a b c d e
+
 guidBytes :: GUID -> B.ByteString
 guidBytes (GUID (a,b,c,d)) = do
     runPut $ do

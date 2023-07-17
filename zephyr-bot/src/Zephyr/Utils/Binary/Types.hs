@@ -4,6 +4,7 @@ module Zephyr.Utils.Binary.Types (
     PutM, Put , Get(..),
     DecodeResult(..),
     (.<.), (.>.),
+    runGetInner
 ) where
 import qualified Data.ByteString.Lazy as B
 import Control.Monad.Trans.Writer
@@ -23,7 +24,9 @@ data DecodeResult a =
 type PutM = Writer B.ByteString
 type Put = PutM ()
 
-newtype Get a = Get { runGetInner :: B.ByteString -> DecodeResult a }
+newtype Get a = Get { runGetInner_ :: B.ByteString -> DecodeResult a }
+runGetInner :: Get a -> B.ByteString -> DecodeResult a
+runGetInner (Get f) = f
 instance Functor Get where
     fmap f (Get g) = Get $ \bs -> case g bs of
         Success a bs' -> Success (f a) bs'

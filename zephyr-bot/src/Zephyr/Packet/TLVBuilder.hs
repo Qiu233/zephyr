@@ -195,6 +195,7 @@ t106 md5pass = do
             lvu8 $ show uin_
             put16be 0
     let key_ = md5Lazy $ B.concat [md5pass, B.pack [0,0,0,0], runPut $ put32be $ fromIntegral uin_]
+    liftIO $ printf "0x106: %d\n%s\n" (B.length body_) (encodeHex body_) 
     enc <- qqteaEncrypt (tea16KeyFromBytes key_) body_
     packTLV_ 0x106 $ do
         putbs enc
@@ -301,6 +302,7 @@ t144 = do
     let s = runPut $ do
             put16be 5
             putbs bs
+    liftIO $ printf "0x144: %d\n%s\n" (B.length s) (encodeHex s)
     vs <- qqteaEncrypt (tea16KeyFromBytes tgtgt_) s
     packTLV_ 0x144 $ do
         putbs vs
