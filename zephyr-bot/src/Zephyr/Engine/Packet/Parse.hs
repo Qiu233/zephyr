@@ -2,7 +2,7 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 {-# LANGUAGE TemplateHaskell #-}
 module Zephyr.Engine.Packet.Parse where
-import Zephyr.Engine.Context
+import Zephyr.Core.Context
 import qualified Data.ByteString.Lazy as B
 import Control.Lens hiding (Context)
 import qualified Zephyr.Core.Signature as Sig

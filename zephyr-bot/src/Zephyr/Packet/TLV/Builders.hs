@@ -2,9 +2,9 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Redundant id" #-}
-module Zephyr.Packet.TLVBuilder where
+module Zephyr.Packet.TLV.Builders where
 
-import Zephyr.Engine.Context
+import Zephyr.Core.Context
 import qualified Data.ByteString.Lazy as B
 import Control.Lens hiding (Context)
 import Zephyr.Core.Device
@@ -24,20 +24,9 @@ import Data.Word
 import Zephyr.Utils.Time (getEpochTime)
 import Zephyr.Utils.Codec (md5Lazy, md5OfU8)
 import Control.Monad
-import qualified Zephyr.Internal.TLV.T544 as T544
+import qualified Zephyr.Packet.TLV.T544 as T544
 import System.Random (randomIO)
-
-lv :: Put -> Put
-lv p = do
-    let s = runPut p
-    put16be $ fromIntegral $ B.length s
-    putbs s
-
-lvbs :: B.ByteString -> Put
-lvbs = lv . putbs
-
-lvu8 :: String -> Put
-lvu8 = lv . pututf8
+import Zephyr.Packet.Builder
 
 packTLV :: Word16 -> Put -> B.ByteString
 packTLV t p = runPut $ do

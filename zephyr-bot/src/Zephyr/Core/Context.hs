@@ -3,7 +3,7 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
-module Zephyr.Engine.Context where
+module Zephyr.Core.Context where
 import Zephyr.Core.Device (Device)
 import Data.Word
 import Zephyr.Core.ClientApp

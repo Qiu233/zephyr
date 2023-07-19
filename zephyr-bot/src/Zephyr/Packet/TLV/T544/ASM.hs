@@ -6,7 +6,7 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Use camelCase" #-}
 {-# LANGUAGE RecordWildCards #-}
-module Zephyr.Internal.TLV.T544.ASM where
+module Zephyr.Packet.TLV.T544.ASM where
 
 
 import Data.Word
@@ -18,7 +18,7 @@ import Control.Lens
 import qualified Crypto.Cipher.RC4 as RC4
 import qualified Data.ByteArray as BArr
 import Zephyr.Utils.Binary
-import Zephyr.Internal.TLV.T544.HardCoded
+import Zephyr.Packet.TLV.T544.HardCoded
 import Zephyr.Utils.Time (getEpochTimeMS)
 import Zephyr.Utils.Codec
 import Zephyr.Utils.Random

@@ -1,13 +1,12 @@
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE TypeApplications #-}
 module T544Test where
 
-import Zephyr.Internal.TLV.T544.ASM
+import Zephyr.Packet.TLV.T544.ASM
+import Zephyr.Packet.TLV.T544.HardCoded
 import Zephyr.Utils.Common
 import Test.Hspec
 import qualified Data.ByteString.Lazy as B
 import Common (testHex, printHex)
-import Zephyr.Internal.TLV.T544.HardCoded
 import Data.Word
 import Control.Monad.State (execState, runState)
 import qualified Crypto.Cipher.RC4 as RC4

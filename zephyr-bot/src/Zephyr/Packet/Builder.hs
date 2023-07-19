@@ -1,16 +1,20 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
-module Zephyr.Engine.Packet where
-import qualified Data.ByteString.Lazy as B
+module Zephyr.Packet.Builder where
 import Zephyr.Utils.Binary
+import qualified Data.ByteString.Lazy as B
 
-withTLV :: Put -> Put
-withTLV p = do
+lv :: Put -> Put
+lv p = do
     let s = runPut p
-    put16be (fromIntegral $ B.length s)
+    put16be $ fromIntegral $ B.length s
     putbs s
 
-withTLV_ :: B.ByteString -> Put
-withTLV_ bs = withTLV $ putbs bs
+lvbs :: B.ByteString -> Put
+lvbs = lv . putbs
+
+lvu8 :: String -> Put
+lvu8 = lv . pututf8
+
 
 withLength32Desc :: Put -> Put
 withLength32Desc p = do

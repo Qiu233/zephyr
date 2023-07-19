@@ -4,7 +4,7 @@ module Main (main) where
 import Network.Socket
 import qualified Control.Exception as Ex
 import Network.Socket.ByteString.Lazy
-import Zephyr.Engine.Context (newContext, Context, ContextIOT, device)
+import Zephyr.Core.Context (newContext, Context, ContextIOT, device)
 import Data.Word
 import System.Environment
 import Control.Lens hiding (Context)

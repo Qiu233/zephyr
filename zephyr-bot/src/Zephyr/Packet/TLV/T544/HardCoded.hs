@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
-module Zephyr.Internal.TLV.T544.HardCoded where
+module Zephyr.Packet.TLV.T544.HardCoded where
 
 import qualified Data.ByteString.Lazy as B
 import Data.Word
