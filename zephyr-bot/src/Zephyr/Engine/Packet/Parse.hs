@@ -31,7 +31,7 @@ parseSSO buf = do
             offset_ <- (+12) <$> get32be
             pure (head_len_, seq_, offset_)
     let o1 = fromIntegral cmd_offset
-    let (cmd, flag) = flip runGet_ (B.drop o1 buf) $ do
+    let (cmd__, flag) = flip runGet_ (B.drop o1 buf) $ do
             cmd_len_ <- get32be
             cmd_ <- utf8FromBytes <$> getbs (fromIntegral $ cmd_len_ - 4)
             ss_len <- get32be
@@ -43,7 +43,7 @@ parseSSO buf = do
             1 -> ZLib.decompress $ B.drop (fromIntegral $ head_len + 4) buf
             8 -> B.drop (fromIntegral head_len) buf
             _ -> error "unknown compressed flag: "
-    pure $ SSO seq__ cmd payload_
+    pure $ SSO seq__ cmd__ payload_
 
 parsePacket :: MonadIO m => Context -> B.ByteString -> m SSO
 parsePacket ctx pkt = do

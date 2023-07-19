@@ -7,6 +7,7 @@ import Zephyr.Core.Device
 import Zephyr.Core.Device.QIMEI
 import Zephyr.Core.ClientApp (androidPhone)
 import Control.Monad.Trans.Except (runExceptT)
+import Control.Monad
 
 device :: Device
 device = generateDevice 1234567890
@@ -14,7 +15,7 @@ device = generateDevice 1234567890
 
 deviceTest :: SpecWith ()
 deviceTest = do
-    
+
     describe "Device Tests" $ do
 
         it "Validation" $ do
@@ -32,9 +33,6 @@ deviceTest = do
             printHex d
 
         it "RequestQIMEI" $ do
-            let e = requestQImei androidPhone device
-            v <- runExceptT e
-            -- print v
-            case v of
-                Left err -> putStrLn err
-                Right payload -> print payload
+            e <- requestQImei_ androidPhone device
+            shouldNotBe e Nothing
+            forM_ e print

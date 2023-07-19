@@ -10,7 +10,6 @@ module Zephyr.Core.Device.QIMEI (
     aesEncrypt,
     aesDecrypt
 ) where
-import qualified Control.Monad.Except as ExceptT
 import GHC.Generics
 import qualified Data.Aeson as Aeson
 import qualified Data.Aeson.Encode.Pretty as Aeson
@@ -43,6 +42,10 @@ import qualified Crypto.PubKey.RSA.PKCS15 as PKCS15
 import Zephyr.Utils.Codec (md5OfU8)
 import Crypto.Data.Padding
 import Zephyr.Utils.HTTP (httpPostJSON_)
+import Control.Monad.Trans.Maybe (MaybeT (runMaybeT))
+import Control.Monad (guard)
+import Data.Either (isRight, fromRight)
+import Zephyr.Utils.MTL
 
 aesEncrypt :: B.ByteString -> B.ByteString -> B.ByteString
 aesEncrypt src' key' = do
@@ -238,16 +241,16 @@ data ReqRespInner = ReqRespInner {
 instance Aeson.FromJSON ReqRespInner
 
 
-requestQImei :: CA.ClientApp -> Dev.Device -> ExceptT.ExceptT String IO (String, String)
+requestQImei :: CA.ClientApp -> Dev.Device -> MaybeT IO (String, String)
 requestQImei ver dev = do
     payload <- liftIO $ Aeson.encodePretty <$> genRandomPayloadByDevice ver dev
     cryptKey <- utf8ToBytes <$> randHexl 16
     ts <- liftIO getEpochTimeMS
     nonce <- randHexl 16
     publicKey <- liftIO $ readPublicKey rsaKey
-    key <- liftIO (PKCS15.encrypt publicKey (SB.toStrict cryptKey)) >>= \case
-                Left err -> ExceptT.throwError $ "Failed to create key" ++ show err
-                Right key -> pure $ utf8FromBytes . Base64.encode . B.fromStrict $ key
+    key <- liftIO $ PKCS15.encrypt publicKey (SB.toStrict cryptKey) >>= \x -> do
+        guard (isRight x)
+        pure $ utf8FromBytes . Base64.encode . B.fromStrict $ fromRight SB.empty x
     let params = utf8FromBytes $ aesEncrypt payload cryptKey
     let body = ReqBody {
             key = key,
@@ -257,16 +260,11 @@ requestQImei ver dev = do
             sign = encodeHex . B.fromStrict . md5OfU8 $ (key ++ params ++ show ts ++ nonce ++ secret),
             extra = ""
             }
-    response <- liftIO $ httpPostJSON_ "https://snowflake.qq.com/ola/android" body
-    let resp = Aeson.decode response :: Maybe ReqResp
-    ReqResp data_ code <- maybe (ExceptT.throwError $ "Failed to decode response: \n" ++ show response) pure resp
-    if code == 0 then do
-        let respInner = Aeson.decode $ aesDecrypt (utf8ToBytes data_) cryptKey :: Maybe ReqRespInner
-        case respInner of
-            Just (ReqRespInner q16 q36) -> pure (q16, q36)
-            Nothing -> ExceptT.throwError $ "Bad json format detected: " ++ data_
-    else
-        ExceptT.throwError $ "Code != 0: " ++ show code
+    response <- tryMaybe $ httpPostJSON_ "https://snowflake.qq.com/ola/android" body
+    ReqResp data_ code <- hoistMaybe $ Aeson.decode response :: MaybeT IO ReqResp
+    guard (code == 0) 
+    ReqRespInner q16 q36 <- hoistMaybe $ Aeson.decode $ aesDecrypt (utf8ToBytes data_) cryptKey :: MaybeT IO ReqRespInner
+    pure (q16, q36)
 
-requestQImei_ :: CA.ClientApp -> Dev.Device -> IO (Either String (String, String))
-requestQImei_ ver dev = do ExceptT.runExceptT $ requestQImei ver dev
+requestQImei_ :: CA.ClientApp -> Dev.Device -> IO (Maybe (String, String))
+requestQImei_ ver dev = do runMaybeT $ requestQImei ver dev

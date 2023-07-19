@@ -1,8 +1,8 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -Wno-unused-top-binds #-}
 module Zephyr.Encrypt.ECDH (
     EncryptECDH(..),
     svr_public_key_ver, shared_key, public_key,
@@ -24,10 +24,10 @@ import Zephyr.Utils.Codec
 import Control.Lens
 import qualified Data.Aeson as Aeson
 import Control.Monad.Trans.Maybe
-import qualified Control.Exception as Ex
 import Zephyr.Utils.HTTP
 import Data.Aeson ((.:))
 import Control.Monad.Trans (lift)
+import Zephyr.Utils.MTL
 
 data EncryptECDH = EncryptECDH {
     _svr_public_key_ver :: Word16,
@@ -85,13 +85,6 @@ instance Aeson.FromJSON PubKeyResp where
     parseJSON = Aeson.withObject "PubKeyResp" $ \v -> PubKeyResp
         <$> v .: "QuerySpan"
         <*> v .: "PubKeyMeta"
-
-hoistMaybe  :: Applicative m => Maybe a -> MaybeT m a
-hoistMaybe m = MaybeT (pure m)
-
--- | Swallow all exceptions
-tryMaybe :: IO a -> MaybeT IO a
-tryMaybe o = MaybeT $ Ex.handle (\(_ :: Ex.SomeException) -> pure Nothing) . fmap Just $ o
 
 fetchPubKey :: Word64 -> IO (Maybe EncryptECDH)
 fetchPubKey uin = runMaybeT $ do
