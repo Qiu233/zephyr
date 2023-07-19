@@ -47,35 +47,14 @@ buildLoginPacket cmd type_ body = do
             else (uin_, 0x810, sub_id_)
     b2 <- if type_ == 2
         then do
-            rand_key_ <- use $ codec . random_key
-            svr_public_key_ver_ <- use $ codec . ecdh . ECDH.svr_public_key_ver
-            public_key_ <- use $ codec . ecdh . ECDH.public_key
-            shared_key_ <- use $ codec . ecdh . ECDH.shared_key
-            enc <- qqteaEncrypt (tea16KeyFromBytes shared_key_) body
-            let t1 = runPut $ do
-                    put8 0x02
-                    put8 0x01
-                    putbs rand_key_
-                    put16be 0x131
-                    put16be svr_public_key_ver_
-                    withTLV_ public_key_
-                    putbs enc
-            let t2 = runPut $ do
-                    put8 0x02
-                    put16be $ fromIntegral $ 29 + B.length t1
-                    put16be 8001
-                    put16be cmdid__
-                    put16be 1
-                    put32be $ fromIntegral uin__
-                    put8 3
-                    put8 0x87
-                    put8 0
-                    put32be 2
-                    put32be 0
-                    put32be 0
-                    putbs t1
-                    put8 0x03
-            pure t2
+            let msg = Message {
+                    _msg_uin = fromIntegral uin__,
+                    _msg_cmd = cmdid__,
+                    _encrypt_method = EM_ECDH,
+                    _msg_body = body
+                    }
+            codec_ <- use codec
+            marshal codec_ msg
         else pure body
     imei_ <- use $ device . imei
     apk_name_ <- use $ client_app . name
