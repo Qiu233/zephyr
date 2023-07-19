@@ -4,12 +4,13 @@ module Main (main) where
 import Network.Socket
 import qualified Control.Exception as Ex
 import Network.Socket.ByteString.Lazy
-import Zephyr.Core.Context (newContext, Context, ContextIOT, device)
+import Zephyr.Core.Context
 import Data.Word
 import System.Environment
 import Control.Lens hiding (Context)
 import Zephyr.Utils.Common
 import Zephyr.Core.Device.Types
+import Zephyr.Core.Transport
 import Zephyr.Core.ClientApp (androidPhone)
 import Zephyr.Packet.Login
 import Control.Monad.State
@@ -90,7 +91,7 @@ main = do
     print imeis
     let ctx_ = maybe ctx (
             \(q16, q36) ->
-                ctx & device . qimei16 .~ q16
-                    & device . qimei36 .~ q36
+                ctx & transport . device . qimei16 .~ q16
+                    & transport . device . qimei36 .~ q36
             ) imeis
     evalStateT (clientMain password) ctx_

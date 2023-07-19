@@ -13,6 +13,7 @@ import qualified Codec.Compression.Zlib as ZLib
 import Zephyr.Utils.Common (utf8FromBytes)
 import Control.Monad
 import Control.Monad.IO.Class (MonadIO)
+import Zephyr.Core.Transport
 
 data SSO = SSO {
     _seqid :: Word32,
@@ -56,7 +57,7 @@ parsePacket ctx pkt = do
     decrypted_ <- case flag_ of
             0 -> pure encrypted_
             1 -> do
-                let d2key_ = view (signature . Sig.d2key) ctx
+                let d2key_ = view (transport . signature . Sig.d2key) ctx
                 pure $ qqteaDecrypt (tea16KeyFromBytes d2key_) encrypted_
             2 -> do
                 pure $ qqteaDecrypt tea16EmptyKey encrypted_

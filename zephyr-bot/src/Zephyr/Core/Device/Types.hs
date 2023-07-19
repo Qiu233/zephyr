@@ -25,7 +25,7 @@ data OSVersion = OSVersion {
     _release :: String,
     _codeName :: String,
     _sdk :: Word32
-} deriving Show
+} deriving (Eq, Show)
 
 $(makeLenses ''OSVersion)
 
@@ -56,7 +56,7 @@ data Device = Device {
     _guid :: GUID,
     _qimei16 :: String,
     _qimei36 :: String
-} deriving Show
+} deriving (Eq, Show)
 
 $(makeLenses ''Device)
 

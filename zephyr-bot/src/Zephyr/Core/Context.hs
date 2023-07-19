@@ -14,12 +14,11 @@ import Control.Lens hiding (Context)
 import Control.Monad.State
 import Prelude hiding (seq)
 import Zephyr.Core.Codec
+import Zephyr.Core.Transport
 
 data Context = Context {
     _uin :: Word64,
-    _device :: Device,
-    _client_app :: ClientApp,
-    _signature :: Signature,
+    _transport :: Transport,
 
     _codec :: Codec,
 
@@ -31,10 +30,11 @@ type ContextIOT m = (MonadState Context m, MonadIO m)
 $(makeLenses ''Context)
 
 newContext :: Word64 -> Device -> ClientApp -> IO Context
-newContext _uin _device _client_app = do
+newContext _uin _device _client_version = do
     _signature <- defaultSignature
     _seq <- newTVarIO =<< randomIO
     _codec <- newCodec
+    let _transport = Transport { .. }
     pure $ Context {..}
 
 nextSeq :: ContextIOT m => m Word32

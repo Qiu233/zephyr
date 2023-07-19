@@ -12,7 +12,7 @@ data BigDataChannel = BigDataChannel {
     _port :: Int,
     _sig_session :: B.ByteString,
     _session_key :: B.ByteString
-}
+} deriving (Eq, Show)
 
 data Signature = Signature {
     _session :: B.ByteString,
@@ -29,7 +29,7 @@ data Signature = Signature {
     _big_data :: BigDataChannel,
     _emp_time :: Int,
     _time_diff :: Word32
-}
+} deriving (Eq, Show)
 
 $(makeLenses ''Signature)
 

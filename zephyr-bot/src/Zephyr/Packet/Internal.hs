@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
-module Zephyr.Packet.Builder where
+module Zephyr.Packet.Internal where
 import Zephyr.Utils.Binary
 import qualified Data.ByteString.Lazy as B
 

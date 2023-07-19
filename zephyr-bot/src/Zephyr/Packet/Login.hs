@@ -11,7 +11,7 @@ import Control.Lens
 import Zephyr.Core.ClientApp
 import qualified Zephyr.Core.Signature as Sig
 import Zephyr.Utils.Binary.Put
-import Zephyr.Packet.Builder
+import Zephyr.Packet.Internal
 import Zephyr.Encrypt.QQTea (qqteaEncrypt, tea16KeyFromBytes, tea16EmptyKey)
 import Zephyr.Core.Device
 import Text.Printf
@@ -21,6 +21,7 @@ import qualified Zephyr.Packet.TLV.Builders as T
 import qualified Debug.Trace as Debug
 import Zephyr.Utils.Common (encodeHex)
 import Zephyr.Core.Codec
+import Zephyr.Core.Transport
 
 data LoginCmd =
     WTLogin_Login |
@@ -40,7 +41,7 @@ buildLoginPacket :: ContextIOT m => LoginCmd -> Word8 -> B.ByteString -> m B.Byt
 buildLoginPacket cmd type_ body = do
     seq_ <- nextSeq
     uin_ <- use uin
-    sub_id_ <- use $ client_app . sub_id
+    sub_id_ <- use $ transport . client_version . sub_id
     let (uin__, cmdid__, subappid__) = if cmd == WTLogin_TransEMP
             then (0, 0x812, 537065138)
             else (uin_, 0x810, sub_id_)
@@ -55,12 +56,12 @@ buildLoginPacket cmd type_ body = do
             codec_ <- use codec
             marshal codec_ msg
         else pure body
-    imei_ <- use $ device . imei
-    apk_name_ <- use $ client_app . name
+    imei_ <- use $ transport . device . imei
+    apk_name_ <- use $ transport . client_version . name
     let ksid = printf "|%s|%s" imei_ apk_name_ :: String
-    tgt_ <- use $ signature . Sig.tgt
-    session_ <- use $ signature . Sig.session
-    qimei16_ <- use $ device . qimei16
+    tgt_ <- use $ transport . signature . Sig.tgt
+    session_ <- use $ transport . signature . Sig.session
+    qimei16_ <- use $ transport . device . qimei16
     let sso' = runPut $ do
             withLength32Desc $ do
                 put32be seq_
@@ -78,12 +79,12 @@ buildLoginPacket cmd type_ body = do
             withLength32Desc_ b2
     sso <- case type_ of
         1 -> do
-            d2key_ <- use $ signature . Sig.d2key
+            d2key_ <- use $ transport . signature . Sig.d2key
             qqteaEncrypt (tea16KeyFromBytes d2key_) sso'
         2 -> do
             qqteaEncrypt tea16EmptyKey sso'
         _ -> pure sso'
-    d2_ <- use $ signature . Sig.d2
+    d2_ <- use $ transport . signature . Sig.d2
     pure $ runPut $ withLength32Desc $ do
         put32be 0x0A
         put8 type_
@@ -94,8 +95,8 @@ buildLoginPacket cmd type_ body = do
 
 passwordLoginPacket :: ContextIOT m => B.ByteString -> m B.ByteString
 passwordLoginPacket md5pass = do
-    signature . Sig.session <~ randBytes 4
-    signature . Sig.tgtgt <~ randBytes 16
+    transport . signature . Sig.session <~ randBytes 4
+    transport . signature . Sig.tgtgt <~ randBytes 16
     tlvs <- B.concat <$> sequence [
         T.t18,
         T.t1,
