@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Core.Transport where
 import Zephyr.Core.Signature (Signature)
 import Zephyr.Core.Device (Device)

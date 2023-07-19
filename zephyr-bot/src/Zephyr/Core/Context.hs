@@ -31,7 +31,7 @@ $(makeLenses ''Context)
 
 newContext :: Word64 -> Device -> ClientApp -> IO Context
 newContext _uin _device _client_version = do
-    _signature <- defaultSignature
+    _signature <- defaultSignature _device
     _seq <- newTVarIO =<< randomIO
     _codec <- newCodec
     let _transport = Transport { .. }

@@ -2,6 +2,7 @@
 {-# HLINT ignore "Use camelCase" #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
+{-# LANGUAGE FunctionalDependencies #-}
 module Zephyr.Core.Request where
 import Data.Word
 import qualified Data.ByteString.Lazy as B
@@ -17,7 +18,7 @@ data Request = Request {
     _req_type :: RequestType,
     _enc_type :: EncryptType,
     _sequence_id :: Word32,
-    _uin :: Word64,
+    _req_uin :: Word64,
     _req_command :: String,
     _req_body :: B.ByteString
 } deriving (Eq, Show)

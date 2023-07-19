@@ -6,6 +6,9 @@ import qualified Data.ByteString.Lazy as B
 import Zephyr.Utils.Random (randBytes)
 import Control.Lens
 import Data.Word
+import Zephyr.Core.Device.Types
+import Zephyr.Utils.Common (utf8ToBytes)
+import Text.Printf
 
 data BigDataChannel = BigDataChannel {
     _ip :: String,
@@ -33,14 +36,14 @@ data Signature = Signature {
 
 $(makeLenses ''Signature)
 
-defaultSignature :: IO Signature
-defaultSignature = do
+defaultSignature :: Device -> IO Signature
+defaultSignature dev = do
     _session <- randBytes 4
     _tgtgt <- randBytes 16
     let buf0 = B.empty
     let _tgt = buf0
         _skey = buf0
-        _ksid = buf0
+        _ksid = utf8ToBytes $ printf "|%s|A8.2.7.27f6ea96" (dev ^. imei)
         _d2 = buf0
         _d2key = buf0
         _t104 = buf0

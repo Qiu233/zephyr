@@ -41,17 +41,17 @@ clientMain md5pass = do
     buffer <- liftIO $ newTVarIO B.empty
     let getP = getPacket buffer
     v <- passwordLoginPacket md5pass
-    s <- syncTimeDiffPacket
+    --s <- syncTimeDiffPacket
     liftIO $ print $ B.length v
     liftIO $ putStrLn $ encodeHex v
     ctx <- get
     liftIO $ runTCPClient "120.233.17.147" "8080" $ \sock -> do
-        sendAll sock s
-        vs <- getP sock
-        sso <- parsePacket ctx vs
-        let p = sso ^. payload
-        print $ B.length p
-        putStrLn $ encodeHex p
+        --sendAll sock s
+        -- vs <- getP sock
+        -- sso <- parsePacket ctx vs
+        -- let p = sso ^. payload
+        -- print $ B.length p
+        -- putStrLn $ encodeHex p
 
         sendAll sock v
         putStrLn "Waiting:"

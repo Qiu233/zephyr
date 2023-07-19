@@ -5,23 +5,15 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Packet.Login where
 import Zephyr.Core.Context
-import Data.Word
 import qualified Data.ByteString.Lazy as B
 import Control.Lens
-import Zephyr.Core.ClientApp
 import qualified Zephyr.Core.Signature as Sig
-import Zephyr.Utils.Binary.Put
-import Zephyr.Packet.Internal
-import Zephyr.Encrypt.QQTea (qqteaEncrypt, tea16KeyFromBytes, tea16EmptyKey)
-import Zephyr.Core.Device
-import Text.Printf
 import Prelude hiding (seq)
 import Zephyr.Utils.Random
 import qualified Zephyr.Packet.TLV.Builders as T
-import qualified Debug.Trace as Debug
-import Zephyr.Utils.Common (encodeHex)
-import Zephyr.Core.Codec
 import Zephyr.Core.Transport
+import Zephyr.Packet.Build
+import Zephyr.Core.Request
 
 data LoginCmd =
     WTLogin_Login |
@@ -30,74 +22,29 @@ data LoginCmd =
     StatSvc_Register |
     Client_CorrectTime
     deriving (Eq)
-loginCmdCode :: LoginCmd -> B.ByteString
+loginCmdCode :: LoginCmd -> String
 loginCmdCode WTLogin_Login = "wtlogin.login"
 loginCmdCode WTLogin_ExchangeEMP = "wtlogin.exchange_emp"
 loginCmdCode WTLogin_TransEMP = "wtlogin.trans_emp"
 loginCmdCode StatSvc_Register = "StatSvc.register"
 loginCmdCode Client_CorrectTime = "Client.CorrectTime"
 
-buildLoginPacket :: ContextIOT m => LoginCmd -> Word8 -> B.ByteString -> m B.ByteString
-buildLoginPacket cmd type_ body = do
+buildLoginPacket :: ContextIOT m => LoginCmd -> TLV -> m B.ByteString
+buildLoginPacket cmd body = do
     seq_ <- nextSeq
     uin_ <- use uin
-    sub_id_ <- use $ transport . client_version . sub_id
-    let (uin__, cmdid__, subappid__) = if cmd == WTLogin_TransEMP
-            then (0, 0x812, 537065138)
-            else (uin_, 0x810, sub_id_)
-    b2 <- if type_ == 2
-        then do
-            let msg = Message {
-                    _msg_uin = fromIntegral uin__,
-                    _msg_cmd = cmdid__,
-                    _encrypt_method = EM_ECDH,
-                    _msg_body = body
-                    }
+    tr <- use transport
+    b2 <- do
             codec_ <- use codec
-            marshal codec_ msg
-        else pure body
-    imei_ <- use $ transport . device . imei
-    apk_name_ <- use $ transport . client_version . name
-    let ksid = printf "|%s|%s" imei_ apk_name_ :: String
-    tgt_ <- use $ transport . signature . Sig.tgt
-    session_ <- use $ transport . signature . Sig.session
-    qimei16_ <- use $ transport . device . qimei16
-    let sso' = runPut $ do
-            withLength32Desc $ do
-                put32be seq_
-                put32be subappid__
-                put32be subappid__
-                putbs $ B.pack [0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00]
-                withLength32Desc_ tgt_
-                withLength32Desc_ $ loginCmdCode cmd
-                withLength32Desc_ session_
-                withLength32Desc $ pututf8 imei_
-                put32be 4
-                put16be $ fromIntegral $ length ksid + 2
-                pututf8 ksid
-                withLength32Desc $ pututf8 qimei16_
-            withLength32Desc_ b2
-    sso <- case type_ of
-        1 -> do
-            d2key_ <- use $ transport . signature . Sig.d2key
-            qqteaEncrypt (tea16KeyFromBytes d2key_) sso'
-        2 -> do
-            qqteaEncrypt tea16EmptyKey sso'
-        _ -> pure sso'
-    d2_ <- use $ transport . signature . Sig.d2
-    pure $ runPut $ withLength32Desc $ do
-        put32be 0x0A
-        put8 type_
-        withLength32Desc_ d2_
-        put8 0
-        withLength32Desc $ pututf8 $ show uin_
-        putbs sso
+            buildOicqRequestPacket codec_ uin_ 0x810 body
+    let req = Request RT_Login ET_EmptyKey seq_ uin_ (loginCmdCode cmd) b2
+    packRequest tr req
 
 passwordLoginPacket :: ContextIOT m => B.ByteString -> m B.ByteString
 passwordLoginPacket md5pass = do
     transport . signature . Sig.session <~ randBytes 4
     transport . signature . Sig.tgtgt <~ randBytes 16
-    tlvs <- B.concat <$> sequence [
+    tlvs <- sequence [
         T.t18,
         T.t1,
         T.t106 md5pass,
@@ -124,13 +71,9 @@ passwordLoginPacket md5pass = do
         T.t544 2 9,
         T.t545
         ]
-    let body_ = runPut $ do
-            put16be 9
-            put16be 25
-            putbs tlvs
-    Debug.traceM (show (B.length body_) ++ "\n" ++ encodeHex body_)
-    buildLoginPacket WTLogin_Login 2 body_
+    let tlvs_ = TLV 9 tlvs
+    buildLoginPacket WTLogin_Login tlvs_
 
-syncTimeDiffPacket :: ContextIOT m => m B.ByteString
-syncTimeDiffPacket = do
-    buildLoginPacket Client_CorrectTime 0 $ runPut $ put32be 0
+-- syncTimeDiffPacket :: ContextIOT m => m B.ByteString
+-- syncTimeDiffPacket = do
+--     buildLoginPacket Client_CorrectTime 0 $ runPut $ put32be 0
