@@ -85,6 +85,7 @@ main = do
     password <- getEnv "PASSWORD" <&> B.fromStrict . md5OfU8
     let dev = generateDevice uin
     ctx <- newContext uin dev androidPhone
+    print "trying to fetch public key\n"
     imeis <- requestQImei_ androidPhone dev
     print imeis
     let ctx_ = either (const ctx) (
@@ -92,4 +93,4 @@ main = do
                 ctx & device . qimei16 .~ q16
                     & device . qimei36 .~ q36
             ) imeis
-    evalStateT (clientMain password) ctx
+    evalStateT (clientMain password) ctx_

@@ -12,8 +12,8 @@ import Control.Concurrent.STM
 import System.Random (randomIO)
 import Control.Lens hiding (Context)
 import Control.Monad.State
-import Zephyr.Encrypt.ECDH
 import Prelude hiding (seq)
+import Zephyr.Core.Codec
 
 data Context = Context {
     _uin :: Word64,
@@ -21,7 +21,7 @@ data Context = Context {
     _client_app :: ClientApp,
     _signature :: Signature,
 
-    _ecdh :: EncryptECDH,
+    _codec :: Codec,
 
     _seq :: TVar Word32
 }
@@ -34,7 +34,7 @@ newContext :: Word64 -> Device -> ClientApp -> IO Context
 newContext _uin _device _client_app = do
     _signature <- defaultSignature
     _seq <- newTVarIO =<< randomIO
-    _ecdh <- generateDefaultKey
+    _codec <- newCodec
     pure $ Context {..}
 
 nextSeq :: ContextIOT m => m Word32

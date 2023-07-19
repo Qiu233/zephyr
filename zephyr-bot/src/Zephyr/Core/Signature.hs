@@ -16,7 +16,6 @@ data BigDataChannel = BigDataChannel {
 
 data Signature = Signature {
     _session :: B.ByteString,
-    _rand_key :: B.ByteString,
     _tgtgt :: B.ByteString,
     _tgt :: B.ByteString,
     _skey :: B.ByteString,
@@ -37,7 +36,6 @@ $(makeLenses ''Signature)
 defaultSignature :: IO Signature
 defaultSignature = do
     _session <- randBytes 4
-    _rand_key <- randBytes 16
     _tgtgt <- randBytes 16
     let buf0 = B.empty
     let _tgt = buf0

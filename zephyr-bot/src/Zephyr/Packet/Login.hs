@@ -21,6 +21,7 @@ import Zephyr.Utils.Random
 import qualified Zephyr.Packet.TLVBuilder as T
 import qualified Debug.Trace as Debug
 import Zephyr.Utils.Common (encodeHex)
+import Zephyr.Core.Codec
 
 data LoginCmd =
     WTLogin_Login |
@@ -46,16 +47,17 @@ buildLoginPacket cmd type_ body = do
             else (uin_, 0x810, sub_id_)
     b2 <- if type_ == 2
         then do
-            rand_key_ <- use $ signature . Sig.rand_key
-            public_key_ <- use $ ecdh . ECDH.public_key
-            shared_key_ <- use $ ecdh . ECDH.shared_key
+            rand_key_ <- use $ codec . random_key
+            svr_public_key_ver_ <- use $ codec . ecdh . ECDH.svr_public_key_ver
+            public_key_ <- use $ codec . ecdh . ECDH.public_key
+            shared_key_ <- use $ codec . ecdh . ECDH.shared_key
             enc <- qqteaEncrypt (tea16KeyFromBytes shared_key_) body
             let t1 = runPut $ do
                     put8 0x02
                     put8 0x01
                     putbs rand_key_
                     put16be 0x131
-                    put16be 0x01
+                    put16be svr_public_key_ver_
                     withTLV_ public_key_
                     putbs enc
             let t2 = runPut $ do
@@ -115,7 +117,6 @@ buildLoginPacket cmd type_ body = do
 passwordLoginPacket :: ContextIOT m => B.ByteString -> m B.ByteString
 passwordLoginPacket md5pass = do
     signature . Sig.session <~ randBytes 4
-    signature . Sig.rand_key <~ randBytes 16
     signature . Sig.tgtgt <~ randBytes 16
     tlvs <- B.concat <$> sequence [
         T.t18,
