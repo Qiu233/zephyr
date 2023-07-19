@@ -20,6 +20,7 @@ import Control.Concurrent.STM
 import Zephyr.Utils.Binary
 import Control.Exception
 import Zephyr.Engine.Packet.Parse
+import Zephyr.Encrypt.ECDH (fetchPubKey)
 
 
 runTCPClient :: HostName -> ServiceName -> (Socket -> IO a) -> IO a
@@ -50,7 +51,7 @@ clientMain md5pass = do
         let p = _payload sso
         print $ B.length p
         putStrLn $ encodeHex p
-        
+
         sendAll sock v
         putStrLn "Waiting:"
         bs <- recv sock 1024

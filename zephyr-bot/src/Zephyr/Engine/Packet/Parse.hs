@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Engine.Packet.Parse where
 import Zephyr.Engine.Context
 import qualified Data.ByteString.Lazy as B

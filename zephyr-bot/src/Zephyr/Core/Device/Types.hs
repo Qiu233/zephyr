@@ -9,8 +9,7 @@ import Data.Word
 import qualified Data.ByteString.Lazy as B
 import Text.Printf
 import Control.Lens
-import Zephyr.Utils.Codec (md5OfU8, md5Of_)
-import Zephyr.Utils.Common (utf8ToBytes)
+import Zephyr.Utils.Codec (md5OfU8)
 import Prelude hiding (product)
 import Zephyr.Utils.Binary
 import Zephyr.Utils.GUID

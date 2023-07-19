@@ -23,8 +23,6 @@ import qualified Crypto.PubKey.RSA as RSA
 import qualified OpenSSL.RSA as ORSA
 import Data.Word
 import qualified Zephyr.Core.ClientApp as CA
-import Network.HTTP.Client hiding (host)
-import Network.HTTP.Client.TLS
 import Control.Lens
 
 import qualified Data.ByteString.Lazy as B
@@ -44,6 +42,7 @@ import Zephyr.Utils.Time
 import qualified Crypto.PubKey.RSA.PKCS15 as PKCS15
 import Zephyr.Utils.Codec (md5OfU8)
 import Crypto.Data.Padding
+import Zephyr.Utils.HTTP (httpPostJSON_)
 
 aesEncrypt :: B.ByteString -> B.ByteString -> B.ByteString
 aesEncrypt src' key' = do
@@ -228,7 +227,7 @@ data ReqResp = ReqResp {
     code :: Integer
 } deriving (Generic, Show)
 instance Aeson.FromJSON ReqResp where
-    parseJSON = Aeson.withObject "Person" $ \v -> ReqResp
+    parseJSON = Aeson.withObject "ReqResp" $ \v -> ReqResp
         <$> v .: "data"
         <*> v .: "code"
 
@@ -238,16 +237,6 @@ data ReqRespInner = ReqRespInner {
 } deriving (Generic, Show)
 instance Aeson.FromJSON ReqRespInner
 
-postJson :: Aeson.ToJSON p => String -> p -> IO (Response B.ByteString)
-postJson url body = do
-    initialRequest <- parseRequest url
-    let request = initialRequest {
-        method = "POST",
-        requestBody = RequestBodyLBS $ Aeson.encodePretty body,
-        requestHeaders = [("Content-Type", "application/json")]
-        }
-    manager <- newManager tlsManagerSettings
-    httpLbs request manager
 
 requestQImei :: CA.ClientApp -> Dev.Device -> ExceptT.ExceptT String IO (String, String)
 requestQImei ver dev = do
@@ -268,8 +257,8 @@ requestQImei ver dev = do
             sign = encodeHex . B.fromStrict . md5OfU8 $ (key ++ params ++ show ts ++ nonce ++ secret),
             extra = ""
             }
-    response <- liftIO $ postJson "https://snowflake.qq.com/ola/android" body
-    let resp = Aeson.decode $ responseBody response :: Maybe ReqResp
+    response <- liftIO $ httpPostJSON_ "https://snowflake.qq.com/ola/android" body
+    let resp = Aeson.decode response :: Maybe ReqResp
     ReqResp data_ code <- maybe (ExceptT.throwError $ "Failed to decode response: \n" ++ show response) pure resp
     if code == 0 then do
         let respInner = Aeson.decode $ aesDecrypt (utf8ToBytes data_) cryptKey :: Maybe ReqRespInner

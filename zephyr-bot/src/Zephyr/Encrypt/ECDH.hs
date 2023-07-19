@@ -1,12 +1,12 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Zephyr.Encrypt.ECDH (
     EncryptECDH(..),
-    generateKey,
-    generateDefaultKey,
-    shared_key,
-    public_key,
+    svr_public_key_ver, shared_key, public_key,
+    generateDefaultKey, fetchPubKey
 ) where
 
 import qualified Data.ByteString.Lazy as B
@@ -17,17 +17,23 @@ import qualified Data.ByteArray as BA
 import qualified Data.ByteString
 import Data.Proxy
 import qualified Crypto.Error as CryError
-import Data.Maybe
 import Text.Printf
 import Data.Functor
 import Zephyr.Utils.Common
 import Zephyr.Utils.Codec
 import Control.Lens
+import qualified Data.Aeson as Aeson
+import Control.Monad.Trans.Maybe
+import qualified Control.Exception as Ex
+import Zephyr.Utils.HTTP
+import Data.Aeson ((.:))
+import Control.Monad.Trans (lift)
 
 data EncryptECDH = EncryptECDH {
+    _svr_public_key_ver :: Word16,
     _shared_key :: B.ByteString,
     _public_key :: B.ByteString
-}
+} deriving Eq
 $(makeLenses ''EncryptECDH)
 
 instance Show EncryptECDH where
@@ -35,25 +41,61 @@ instance Show EncryptECDH where
         printf "EncryptECDH { shared_key = %s, public_key = %s}"
             (encodeHex _shared_key) (encodeHex _public_key)
 
-
-generateKey :: String -> IO EncryptECDH
-generateKey s_pub_key = do
-    ECC.KeyPair pub priv <- ECC.curveGenerateKeyPair curve_prox
+initKeys :: B.ByteString -> IO (B.ByteString, B.ByteString)
+initKeys pub = do
+    ECC.KeyPair pub_ priv <- ECC.curveGenerateKeyPair curve_prox
     let shared = unwrapCryError "failed to generate shared key" $ ECC.ecdh curve_prox priv qqPubKey
     shared_x <- BA.withByteArray shared (Foreign.peekArray @Word8 16) <&> md5Lazy . B.pack
-    pure $ EncryptECDH {
-        _shared_key = shared_x,
-        _public_key = Data.ByteString.fromStrict $ ECC.encodePoint curve_prox pub
-    }
+    pure (shared_x, Data.ByteString.fromStrict $ ECC.encodePoint curve_prox pub_)
     where
         curve_prox = Proxy :: Proxy ECC.Curve_P256R1
         qqPubKey = unwrapCryError "failed to decode QQ public key" $
                     ECC.decodePoint curve_prox $
-                    B.toStrict (fromMaybe (error "invalid key") $ decodeHex s_pub_key)
+                    B.toStrict pub
         unwrapCryError msg e = case e of
                                 CryError.CryptoPassed v -> v
                                 CryError.CryptoFailed _ -> error msg
 
 
+
 generateDefaultKey :: IO EncryptECDH
-generateDefaultKey = generateKey "04EBCA94D733E399B2DB96EACDD3F69A8BB0F74224E2B44E3357812211D2E62EFBC91BB553098E25E33A799ADC7F76FEB208DA7C6522CDB0719A305180CC54A82E"
+generateDefaultKey = do
+    (shared, pub) <- initKeys $ decodeHex_
+        "04EBCA94D733E399B2DB96EACDD3F69A8BB0F74224E2B44E3357812211D2E62EFBC91BB553098E25E33A799ADC7F76FEB208DA7C6522CDB0719A305180CC54A82E"
+    pure EncryptECDH { _svr_public_key_ver = 1, _shared_key = shared, _public_key = pub }
+
+data PubKeyMeta = PubKeyMeta {
+    _pub_key_ver :: Word16,
+    _pub_key :: String,
+    _pub_key_sign :: String
+}
+instance Aeson.FromJSON PubKeyMeta where
+    parseJSON = Aeson.withObject "PubKeyMeta" $ \v -> PubKeyMeta
+        <$> v .: "KeyVer"
+        <*> v .: "PubKey"
+        <*> v .: "PubKeySign"
+
+data PubKeyResp = PubKeyResp {
+    _query_span :: Integer,
+    _body :: PubKeyMeta
+}
+instance Aeson.FromJSON PubKeyResp where
+    parseJSON = Aeson.withObject "PubKeyResp" $ \v -> PubKeyResp
+        <$> v .: "QuerySpan"
+        <*> v .: "PubKeyMeta"
+
+hoistMaybe  :: Applicative m => Maybe a -> MaybeT m a
+hoistMaybe m = MaybeT (pure m)
+
+-- | Swallow all exceptions
+tryMaybe :: IO a -> MaybeT IO a
+tryMaybe o = MaybeT $ Ex.handle (\(_ :: Ex.SomeException) -> pure Nothing) . fmap Just $ o
+
+fetchPubKey :: Word64 -> IO (Maybe EncryptECDH)
+fetchPubKey uin = runMaybeT $ do
+    resp <- tryMaybe $ httpGET_ ("https://keyrotate.qq.com/rotate_key?cipher_suite_ver=305&uin=" ++ show uin)
+    key_ <- hoistMaybe $ Aeson.decode resp :: MaybeT IO PubKeyResp
+    let body_ = _body key_
+    let _svr_public_key_ver = _pub_key_ver body_
+    (_shared_key, _public_key) <- lift $ initKeys $ decodeHex_ $ _pub_key body_
+    pure EncryptECDH { .. }

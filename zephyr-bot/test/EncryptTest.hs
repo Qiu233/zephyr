@@ -30,3 +30,9 @@ encryptTest = do
             print $ encodeHex dbs
             ed <- qqteaEncrypt constKey dbs
             printHex ed
+
+        it "public key fetching" $ do
+            pk <- fetchPubKey 1234567890
+            shouldNotBe pk Nothing
+            print "Fetching key:\n"
+            print pk
