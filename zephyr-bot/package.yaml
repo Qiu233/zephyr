@@ -57,6 +57,8 @@ ghc-options:
 
 library:
   source-dirs: src
+  default-extensions:
+    - NoFieldSelectors
 
 executables:
   zephyr-bot-exe:

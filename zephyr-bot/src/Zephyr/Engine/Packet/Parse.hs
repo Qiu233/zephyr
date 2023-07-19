@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
+{-# LANGUAGE TemplateHaskell #-}
 module Zephyr.Engine.Packet.Parse where
 import Zephyr.Engine.Context
 import qualified Data.ByteString.Lazy as B
@@ -8,7 +9,6 @@ import qualified Zephyr.Core.Signature as Sig
 import Data.Word
 import Zephyr.Encrypt.QQTea
 import Zephyr.Utils.Binary
-
 import qualified Codec.Compression.Zlib as ZLib
 import Zephyr.Utils.Common (utf8FromBytes)
 import Control.Monad
@@ -19,6 +19,7 @@ data SSO = SSO {
     _cmd :: String,
     _payload :: B.ByteString
 }
+$(makeLenses ''SSO)
 
 parseSSO :: MonadIO m => B.ByteString -> m SSO
 parseSSO buf = do

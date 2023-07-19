@@ -17,7 +17,7 @@ getTag = do
     pure $ PTag tag (fromIntegral wt)
 
 getValue :: PTag -> Get PValue
-getValue tag = case _wireType tag of
+getValue (PTag _ _wireType) = case _wireType of
     0 -> PVVariant <$> getPVInt
     1 -> PVI64 <$> get64le
     2 -> do

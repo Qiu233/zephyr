@@ -69,6 +69,7 @@ data PubKeyMeta = PubKeyMeta {
     _pub_key :: String,
     _pub_key_sign :: String
 }
+$(makeLenses ''PubKeyMeta)
 instance Aeson.FromJSON PubKeyMeta where
     parseJSON = Aeson.withObject "PubKeyMeta" $ \v -> PubKeyMeta
         <$> v .: "KeyVer"
@@ -79,6 +80,7 @@ data PubKeyResp = PubKeyResp {
     _query_span :: Integer,
     _body :: PubKeyMeta
 }
+$(makeLenses ''PubKeyResp)
 instance Aeson.FromJSON PubKeyResp where
     parseJSON = Aeson.withObject "PubKeyResp" $ \v -> PubKeyResp
         <$> v .: "QuerySpan"
@@ -95,7 +97,7 @@ fetchPubKey :: Word64 -> IO (Maybe EncryptECDH)
 fetchPubKey uin = runMaybeT $ do
     resp <- tryMaybe $ httpGET_ ("https://keyrotate.qq.com/rotate_key?cipher_suite_ver=305&uin=" ++ show uin)
     key_ <- hoistMaybe $ Aeson.decode resp :: MaybeT IO PubKeyResp
-    let body_ = _body key_
-    let _svr_public_key_ver = _pub_key_ver body_
-    (_shared_key, _public_key) <- lift $ initKeys $ decodeHex_ $ _pub_key body_
+    let body_ = key_ ^. body
+    let _svr_public_key_ver = body_ ^. pub_key_ver
+    (_shared_key, _public_key) <- lift $ initKeys $ decodeHex_ $ body_ ^. pub_key
     pure EncryptECDH { .. }

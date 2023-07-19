@@ -48,7 +48,7 @@ clientMain md5pass = do
         sendAll sock s
         vs <- getP sock
         sso <- parsePacket ctx vs
-        let p = _payload sso
+        let p = sso ^. payload
         print $ B.length p
         putStrLn $ encodeHex p
 

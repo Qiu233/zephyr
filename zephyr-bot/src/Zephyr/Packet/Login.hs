@@ -11,7 +11,6 @@ import Control.Lens
 import Zephyr.Core.ClientApp
 import qualified Zephyr.Core.Signature as Sig
 import Zephyr.Utils.Binary.Put
-import qualified Zephyr.Encrypt.ECDH as ECDH
 import Zephyr.Engine.Packet
 import Zephyr.Encrypt.QQTea (qqteaEncrypt, tea16KeyFromBytes, tea16EmptyKey)
 import Zephyr.Core.Device

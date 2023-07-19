@@ -12,8 +12,8 @@ import Data.Word
 import Zephyr.Utils.Common (utf8ToBytes)
 
 putTag :: PTag -> Put
-putTag tag = do
-    let v = PVInt $ (fromIntegral (_fieldNumber tag) `shiftL` 3) .|. fromIntegral (_wireType tag)
+putTag (PTag _fieldNumber _wireType) = do
+    let v = PVInt $ (fromIntegral _fieldNumber `shiftL` 3) .|. fromIntegral _wireType
     putPVInt v
 
 
@@ -84,7 +84,7 @@ putValue (PVI64 v) = put64le v
 putValue (PVLenPrefixed v) = do
     putPVInt $ pvIntDirect' $ B.length v
     putbs v
-    
+
 encodeMessage_ :: [PMessageEntry] -> B.ByteString
 encodeMessage_ entries = runPut $ do
     mapM_ putEntry entries
