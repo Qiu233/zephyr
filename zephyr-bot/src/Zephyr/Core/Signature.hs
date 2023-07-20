@@ -18,8 +18,7 @@ data BigDataChannel = BigDataChannel {
 } deriving (Eq, Show)
 
 data Signature = Signature {
-    _session :: B.ByteString,
-    _tgtgt :: B.ByteString,
+    _out_session :: B.ByteString,
     _tgt :: B.ByteString,
     _skey :: B.ByteString,
     _ksid :: B.ByteString,
@@ -38,9 +37,8 @@ $(makeLenses ''Signature)
 
 defaultSignature :: Device -> IO Signature
 defaultSignature dev = do
-    _session <- randBytes 4
-    _tgtgt <- randBytes 16
     let buf0 = B.empty
+    let _out_session = B.pack [0x02, 0xB0, 0x5B, 0x8B]
     let _tgt = buf0
         _skey = buf0
         _ksid = utf8ToBytes $ printf "|%s|A8.2.7.27f6ea96" (dev ^. imei)

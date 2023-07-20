@@ -9,7 +9,7 @@ import Data.Word
 import qualified Data.ByteString.Lazy as B
 import Text.Printf
 import Control.Lens
-import Zephyr.Utils.Codec (md5OfU8)
+import Zephyr.Utils.Codec (md5OfU8, md5Lazy)
 import Prelude hiding (product)
 import Zephyr.Utils.Binary
 import Zephyr.Utils.GUID
@@ -54,6 +54,7 @@ data Device = Device {
     _os_version :: OSVersion,
     _imsi :: B.ByteString,
     _guid :: GUID,
+    _tgtgt_key :: B.ByteString,
     _qimei16 :: String,
     _qimei36 :: String
 } deriving (Eq, Show)
@@ -106,6 +107,7 @@ generateDevice uin = do
         _os_version = OSVersion _incremental "10" "REL" 29
     let _imsi = B.pack $ take 16 $ randoms pg
     let _guid = createGUID $ B.fromStrict . md5OfU8 $ (_imei ++ _mac_address)
+        _tgtgt_key = md5Lazy $ B.pack (take 16 $ randoms pg) <> guidBytes _guid
         _qimei16 = ""
         _qimei36 = ""
     Device{..}

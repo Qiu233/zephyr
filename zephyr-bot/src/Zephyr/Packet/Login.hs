@@ -42,8 +42,6 @@ buildLoginPacket cmd body = do
 
 passwordLoginPacket :: ContextIOT m => B.ByteString -> m B.ByteString
 passwordLoginPacket md5pass = do
-    transport . signature . Sig.session <~ randBytes 4
-    transport . signature . Sig.tgtgt <~ randBytes 16
     tlvs <- sequence [
         T.t18,
         T.t1,

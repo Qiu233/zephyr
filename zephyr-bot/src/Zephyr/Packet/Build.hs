@@ -20,7 +20,7 @@ import Zephyr.Core.Signature
 import Zephyr.Packet.Internal
 import qualified Zephyr.Encrypt.ECDH as ECDH
 import qualified Zephyr.Encrypt.QQTea as QQTea
-import Zephyr.Core.ClientApp
+import Zephyr.Core.AppVersion
 import Zephyr.Core.Device.Types
 import Text.Printf
 
@@ -198,7 +198,7 @@ packBody tr req = do
                     else
                         withLength32Desc_ tgt_
                 withLength32Desc $ pututf8 $ req ^. req_command
-                withLength32Desc_ $ tr ^. signature . session
+                withLength32Desc_ $ tr ^. signature . out_session
                 when (req_type_ == RT_Login) $ do
                     withLength32Desc $ pututf8 $ tr ^. device . imei
                     put32be 0x04

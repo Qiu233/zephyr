@@ -5,7 +5,7 @@ import Test.Hspec
 import Common
 import Zephyr.Core.Device
 import Zephyr.Core.Device.QIMEI
-import Zephyr.Core.ClientApp (androidPhone)
+import Zephyr.Core.AppVersion (androidPhone)
 import Control.Monad.Trans.Except (runExceptT)
 import Control.Monad
 

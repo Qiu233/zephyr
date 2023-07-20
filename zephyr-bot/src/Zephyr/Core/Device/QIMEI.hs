@@ -21,7 +21,7 @@ import qualified Zephyr.Core.Device.Types as Dev
 import qualified Crypto.PubKey.RSA as RSA
 import qualified OpenSSL.RSA as ORSA
 import Data.Word
-import qualified Zephyr.Core.ClientApp as CA
+import qualified Zephyr.Core.AppVersion as CA
 import Control.Lens
 
 import qualified Data.ByteString.Lazy as B
@@ -116,7 +116,7 @@ instance Aeson.ToJSON Payload
 fmtTime :: String -> UTCTime -> String
 fmtTime = formatTime defaultTimeLocale
 
-genRandomPayloadByDevice :: CA.ClientApp -> Dev.Device -> IO Payload
+genRandomPayloadByDevice :: CA.AppVersion -> Dev.Device -> IO Payload
 genRandomPayloadByDevice ver dev = do
     uptimes <- fmtTime "%F %T" <$> getCurrentTime
     let rs = PayloadInner {
@@ -176,9 +176,9 @@ genRandomPayloadByDevice ver dev = do
         sdkVersion = "1.2.13.6",
         audit = "",
         userId = "{}",
-        packageId = view CA.id ver,
+        packageId = view CA.apk_id ver,
         deviceType =
-            if view CA.display ver == "aPad" then
+            if view CA.protocol ver == CA.AndroidPad then
                 "Pad"
             else
                 "Phone",
@@ -241,7 +241,7 @@ data ReqRespInner = ReqRespInner {
 instance Aeson.FromJSON ReqRespInner
 
 
-requestQImei :: CA.ClientApp -> Dev.Device -> MaybeT IO (String, String)
+requestQImei :: CA.AppVersion -> Dev.Device -> MaybeT IO (String, String)
 requestQImei ver dev = do
     payload <- liftIO $ Aeson.encodePretty <$> genRandomPayloadByDevice ver dev
     cryptKey <- utf8ToBytes <$> randHexl 16
@@ -266,5 +266,5 @@ requestQImei ver dev = do
     ReqRespInner q16 q36 <- hoistMaybe $ Aeson.decode $ aesDecrypt (utf8ToBytes data_) cryptKey :: MaybeT IO ReqRespInner
     pure (q16, q36)
 
-requestQImei_ :: CA.ClientApp -> Dev.Device -> IO (Maybe (String, String))
+requestQImei_ :: CA.AppVersion -> Dev.Device -> IO (Maybe (String, String))
 requestQImei_ ver dev = do runMaybeT $ requestQImei ver dev

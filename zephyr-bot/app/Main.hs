@@ -11,7 +11,7 @@ import Control.Lens hiding (Context)
 import Zephyr.Utils.Common
 import Zephyr.Core.Device.Types
 import Zephyr.Core.Transport
-import Zephyr.Core.ClientApp (androidPhone)
+import Zephyr.Core.AppVersion (androidPhone)
 import Zephyr.Packet.Login
 import Control.Monad.State
 import Zephyr.Utils.Codec (md5OfU8)

@@ -10,7 +10,7 @@ import Control.Lens hiding (Context)
 import Zephyr.Core.Device
 import Zephyr.Utils.Binary
 import Control.Monad.IO.Class
-import Zephyr.Core.ClientApp
+import Zephyr.Core.AppVersion
 import Zephyr.Core.Signature as Sig
 import Prelude hiding (id, seq)
 import Zephyr.Utils.GUID (guidBytes)
@@ -67,7 +67,7 @@ t16 = do
     app_id_ <- use $ transport . client_version . app_id
     sub_id_ <- use $ transport . client_version . sub_id
     guid_ <- guidBytes <$> use (transport . device . guid)
-    id_ <- use $ transport . client_version . id
+    id_ <- use $ transport . client_version . apk_id
     ver_ <- use $ transport . client_version . ver
     sign_ <- use $ transport . client_version . sign
     packTLV_ 0x16 $ do
@@ -162,7 +162,7 @@ t106 md5pass = do
     sub_id_ <- use $ transport . client_version . sub_id
     ssover_ <- use $ transport . client_version . ssover
     guid_ <- guidBytes <$> use (transport . device . guid)
-    tgtgt_ <- use $ transport . signature . tgtgt
+    tgtgt_ <- use $ transport . device . tgtgt_key
     r <- randomIO
     time <- getEpochTime
     let body_ = runPut $ do
@@ -224,7 +224,7 @@ t10A = do
 
 t116 :: ContextIOT m => m B.ByteString
 t116 = do
-    bitmap_ <- use $ transport . client_version . bitmap
+    bitmap_ <- use $ transport . client_version . misc_bitmap
     sub_sig_map_ <- use $ transport . client_version . sub_sig_map
     packTLV_ 0x116 $ do
         put8 0
@@ -274,7 +274,7 @@ t141 = do
 
 t142 :: ContextIOT m => m B.ByteString
 t142 = do
-    id_ <- use $ transport . client_version . id
+    id_ <- use $ transport . client_version . apk_id
     packTLV_ 0x142 $ do
         put16be 0
         lvu8 $ take 32 id_
@@ -287,7 +287,7 @@ t143 = do
 
 t144 :: ContextIOT m => m B.ByteString
 t144 = do
-    tgtgt_ <- use $ transport . signature . tgtgt
+    tgtgt_ <- use $ transport . device . tgtgt_key
     bs <- B.concat <$> sequence [t109, t52D, t124, t128, t16E]
     let s = runPut $ do
             put16be 5

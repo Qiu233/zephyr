@@ -6,7 +6,7 @@
 module Zephyr.Core.Context where
 import Zephyr.Core.Device (Device)
 import Data.Word
-import Zephyr.Core.ClientApp
+import Zephyr.Core.AppVersion
 import Zephyr.Core.Signature
 import Control.Concurrent.STM
 import System.Random (randomIO)
@@ -29,7 +29,7 @@ type ContextIOT m = (MonadState Context m, MonadIO m)
 
 $(makeLenses ''Context)
 
-newContext :: Word64 -> Device -> ClientApp -> IO Context
+newContext :: Word64 -> Device -> AppVersion -> IO Context
 newContext _uin _device _client_version = do
     _signature <- defaultSignature _device
     _seq <- newTVarIO =<< randomIO
