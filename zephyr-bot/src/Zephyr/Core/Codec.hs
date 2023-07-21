@@ -8,9 +8,6 @@ import qualified Data.ByteString.Lazy as B
 import Zephyr.Utils.Random
 import Control.Lens
 import Data.Word
-import Zephyr.Utils.Binary
-import Zephyr.Encrypt.QQTea
-import Control.Monad.IO.Class
 
 data Codec = Codec {
     _ecdh :: EncryptECDH,

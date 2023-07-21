@@ -23,6 +23,19 @@ import qualified Zephyr.Encrypt.QQTea as QQTea
 import Zephyr.Core.AppVersion
 import Zephyr.Core.Device.Types
 import Text.Printf
+import Zephyr.Packet.TLV.Prim
+
+
+data TLV = TLV {
+    _tlv_tag :: Word16,
+    _tlv_data :: [B.ByteString]
+}
+marshalTLVs :: TLV -> B.ByteString
+marshalTLVs (TLV tag_ data_) = do
+    runPut $ do
+        put16be tag_
+        put16be $ fromIntegral $ length data_
+        forM_ data_ putbs
 
 
 whiteListCommands :: [String]
@@ -115,17 +128,6 @@ whiteListCommands =
     "wtlogin_device.login",
     "wtlogin_device.tran_sim_emp"]
 
-
-data TLV = TLV {
-    _tlv_tag :: Word16,
-    _tlv_data :: [B.ByteString]
-}
-marshalTLVs :: TLV -> B.ByteString
-marshalTLVs (TLV tag_ data_) = do
-    runPut $ do
-        put16be tag_
-        put16be $ fromIntegral $ length data_
-        forM_ data_ putbs
 
 
 marshal :: MonadIO m => Codec -> Message -> m B.ByteString

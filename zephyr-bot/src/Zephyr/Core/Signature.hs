@@ -3,7 +3,6 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Core.Signature where
 import qualified Data.ByteString.Lazy as B
-import Zephyr.Utils.Random (randBytes)
 import Control.Lens
 import Data.Word
 import Zephyr.Core.Device.Types

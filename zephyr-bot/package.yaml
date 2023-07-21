@@ -26,6 +26,7 @@ dependencies:
 - lens
 - time
 - random
+- MonadRandom
 - async
 - array
 - memory >= 0.18.0

@@ -49,6 +49,9 @@ runPut = execWriter
 put8 :: Word8 -> Put
 put8 = tell . B.singleton
 
+putb :: Bool -> Put
+putb v = put8 $ if v then 1 else 0
+
 put16le :: Word16 -> Put
 put16le x = do
     put8 $ fromIntegral x
