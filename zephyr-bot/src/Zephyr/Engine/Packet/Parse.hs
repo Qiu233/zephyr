@@ -58,7 +58,7 @@ parsePacket ctx pkt = do
             0 -> pure encrypted_
             1 -> do
                 let d2key_ = view (transport . signature . Sig.d2key) ctx
-                pure $ qqteaDecrypt (tea16KeyFromBytes d2key_) encrypted_
+                pure $ qqteaDecrypt d2key_ encrypted_
             2 -> do
                 pure $ qqteaDecrypt tea16EmptyKey encrypted_
             _ -> error "Unknown flag"

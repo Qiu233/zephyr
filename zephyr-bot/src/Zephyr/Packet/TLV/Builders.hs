@@ -17,7 +17,7 @@ import Zephyr.Utils.GUID (guidBytes)
 import Zephyr.Utils.Common
 import Text.Printf (printf)
 import qualified Zephyr.Utils.ProtoLite as PL
-import Zephyr.Encrypt.QQTea (qqteaEncrypt, tea16KeyFromBytes)
+import Zephyr.Encrypt.QQTea (qqteaEncrypt)
 import Control.Concurrent.STM (readTVarIO)
 import Zephyr.Utils.Random
 import Data.Word
@@ -186,7 +186,7 @@ t106 md5pass = do
             put16be 0
     let key_ = md5Lazy $ B.concat [md5pass, B.pack [0,0,0,0], runPut $ put32be $ fromIntegral uin_]
     liftIO $ printf "0x106: %d\n%s\n" (B.length body_) (encodeHex body_) 
-    enc <- qqteaEncrypt (tea16KeyFromBytes key_) body_
+    enc <- qqteaEncrypt key_ body_
     packTLV_ 0x106 $ do
         putbs enc
 
@@ -293,7 +293,7 @@ t144 = do
             put16be 5
             putbs bs
     liftIO $ printf "0x144: %d\n%s\n" (B.length s) (encodeHex s)
-    vs <- qqteaEncrypt (tea16KeyFromBytes tgtgt_) s
+    vs <- qqteaEncrypt tgtgt_ s
     packTLV_ 0x144 $ do
         putbs vs
 

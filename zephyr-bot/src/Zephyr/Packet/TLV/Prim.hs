@@ -171,7 +171,7 @@ t106_ uin_ salt_ appId_ ssoVer_ passwordMd5_ guidAvailable_ guid_ tgtgtKey_ wtf_
             put32be 1
             lvu8 $ show uin_
             put16be 0
-    enc_ <- QQTea.qqteaEncrypt (QQTea.tea16KeyFromBytes key) body_
+    enc_ <- QQTea.qqteaEncrypt key body_
     pure $ tlv 0x106 $ do
         putbs enc_
 
@@ -273,7 +273,7 @@ t144_ imei devInfo osType osVersion simInfo apn
             putbs $ t128_ isGuidFromFileNull isGuidAvailable isGuidChanged
                 guidFlag buildModel guid buildBrand
             putbs $ t16E_ buildModel
-    enc <- QQTea.qqteaEncrypt (QQTea.tea16KeyFromBytes tgtgtKey) s
+    enc <- QQTea.qqteaEncrypt tgtgtKey s
     pure $ tlv 0x144 $ do
         putbs enc
 
@@ -387,7 +387,7 @@ t400_ g uin_ guid_ dpwd j2 j3 randSeed = do
             put32be j3
             put32be time_sec
             putbe randSeed
-    enc <- QQTea.qqteaEncrypt (QQTea.tea16KeyFromBytes g) s
+    enc <- QQTea.qqteaEncrypt g s
     pure $ tlv 0x400 $ do
         putbs enc
 

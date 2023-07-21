@@ -6,9 +6,10 @@ import Data.Maybe (fromJust)
 import Zephyr.Utils.Common
 import Zephyr.Encrypt.ECDH
 import Common
+import qualified Data.ByteString.Lazy as B
 
-constKey :: TeaKey
-constKey = tea16KeyFromBytes $ fromJust $ decodeHex "2D624E782A4D55BAA5B97418A0FE6240"
+constKey :: B.ByteString
+constKey = fromJust $ decodeHex "2D624E782A4D55BAA5B97418A0FE6240"
 
 encryptTest :: SpecWith ()
 encryptTest = do

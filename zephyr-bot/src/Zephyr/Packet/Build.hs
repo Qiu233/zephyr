@@ -135,7 +135,7 @@ marshal Codec{..} msg = do
     key_ <- case msg ^. encrypt_method of
         EM_ECDH -> pure $ _ecdh ^. ECDH.shared_key
         EM_ST -> pure _random_key
-    enc_ <- QQTea.qqteaEncrypt (QQTea.tea16KeyFromBytes key_) $ msg ^. msg_body
+    enc_ <- QQTea.qqteaEncrypt key_ $ msg ^. msg_body
     let w = runPut $ do
             put16be 8001
             put16be $ msg ^. msg_cmd
@@ -218,7 +218,7 @@ packRequest tr req = do
     body <- packBody tr req
     body_ <- case enc_type_ of
         ET_EmptyKey -> QQTea.qqteaEncrypt QQTea.tea16EmptyKey body
-        ET_D2Key -> QQTea.qqteaEncrypt (QQTea.tea16KeyFromBytes $ tr ^. signature . d2key) body
+        ET_D2Key -> QQTea.qqteaEncrypt (tr ^. signature . d2key) body
         ET_NoEncrypt -> pure body
     pure $ runPut $ withLength32Desc $ do
             put32be $ case req_type_ of
