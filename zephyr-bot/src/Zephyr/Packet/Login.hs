@@ -7,13 +7,12 @@ module Zephyr.Packet.Login where
 import Zephyr.Core.Context
 import qualified Data.ByteString.Lazy as B
 import Control.Lens
-import qualified Zephyr.Core.Signature as Sig
 import Prelude hiding (seq)
-import Zephyr.Utils.Random
 import qualified Zephyr.Packet.TLV.Builders as T
-import Zephyr.Core.Transport
 import Zephyr.Packet.Build
 import Zephyr.Core.Request
+import Zephyr.Core.Transport
+import Zephyr.Core.AppVersion
 
 data LoginCmd =
     WTLogin_Login |
@@ -29,48 +28,48 @@ loginCmdCode WTLogin_TransEMP = "wtlogin.trans_emp"
 loginCmdCode StatSvc_Register = "StatSvc.register"
 loginCmdCode Client_CorrectTime = "Client.CorrectTime"
 
-buildLoginPacket :: ContextIOT m => LoginCmd -> TLV -> m B.ByteString
-buildLoginPacket cmd body = do
+buildLoginPacket :: ContextIOT m => B.ByteString -> m B.ByteString
+buildLoginPacket md5pass = do
     seq_ <- nextSeq
     uin_ <- use uin
     tr <- use transport
-    b2 <- do
-            codec_ <- use codec
-            buildOicqRequestPacket codec_ uin_ 0x810 body
-    let req = Request RT_Login ET_EmptyKey seq_ uin_ (loginCmdCode cmd) b2
-    packRequest tr req
+    let sub_id_ = tr ^. client_version . sub_id
 
-passwordLoginPacket :: ContextIOT m => B.ByteString -> m B.ByteString
-passwordLoginPacket md5pass = do
     tlvs <- sequence [
         T.t18,
         T.t1,
         T.t106 md5pass,
         T.t116,
-        T.t100,
+        T.t100 sub_id_,
         T.t107,
         T.t142,
         T.t144,
         T.t145,
         T.t147,
-        T.t154,
+        T.t154 seq_,
         T.t141,
         T.t8,
         T.t511,
         T.t187,
         T.t188,
         T.t194,
-        T.t191,
+        T.t191 0x82,
         T.t202,
         T.t177,
         T.t516,
-        T.t521,
+        T.t521 0,
         T.t525,
         T.t544 2 9,
         T.t545
         ]
-    let tlvs_ = TLV 9 tlvs
-    buildLoginPacket WTLogin_Login tlvs_
+    let body = TLV 9 tlvs
+
+    b2 <- do
+            codec_ <- use codec
+            buildOicqRequestPacket codec_ uin_ 0x810 body
+    let req = Request RT_Login ET_EmptyKey (fromIntegral seq_) uin_ "wtlogin.login" b2
+    packRequest tr req
+
 
 -- syncTimeDiffPacket :: ContextIOT m => m B.ByteString
 -- syncTimeDiffPacket = do

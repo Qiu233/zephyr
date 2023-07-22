@@ -29,7 +29,10 @@ data Signature = Signature {
     _qrsig :: B.ByteString,
     _big_data :: BigDataChannel,
     _emp_time :: Int,
-    _time_diff :: Word32
+    _time_diff :: Word32,
+    _g :: B.ByteString,
+    _dpwd :: B.ByteString,
+    _rand_seed :: B.ByteString
 } deriving (Eq, Show)
 
 $(makeLenses ''Signature)
@@ -50,5 +53,8 @@ defaultSignature dev = do
         _big_data = BigDataChannel "" 0 buf0 buf0
         _emp_time = 0
         _time_diff = 0
+        _g = buf0
+        _dpwd = buf0
+        _rand_seed = buf0
     pure $ Signature {..}
 

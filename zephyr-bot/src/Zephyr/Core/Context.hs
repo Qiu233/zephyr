@@ -22,7 +22,7 @@ data Context = Context {
 
     _codec :: Codec,
 
-    _seq :: TVar Word32
+    _seq :: TVar Word16
 }
 
 type ContextIOT m = (MonadState Context m, MonadIO m)
@@ -37,7 +37,7 @@ newContext _uin _device _client_version = do
     let _transport = Transport { .. }
     pure $ Context {..}
 
-nextSeq :: ContextIOT m => m Word32
+nextSeq :: ContextIOT m => m Word16
 nextSeq = do
     seq_ <- use seq
     liftIO $ atomically $ stateTVar seq_ (\x -> (x, x+1))

@@ -1,14 +1,16 @@
+{-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Packet.TLV.Prim where
 import Data.Word
 import qualified Data.ByteString.Lazy as B
 import Zephyr.Utils.Binary
 import Zephyr.Packet.Internal
 import Control.Monad
-import Control.Monad.Random
 import Zephyr.Utils.Codec (md5Lazy)
 import qualified Zephyr.Encrypt.QQTea as QQTea
 import Zephyr.Utils.Time (getEpochTime)
 import Zephyr.Utils.Common (utf8ToBytes)
+import Control.Monad.IO.Class
+import System.Random (randomIO)
 
 tlv :: Word16 -> Put -> B.ByteString
 tlv tag body_ = do
@@ -18,9 +20,10 @@ tlv tag body_ = do
         put16be $ fromIntegral $ B.length body
         putbs body
 
-t1_ :: MonadRandom m => Word32 -> Word32 -> (Word8, Word8, Word8, Word8) -> m B.ByteString
-t1_ uin_ time_sec (a,b,c,d) = do
-    r <- getRandom
+t1_ :: MonadIO m => Word32 -> (Word8, Word8, Word8, Word8) -> m B.ByteString
+t1_ uin_ (a,b,c,d) = do
+    r <- randomIO
+    time_sec <- fromIntegral <$> getEpochTime
     pure $ tlv 0x01 $ do
         put16be 1
         put32be r
@@ -135,15 +138,15 @@ t104_ data_ = do
     tlv 0x104 $ do
         putbs data_
 
-t106_ :: (MonadIO m, MonadRandom m) => Word32 -> Word32 -> Word32 -> Word32 ->
+t106_ :: (MonadIO m) => Word32 -> Word32 -> Word32 -> Word32 ->
     B.ByteString -> Bool -> B.ByteString -> B.ByteString ->
     Word32 -> m B.ByteString
 t106_ uin_ salt_ appId_ ssoVer_ passwordMd5_ guidAvailable_ guid_ tgtgtKey_ wtf_ = do
     let key = md5Lazy $ passwordMd5_ <> B.pack [0,0,0,0]
             <> runPut (put32be $ if salt_ /= 0 then salt_ else uin_)
-    r1 <- getRandom
-    r2 <- getRandom
-    r3 <- getRandom
+    r1 <- randomIO
+    r2 <- randomIO
+    r3 <- randomIO
     time_ <- fromIntegral <$> getEpochTime
     let body_ = runPut $ do
             put16be 4
@@ -292,7 +295,7 @@ t147_ appId apkVersionName apkSignatureMd5 = do
 t154_ :: Word16 -> B.ByteString
 t154_ seq_ = do
     tlv 0x154 $ do
-        put16be seq_
+        put32be $ fromIntegral seq_
 
 t166_ :: Word8 -> B.ByteString
 t166_ imageType = do
@@ -370,8 +373,8 @@ t198_ = do
 t202_ :: B.ByteString -> B.ByteString -> B.ByteString
 t202_ wifiBSSID wifiSSID = do
     tlv 0x202 $ do
-        putbs $ B.take 16 wifiBSSID
-        putbs $ B.take 32 wifiSSID
+        lvbs $ B.take 16 wifiBSSID
+        lvbs $ B.take 32 wifiSSID
 
 t400_ :: MonadIO m => B.ByteString -> Word64 -> B.ByteString ->
     B.ByteString -> Word32 -> Word32 -> B.ByteString

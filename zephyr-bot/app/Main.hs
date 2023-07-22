@@ -40,7 +40,7 @@ clientMain :: (ContextIOT m) => B.ByteString -> m ()
 clientMain md5pass = do
     buffer <- liftIO $ newTVarIO B.empty
     let getP = getPacket buffer
-    v <- passwordLoginPacket md5pass
+    v <- buildLoginPacket md5pass
     --s <- syncTimeDiffPacket
     liftIO $ print $ B.length v
     liftIO $ putStrLn $ encodeHex v
