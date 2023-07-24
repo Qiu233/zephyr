@@ -11,6 +11,7 @@ import Zephyr.Utils.Time (getEpochTime)
 import Zephyr.Utils.Common (utf8ToBytes)
 import Control.Monad.IO.Class
 import System.Random (randomIO)
+import Data.Bifunctor
 
 tlv :: Word16 -> Put -> B.ByteString
 tlv tag body_ = do
@@ -229,7 +230,7 @@ t124_ osType osVersion simInfo apn = do
 t128_ :: Bool -> Bool -> Bool -> Word32 ->
     B.ByteString -> B.ByteString -> B.ByteString ->
     B.ByteString
-t128_ isGuidFromFileNull isGuidAvailable isGuidChanged 
+t128_ isGuidFromFileNull isGuidAvailable isGuidChanged
     guidFlag buildModel guid buildBrand = do
     tlv 0x128 $ do
         put16be 0
@@ -260,8 +261,8 @@ t143_ arr = do
     tlv 0x143 $ do
         putbs arr
 
-t144_ :: MonadIO m => B.ByteString -> B.ByteString -> B.ByteString -> 
-    B.ByteString -> B.ByteString -> B.ByteString -> 
+t144_ :: MonadIO m => B.ByteString -> B.ByteString -> B.ByteString ->
+    B.ByteString -> B.ByteString -> B.ByteString ->
     Bool -> Bool -> Bool -> Word32 ->
     B.ByteString -> B.ByteString -> B.ByteString ->
     B.ByteString -> m B.ByteString
@@ -428,16 +429,17 @@ t52D_ :: B.ByteString -> B.ByteString
 t52D_ devInfo = do
     tlv 0x52D $ do
         putbs devInfo
-        
+
 t536_ :: B.ByteString -> B.ByteString
 t536_ loginExtraData = do
     tlv 0x536 $ do
         putbs loginExtraData
 
-type Signer = Word64 -> String -> String -> B.ByteString -> B.ByteString
+type EnergySigner = Word64 -> String -> String -> B.ByteString -> IO (Either String B.ByteString)
+type FekitSigner = Word64 -> String -> String -> String -> B.ByteString -> IO (Either String (B.ByteString, B.ByteString, B.ByteString))
 
-t544_ :: Word64 -> String -> Word32 -> String ->
-    B.ByteString -> String -> Signer -> B.ByteString
+t544_ :: MonadIO m => Word64 -> String -> Word32 -> String ->
+    B.ByteString -> String -> EnergySigner -> m (Either String B.ByteString)
 t544_ userId moduleId subCmd sdkVersion guid_ appVersion signer = do
     let salt = runPut $ do
             put64be userId
@@ -447,8 +449,8 @@ t544_ userId moduleId subCmd sdkVersion guid_ appVersion signer = do
     t544Custom_ userId moduleId appVersion salt signer
 
 
-t544V2_ :: Word64 -> String -> Word32 -> String ->
-    B.ByteString -> String -> Signer -> B.ByteString
+t544V2_ :: MonadIO m => Word64 -> String -> Word32 -> String ->
+    B.ByteString -> String -> EnergySigner -> m (Either String B.ByteString)
 t544V2_ userId moduleId subCmd sdkVersion guid_ appVersion signer = do
     let salt = runPut $ do
             put32be 0
@@ -458,11 +460,10 @@ t544V2_ userId moduleId subCmd sdkVersion guid_ appVersion signer = do
             put32be 0
     t544Custom_ userId moduleId appVersion salt signer
 
-t544Custom_ :: Word64 -> String -> String -> B.ByteString -> Signer -> B.ByteString
+t544Custom_ :: MonadIO m => Word64 -> String -> String -> B.ByteString -> EnergySigner -> m (Either String B.ByteString)
 t544Custom_ userId moduleId appVersion salt signer = do
-    let signed = signer userId moduleId appVersion salt
-    tlv 0x544 $ do
-        putbs signed
+    signed <- liftIO $ signer userId moduleId appVersion salt
+    pure $ second (tlv 0x544 . putbs) signed
 
 t545_ :: B.ByteString -> B.ByteString
 t545_ qimei_ = do

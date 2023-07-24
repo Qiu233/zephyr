@@ -13,6 +13,7 @@ import Zephyr.Packet.Build
 import Zephyr.Core.Request
 import Zephyr.Core.Transport
 import Zephyr.Core.AppVersion
+import Data.Either (fromRight)
 
 data LoginCmd =
     WTLogin_Login |
@@ -34,7 +35,6 @@ buildLoginPacket md5pass = do
     uin_ <- use uin
     tr <- use transport
     let sub_id_ = tr ^. client_version . sub_id
-
     tlvs <- sequence [
         T.t18,
         T.t1,
@@ -59,7 +59,7 @@ buildLoginPacket md5pass = do
         T.t516,
         T.t521 0,
         T.t525,
-        T.t544 2 9,
+        either error id <$> T.t544v2 "810_9" 9,
         T.t545
         ]
     let body = TLV 9 tlvs
@@ -68,7 +68,7 @@ buildLoginPacket md5pass = do
             codec_ <- use codec
             buildOicqRequestPacket codec_ uin_ 0x810 body
     let req = Request RT_Login ET_EmptyKey (fromIntegral seq_) uin_ "wtlogin.login" b2
-    packRequest tr req
+    packRequest req
 
 
 -- syncTimeDiffPacket :: ContextIOT m => m B.ByteString

@@ -1,4 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE FlexibleContexts #-}
 module Zephyr.Packet.Build (
     marshal,
     buildOicqRequestPacket,
@@ -12,8 +13,8 @@ import Zephyr.Utils.Binary
 import Control.Monad
 import Zephyr.Core.Context
 import Zephyr.Core.Codec
-import Control.Lens ((^.))
-import Control.Monad.IO.Class (MonadIO)
+import Control.Lens ((^.), use)
+import Control.Monad.IO.Class
 import Zephyr.Core.Request
 import Zephyr.Core.Transport
 import Zephyr.Core.Signature
@@ -24,6 +25,8 @@ import Zephyr.Core.AppVersion
 import Zephyr.Core.Device.Types
 import Text.Printf
 import Zephyr.Packet.TLV.Prim
+import Zephyr.Packet.Wrapper (wsign)
+import qualified Zephyr.Utils.ProtoLite as PL
 
 
 data TLV = TLV {
@@ -39,7 +42,7 @@ marshalTLVs (TLV tag_ data_) = do
 
 
 whiteListCommands :: [String]
-whiteListCommands = 
+whiteListCommands =
     ["ConnAuthSvr.fast_qq_login",
     "ConnAuthSvr.sdk_auth_api",
     "ConnAuthSvr.sdk_auth_api_emp",
@@ -177,15 +180,43 @@ buildOicqRequestPacket codec_ uin_ command_ tlvs_ = do
     marshal codec_ msg
     where msg = Message (fromIntegral uin_) command_ EM_ECDH (marshalTLVs  tlvs_)
 
-packSecSign :: MonadIO m => Transport -> Request -> m B.ByteString
-packSecSign tr req = do
-    undefined
+packSecSign :: ContextIOT m => Request -> m B.ByteString
+packSecSign req = do
+    tr <- use transport
+    let d = tr ^. device
+    signer <- wsign
+    let qua_ = tr ^. client_version . qua
+    rst <- liftIO $ signer
+        (fromIntegral $ req ^. sequence_id)
+        (show $ req ^. req_uin)
+        (req ^. req_command)
+        qua_ (req ^. req_body)
+    case rst of
+        Left err -> error err --pure B.empty
+        Right (sign_, extra_, token_) -> do
+            pure $ PL.encodeMessage_ [
+                    9 `PL.putPVInt32` 0,
+                    12 `PL.putLenUTF8` (d ^. qimei16),
+                    14 `PL.putPVInt32` 0,
+                    16 `PL.putLenUTF8` show (req ^. req_uin),
+                    18 `PL.putPVInt32` 0,
+                    19 `PL.putPVInt32` 1,
+                    20 `PL.putPVInt32` 1,
+                    21 `PL.putPVInt32` 0,
+                    24 `PL.putLenBytes` PL.encodeMessage_ [
+                        1 `PL.putLenBytes` sign_,
+                        2 `PL.putLenBytes` token_,
+                        3 `PL.putLenBytes` extra_
+                        ],
+                    28 `PL.putPVInt32` 0
+                    ]
 
 
-packBody :: MonadIO m => Transport -> Request -> m B.ByteString
-packBody tr req = do
+packBody :: ContextIOT m => Request -> m B.ByteString
+packBody req = do
+    tr <- use transport
     secSign <- if (req ^. req_command) `elem` whiteListCommands
-        then pure B.empty-- packSecSign tr req
+        then packSecSign req
         else pure B.empty
     pure $ runPut $ do
             withLength32Desc $ do
@@ -213,9 +244,14 @@ packBody tr req = do
     where
         req_type_ = req ^. req_type
 
-packRequest :: MonadIO m => Transport -> Request -> m B.ByteString
-packRequest tr req = do
-    body <- packBody tr req
+packRequest :: ContextIOT m => Request -> m B.ByteString
+packRequest req = do
+    tr <- use transport
+    let req_type_ = req ^. req_type
+        enc_type_ = if B.length (tr ^. signature . d2) == 0
+            then ET_EmptyKey
+            else req ^. enc_type
+    body <- packBody req
     body_ <- case enc_type_ of
         ET_EmptyKey -> QQTea.qqteaEncrypt QQTea.tea16EmptyKey body
         ET_D2Key -> QQTea.qqteaEncrypt (tr ^. signature . d2key) body
@@ -237,8 +273,3 @@ packRequest tr req = do
             put8 0
             withLength32Desc $ pututf8 $ show $ req ^. req_uin
             putbs body_
-    where
-        req_type_ = req ^. req_type
-        enc_type_ = if B.length (tr ^. signature . d2) == 0
-            then ET_EmptyKey
-            else req ^. enc_type

@@ -85,7 +85,7 @@ main = do
     uin <- getEnv "UIN" <&> read @Word64
     password <- getEnv "PASSWORD" <&> B.fromStrict . md5OfU8
     let dev = generateDevice uin
-    ctx <- newContext uin dev androidPhone
+    ctx <- newContext uin dev androidPhone "http://127.0.0.1:6543"
     putStrLn "trying to fetch public key"
     imeis <- requestQImei_ androidPhone dev
     print imeis

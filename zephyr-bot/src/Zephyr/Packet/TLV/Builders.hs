@@ -30,6 +30,7 @@ import System.Random (randomIO)
 import Zephyr.Packet.Internal
 import Zephyr.Core.Transport
 import qualified Zephyr.Packet.TLV.Prim as Prim
+import Zephyr.Packet.Wrapper (wenergy)
 
 packTLV :: Word16 -> Put -> B.ByteString
 packTLV t p = runPut $ do
@@ -326,42 +327,43 @@ t525 = do
     let t536_ = Prim.t536_ $ B.pack [1, 0]
     pure $ Prim.t525_ t536_
 
--- t544 :: ContextIOT m => String -> Word32 -> Prim.Signer -> m B.ByteString
--- t544 moduleId subCmd signer = do
---     uin_ <- use uin
---     guid_ <- guidBytes <$> use (transport . device . guid)
---     sdk_ver_ <- use $ transport . client_version . sdk_ver
---     version_ <- use $ transport . client_version . sort_version
---     pure $ Prim.t544_ uin_ moduleId subCmd sdk_ver_ guid_ version_ signer
-
--- t544v2 :: ContextIOT m => String -> Word32 -> Prim.Signer -> m B.ByteString
--- t544v2 moduleId subCmd signer = do
---     uin_ <- use uin
---     guid_ <- guidBytes <$> use (transport . device . guid)
---     sdk_ver_ <- use $ transport . client_version . sdk_ver
---     version_ <- use $ transport . client_version . sort_version
---     pure $ Prim.t544V2_ uin_ moduleId subCmd sdk_ver_ guid_ version_ signer
-
-t544 :: ContextIOT m => Word32 -> Word32 -> m B.ByteString
-t544 v subCmd = do
+t544 :: ContextIOT m => String -> Word32 -> Prim.EnergySigner -> m (Either String B.ByteString)
+t544 moduleId subCmd signer = do
     uin_ <- use uin
     guid_ <- guidBytes <$> use (transport . device . guid)
     sdk_ver_ <- use $ transport . client_version . sdk_ver
-    let salt = runPut $ do
-            if v == 2 then do
-                put32be 0
-                lvbs guid_
-                lvu8 sdk_ver_
-                put32be subCmd
-                put32be 0
-            else do
-                put64be uin_
-                lvbs guid_
-                lvu8 sdk_ver_
-                put32be subCmd
-    vs <- T544.sign salt
-    packTLV_ 0x544 $ do
-        putbs vs
+    version_ <- use $ transport . client_version . sort_version
+    Prim.t544_ uin_ moduleId subCmd sdk_ver_ guid_ version_ signer
+
+t544v2 :: ContextIOT m => String -> Word32 -> m (Either String B.ByteString)
+t544v2 moduleId subCmd = do
+    uin_ <- use uin
+    guid_ <- guidBytes <$> use (transport . device . guid)
+    sdk_ver_ <- use $ transport . client_version . sdk_ver
+    version_ <- use $ transport . client_version . sort_version
+    signer <- wenergy
+    Prim.t544V2_ uin_ moduleId subCmd sdk_ver_ guid_ version_ signer
+
+-- t544 :: ContextIOT m => Word32 -> Word32 -> m B.ByteString
+-- t544 v subCmd = do
+--     uin_ <- use uin
+--     guid_ <- guidBytes <$> use (transport . device . guid)
+--     sdk_ver_ <- use $ transport . client_version . sdk_ver
+--     let salt = runPut $ do
+--             if v == 2 then do
+--                 put32be 0
+--                 lvbs guid_
+--                 lvu8 sdk_ver_
+--                 put32be subCmd
+--                 put32be 0
+--             else do
+--                 put64be uin_
+--                 lvbs guid_
+--                 lvu8 sdk_ver_
+--                 put32be subCmd
+--     vs <- T544.sign salt
+--     packTLV_ 0x544 $ do
+--         putbs vs
 
 t545 :: ContextIOT m => m B.ByteString
 t545 = do

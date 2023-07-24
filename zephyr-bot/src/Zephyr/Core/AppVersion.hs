@@ -32,13 +32,13 @@ $(makeLenses ''AppVersion)
 androidPhone :: AppVersion
 androidPhone = AppVersion {
     _apk_id = "com.tencent.mobileqq",
-    _sub_id = 537153294,
+    _sub_id = 537164840,
     _app_key = "0S200MNJT807V3GE",
-    _sort_version = "8.9.35.10440",
-    _build_time = 1676531414,
+    _sort_version = "8.9.63.11390",
+    _build_time = 1685069178,
     _sign = B.pack [0xA6, 0xB7, 0x45, 0xBF, 0x24, 0xA2, 0xC2, 0x77, 0x52, 0x77, 0x16, 0xF6, 0xF3, 0x6E, 0xB6, 0x8D],
-    _sdk_ver = "6.0.0.2535",
-    _ssover = 19,
+    _sdk_ver = "6.0.0.2546",
+    _ssover = 20,
     _misc_bitmap = 150470524,
     _sub_sig_map = 0x10400,
     _main_sig_map = 16724722,

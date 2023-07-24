@@ -21,7 +21,7 @@ data Context = Context {
     _transport :: Transport,
 
     _codec :: Codec,
-
+    _sign_server :: String,
     _seq :: TVar Word16
 }
 
@@ -29,8 +29,8 @@ type ContextIOT m = (MonadState Context m, MonadIO m)
 
 $(makeLenses ''Context)
 
-newContext :: Word64 -> Device -> AppVersion -> IO Context
-newContext _uin _device _client_version = do
+newContext :: Word64 -> Device -> AppVersion -> String -> IO Context
+newContext _uin _device _client_version _sign_server = do
     _signature <- defaultSignature _device
     _seq <- newTVarIO =<< randomIO
     _codec <- newCodec
