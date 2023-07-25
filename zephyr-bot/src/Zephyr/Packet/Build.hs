@@ -250,7 +250,7 @@ packRequest req = do
     let req_type_ = req ^. req_type
         enc_type_ = if B.length (tr ^. signature . d2) == 0
             then ET_EmptyKey
-            else req ^. enc_type
+            else req ^. req_enc_type
     body <- packBody req
     body_ <- case enc_type_ of
         ET_EmptyKey -> QQTea.qqteaEncrypt QQTea.tea16EmptyKey body

@@ -26,6 +26,7 @@ data Context = Context {
 }
 
 type ContextIOT m = (MonadState Context m, MonadIO m)
+type ContextOPM a = StateT Context IO a
 
 $(makeLenses ''Context)
 

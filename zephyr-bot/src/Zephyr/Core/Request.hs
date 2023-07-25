@@ -16,7 +16,7 @@ data EncryptType = ET_NoEncrypt | ET_D2Key | ET_EmptyKey
 
 data Request = Request {
     _req_type :: RequestType,
-    _enc_type :: EncryptType,
+    _req_enc_type :: EncryptType,
     _sequence_id :: Word32,
     _req_uin :: Word64,
     _req_command :: String,

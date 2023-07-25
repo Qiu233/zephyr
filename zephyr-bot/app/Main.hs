@@ -1,5 +1,6 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TemplateHaskell #-}
 module Main (main) where
 import Network.Socket
 import qualified Control.Exception as Ex
@@ -20,8 +21,10 @@ import Zephyr.Core.Device.QIMEI
 import Control.Concurrent.STM
 import Zephyr.Utils.Binary
 import Control.Exception
-import Zephyr.Engine.Packet.Parse
+import Zephyr.Packet.Parse
 import Zephyr.Encrypt.ECDH (fetchPubKey)
+import Control.Monad.Except (runExceptT)
+import Zephyr.Core.Request
 
 
 runTCPClient :: HostName -> ServiceName -> (Socket -> IO a) -> IO a
@@ -36,36 +39,72 @@ runTCPClient host port client = withSocketsDo $ do
             connect sock $ addrAddress addr
             pure sock
 
-clientMain :: (ContextIOT m) => B.ByteString -> m ()
-clientMain md5pass = do
-    buffer <- liftIO $ newTVarIO B.empty
-    let getP = getPacket buffer
-    v <- buildLoginPacket md5pass
-    --s <- syncTimeDiffPacket
-    liftIO $ print $ B.length v
-    liftIO $ putStrLn $ encodeHex v
-    ctx <- get
+data Client = Client {
+    _context :: Context,
+    _socket :: Socket,
+    _buffer :: TVar B.ByteString
+}
+$(makeLenses ''Client)
+
+type ClientOPM a = StateT Client IO a
+
+fetchQIMEI :: ClientOPM ()
+fetchQIMEI = do
+    dev <- use $ context . transport . device
+    ver_ <- use $ context . transport . client_version
+    liftIO $ putStrLn "trying to fetch public key"
+    imeis <- liftIO $ requestQImei_ ver_ dev
+    liftIO $ print imeis
+    case imeis of
+        Nothing -> pure ()
+        Just (q16, q36) -> do
+            context . transport . device . qimei16 .= q16
+            context . transport . device . qimei36 .= q36
+
+parsePacket_ :: B.ByteString -> ClientOPM (Either String QQResponse)
+parsePacket_ bs = do
+    tr <- use $ context . transport
+    liftIO $ runExceptT $ parsePacket tr bs
+
+clientMainInner :: B.ByteString -> ClientOPM ()
+clientMainInner md5pass = do
+    fetchQIMEI
+    sock <- use Main.socket
+    v <- zoom context $ do
+        buildLoginPacket md5pass
+    liftIO $ sendAll sock v
+    liftIO $ putStrLn "Waiting:"
+    -- bs <- liftIO $ recv sock 1024
+    -- liftIO $ print $ B.length bs
+    -- liftIO $ putStrLn $ encodeHex bs
+    p <- getPacket
+    liftIO $ print $ B.length p
+    liftIO $ putStrLn $ encodeHex p
+    sso <- parsePacket_ p
+    case sso of
+        Left err -> liftIO $ putStrLn err
+        Right sso_ -> do
+            liftIO $ print sso_
+            let pl = sso_ ^. resp_body . req_body
+            liftIO $ print $ B.length pl
+            liftIO $ putStrLn $ encodeHex pl
+
+clientMain :: Context -> B.ByteString -> IO ()
+clientMain ctx md5pass = do
+    _buffer <- liftIO $ newTVarIO B.empty
     liftIO $ runTCPClient "120.233.17.147" "8080" $ \sock -> do
-        --sendAll sock s
-        -- vs <- getP sock
-        -- sso <- parsePacket ctx vs
-        -- let p = sso ^. payload
-        -- print $ B.length p
-        -- putStrLn $ encodeHex p
-
-        sendAll sock v
-        putStrLn "Waiting:"
-        bs <- recv sock 1024
-        print $ B.length bs
-        putStrLn $ encodeHex bs
+        let c = Client ctx sock _buffer
+        void $ execStateT (clientMainInner md5pass) c
 
 
-getPacket :: TVar B.ByteString -> Socket -> IO B.ByteString
-getPacket v sock = do
-    vs <- recv sock 1024
+getPacket :: ClientOPM B.ByteString
+getPacket = do
+    sock <- use Main.socket
+    v <- use buffer
+    vs <- liftIO $ recv sock 1024
     when (B.null vs) $ error  "Connection closed"
-    atomically $ modifyTVar v (<> vs)
-    r <- atomically $ stateTVar v $ \x -> do
+    liftIO $ atomically $ modifyTVar v (<> vs)
+    r <- liftIO $ atomically $ stateTVar v $ \x -> do
         if B.length x >= 4 then do
             let contentM = runGetInner (do
                     len <- get32be
@@ -76,7 +115,7 @@ getPacket v sock = do
         else
             (B.empty, x)
     if B.null r then
-        getPacket v sock
+        getPacket
     else
         pure r
 
@@ -86,12 +125,4 @@ main = do
     password <- getEnv "PASSWORD" <&> B.fromStrict . md5OfU8
     let dev = generateDevice uin
     ctx <- newContext uin dev androidPhone "http://127.0.0.1:6543"
-    putStrLn "trying to fetch public key"
-    imeis <- requestQImei_ androidPhone dev
-    print imeis
-    let ctx_ = maybe ctx (
-            \(q16, q36) ->
-                ctx & transport . device . qimei16 .~ q16
-                    & transport . device . qimei36 .~ q36
-            ) imeis
-    evalStateT (clientMain password) ctx_
+    clientMain ctx password

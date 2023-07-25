@@ -11,6 +11,8 @@ import Data.Int
 import GHC.Float
 import qualified Data.ByteString.Lazy.UTF8 as UTF8
 import Control.Monad (replicateM)
+import GHC.Stack (HasCallStack, callStack)
+import GHC.Exception
 
 class GBinGet f where
     ggetle :: Get (f a)
@@ -42,8 +44,8 @@ runGet (Get f) bs = case f bs of
     Success a _ -> Right a
     TooFewBytes -> Left "Too few bytes"
 
-runGet_ :: Get a -> B.ByteString -> a
-runGet_ f bs = either error id (runGet f bs)
+runGet_ :: HasCallStack => Get a -> B.ByteString -> a
+runGet_ f bs = either (error . (++ prettyCallStack callStack)) id (runGet f bs)
 
 get8 :: Get Word8
 get8 = Get $ \bs -> case B.uncons bs of
@@ -148,3 +150,6 @@ getListOfBE len = replicateM len getbe
 
 isEmpty :: Get Bool
 isEmpty = Get $ \bs -> Success (B.null bs) bs
+
+getRemaining :: Get B.ByteString
+getRemaining = Get $ \bs -> Success bs B.empty

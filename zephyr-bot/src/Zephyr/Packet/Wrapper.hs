@@ -1,11 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Packet.Wrapper where
 import Zephyr.Packet.TLV.Prim (EnergySigner, FekitSigner)
-import Network.HTTP.Client
-import Zephyr.Utils.Common (utf8ToBytes, encodeHex, decodeHex, utf8FromBytes)
+import Zephyr.Utils.Common (encodeHex, decodeHex, utf8FromBytes)
 import Text.Printf
-import Network.HTTP.Client.TLS
 import Zephyr.Utils.HTTP
 import qualified Data.Aeson as Aeson
 import Data.Aeson ((.:))
@@ -13,13 +12,11 @@ import qualified Data.ByteString.Lazy as B
 import Control.Monad
 import Data.Word
 import Control.Monad.Except
-import Control.Monad.IO.Class
 import Zephyr.Core.Context
 import Control.Lens
 import Zephyr.Core.Transport
 import Zephyr.Core.Device.Types
 import Data.Int (Int64)
-import qualified Debug.Trace as Debug
 
 data EnergyResp m = EnergyResp {
     _code :: Int,
@@ -69,7 +66,7 @@ wenergy_ server android_id_ guid_ uin_ id_ appVersion salt = do
     when (B.null rst) $ do
         throwError "Sign Server未返回任何数据，请检查网络问题。"
     let resp = Aeson.decode rst :: Maybe (EnergyResp String)
-    let resp_ = maybe (Left "返回Json格式有无，可能是因为服务器版本不对应。") Right resp
+    let resp_ = maybe (Left "返回Json格式有误，可能是因为服务器版本不对应。") Right resp
     EnergyResp code_ msg_ data_ <- liftEither resp_
     when (code_ /= 0 || null data_) $ do
         throwError $ printf "Sign Server返回错误，错误码：%d，错误信息：%s" code_ msg_
@@ -94,7 +91,7 @@ wsign_ server android_id_ guid_ seq_ uin_ cmd_ qua_ buff_ = do
     let url = server_ ++ args
     resp <- liftIO $ httpGET_ url
     let resp_ = Aeson.decode resp :: Maybe (EnergyResp SignResp)
-    EnergyResp code_ msg_ data_ <- maybe (throwError $ "Sign Server返回Json格式有误。\n"++utf8FromBytes resp) pure resp_
+    EnergyResp code_ msg_ data_ <- maybe (throwError $ "Sign Server返回Json格式有误。\n" ++ utf8FromBytes resp) pure resp_
     when (code_ /= 0) $ do
         throwError $ printf "Sign Server返回错误，错误码：%d，错误信息：%s" code_ msg_
     let SignResp token_ extra_ sign_ o3did_ requestCallback_ = data_
