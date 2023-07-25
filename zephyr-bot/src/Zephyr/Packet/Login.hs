@@ -13,7 +13,6 @@ import Zephyr.Packet.Build
 import Zephyr.Core.Request
 import Zephyr.Core.Transport
 import Zephyr.Core.AppVersion
-import Data.Either (fromRight)
 
 data LoginCmd =
     WTLogin_Login |
@@ -29,7 +28,7 @@ loginCmdCode WTLogin_TransEMP = "wtlogin.trans_emp"
 loginCmdCode StatSvc_Register = "StatSvc.register"
 loginCmdCode Client_CorrectTime = "Client.CorrectTime"
 
-buildLoginPacket :: ContextIOT m => B.ByteString -> m B.ByteString
+buildLoginPacket :: B.ByteString -> ContextOPM B.ByteString
 buildLoginPacket md5pass = do
     seq_ <- nextSeq
     uin_ <- use uin

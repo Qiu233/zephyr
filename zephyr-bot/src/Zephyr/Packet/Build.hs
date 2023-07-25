@@ -23,8 +23,6 @@ import qualified Zephyr.Encrypt.ECDH as ECDH
 import qualified Zephyr.Encrypt.QQTea as QQTea
 import Zephyr.Core.AppVersion
 import Zephyr.Core.Device.Types
-import Text.Printf
-import Zephyr.Packet.TLV.Prim
 import Zephyr.Packet.Wrapper (wsign)
 import qualified Zephyr.Utils.ProtoLite as PL
 
@@ -180,7 +178,7 @@ buildOicqRequestPacket codec_ uin_ command_ tlvs_ = do
     marshal codec_ msg
     where msg = Message (fromIntegral uin_) command_ EM_ECDH (marshalTLVs  tlvs_)
 
-packSecSign :: ContextIOT m => Request -> m B.ByteString
+packSecSign :: Request -> ContextOPM B.ByteString
 packSecSign req = do
     tr <- use transport
     let d = tr ^. device
@@ -212,7 +210,7 @@ packSecSign req = do
                     ]
 
 
-packBody :: ContextIOT m => Request -> m B.ByteString
+packBody :: Request -> ContextOPM B.ByteString
 packBody req = do
     tr <- use transport
     secSign <- if (req ^. req_command) `elem` whiteListCommands
@@ -244,7 +242,7 @@ packBody req = do
     where
         req_type_ = req ^. req_type
 
-packRequest :: ContextIOT m => Request -> m B.ByteString
+packRequest :: Request -> ContextOPM B.ByteString
 packRequest req = do
     tr <- use transport
     let req_type_ = req ^. req_type

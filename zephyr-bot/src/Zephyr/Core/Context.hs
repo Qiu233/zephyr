@@ -25,7 +25,6 @@ data Context = Context {
     _seq :: TVar Word16
 }
 
-type ContextIOT m = (MonadState Context m, MonadIO m)
 type ContextOPM a = StateT Context IO a
 
 $(makeLenses ''Context)
@@ -38,7 +37,7 @@ newContext _uin _device _client_version _sign_server = do
     let _transport = Transport { .. }
     pure $ Context {..}
 
-nextSeq :: ContextIOT m => m Word16
+nextSeq :: ContextOPM Word16
 nextSeq = do
     seq_ <- use seq
     liftIO $ atomically $ stateTVar seq_ (\x -> (x, x+1))

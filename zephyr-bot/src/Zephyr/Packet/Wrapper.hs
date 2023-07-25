@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# OPTIONS_GHC -Wno-missing-export-lists #-}
-module Zephyr.Packet.Wrapper where
+{-# OPTIONS_GHC -Wno-unused-matches #-}
+{-# OPTIONS_GHC -Wno-unused-local-binds #-}
+module Zephyr.Packet.Wrapper (wenergy, wsign) where
 import Zephyr.Packet.TLV.Prim (EnergySigner, FekitSigner)
 import Zephyr.Utils.Common (encodeHex, decodeHex, utf8FromBytes)
 import Text.Printf
@@ -73,7 +74,7 @@ wenergy_ server android_id_ guid_ uin_ id_ appVersion salt = do
     let data__ = decodeHex data_
     liftEither $ maybe (Left "返回数据格式不是标准十六进制串。") Right data__
 
-wenergy :: ContextIOT m => m EnergySigner
+wenergy :: ContextOPM EnergySigner
 wenergy = do
     sign_server_ <- use sign_server
     android_id_ <- use $ transport . device . android_id
@@ -98,7 +99,7 @@ wsign_ server android_id_ guid_ seq_ uin_ cmd_ qua_ buff_ = do
     let r d = liftEither $ maybe (Left "返回数据格式不是标准十六进制串。") Right (decodeHex d)
     (,,) <$> r sign_ <*> r extra_ <*> r token_
 
-wsign :: ContextIOT m => m FekitSigner
+wsign :: ContextOPM FekitSigner
 wsign = do
     sign_server_ <- use sign_server
     android_id_ <- use $ transport . device . android_id

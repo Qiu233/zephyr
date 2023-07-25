@@ -23,7 +23,7 @@ import Zephyr.Utils.Binary
 import Control.Exception
 import Zephyr.Packet.Parse
 import Zephyr.Encrypt.ECDH (fetchPubKey)
-import Control.Monad.Except (runExceptT)
+import Control.Monad.Except (runExcept)
 import Zephyr.Core.Request
 
 
@@ -64,7 +64,7 @@ fetchQIMEI = do
 parsePacket_ :: B.ByteString -> ClientOPM (Either String QQResponse)
 parsePacket_ bs = do
     tr <- use $ context . transport
-    liftIO $ runExceptT $ parsePacket tr bs
+    pure $ runExcept $ parsePacket tr bs
 
 clientMainInner :: B.ByteString -> ClientOPM ()
 clientMainInner md5pass = do

@@ -3,7 +3,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 module Zephyr.Packet.Parse where
-import Zephyr.Core.Context
 import qualified Data.ByteString.Lazy as B
 import Control.Lens hiding (Context)
 import qualified Zephyr.Core.Signature as Sig
@@ -13,7 +12,6 @@ import Zephyr.Utils.Binary
 import qualified Codec.Compression.Zlib as ZLib
 import Zephyr.Utils.Common (utf8FromBytes)
 import Control.Monad
-import Control.Monad.IO.Class (MonadIO)
 import Zephyr.Core.Transport
 import Zephyr.Core.Request
 import Control.Monad.Trans.Except
@@ -46,7 +44,7 @@ parseSSO bs = do
             _ -> throwE $ "unknown compressed_flag = " ++ show compressed_flag
     pure (seq_, msg_, cmd_, payload_)
 
-parsePacket :: Transport -> B.ByteString -> ExceptT String IO QQResponse
+parsePacket :: Transport -> B.ByteString -> Except String QQResponse
 parsePacket tr pkt = do
     let (type_, enc_type_, _, uin_, body_) = runGet_ (
             (,,,,) <$> get32be <*> get8 <*> get8 <*> (read @Word64 <$> getstr32be) <*> getRemaining
