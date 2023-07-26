@@ -57,7 +57,9 @@ fetchQIMEI = do
     imeis <- liftIO $ requestQImei_ ver_ dev
     liftIO $ print imeis
     case imeis of
-        Nothing -> pure ()
+        Nothing -> do
+            liftIO $ putStrLn "fetch qimei failed, retrying..."
+            fetchQIMEI
         Just (q16, q36) -> do
             context . transport . device . qimei16 .= q16
             context . transport . device . qimei36 .= q36
@@ -85,51 +87,46 @@ login = do
     go rsp_
     where 
         go rsp = do
-            liftIO $ print rsp
-            if rsp ^. success then
-                liftIO $ putStrLn "Login Success"
-            else
-                case rsp ^. login_error of
-                    NoResponse -> do
-                        liftIO $ putStrLn "无有效响应，请检查Parse算法"
-                    UnknownLoginError -> do
-                        liftIO $ putStrLn "未知错误:"
-                        liftIO $ printf "code = %d\n" (rsp ^. code)
-                        liftIO $ putStrLn $ rsp ^. error_message
-                    NeedCaptcha -> do -- impossible
-                        liftIO $ putStrLn "需要Captcha"
-                        liftIO $ putStrLn "image: "
-                        liftIO $ putStrLn $ encodeHex $ rsp ^. captcha_image
-                        liftIO $ putStrLn "sign: "
-                        liftIO $ putStrLn $ encodeHex $ rsp ^. captcha_sign
-                    SliderNeededError -> do
-                        liftIO $ putStrLn $ "链接: " ++ rsp ^. verify_url
-                        liftIO $ putStrLn "清输入ticket: "
-                        ticket <- liftIO getLine
-                        v <- zoom context $ buildTicketSubmitPacket ticket
-                        sendP v
-                        p <- getPacket
-                        pkt <- parsePacket' p
-                        rsp2 <- zoom context $ decodeLoginResponse $ pkt ^. resp_body . req_body
-                        go rsp2
-                    SMSOrVerifyNeededError -> do
-                        liftIO $ putStrLn "需要扫码或验证码(已废除)"
-                        liftIO $ putStrLn "请通过链接扫码后重启程序: "
-                        liftIO $ putStrLn $ rsp ^. error_message
-                        liftIO $ putStrLn $ "链接: " ++ rsp ^. verify_url
-                    SMSNeededError -> do -- impossible
-                        liftIO $ putStrLn "需要短信认证"
-                        liftIO $ putStrLn $ rsp ^. error_message
-                        liftIO $ putStrLn $ "手机: " ++ rsp ^. sms_phone
-                    UnsafeDeviceError -> do
-                        liftIO $ putStrLn "不安全设备，需要扫码认证"
-                        liftIO $ putStrLn $ "链接: " ++ rsp ^. verify_url
-                    TooManySMSRequestError -> do -- impossible
-                        liftIO $ putStrLn "短信请求过于频繁"
-                    OtherLoginError -> do
-                        liftIO $ putStrLn "其他错误: "
-                        liftIO $ printf "code = %d\n" (rsp ^. code)
-                        liftIO $ putStrLn $ rsp ^. error_message
+            case rsp of
+                LoginSuccess -> do
+                    liftIO $ putStrLn "登录成功"
+                AccountFrozen -> do
+                    liftIO $ putStrLn "账号被冻结"
+                DeviceLockLogin -> do
+                    liftIO $ putStrLn "设备锁"
+                    undefined
+                UnknownLoginResponse t msg -> do
+                    liftIO $ putStrLn "未知错误:"
+                    liftIO $ printf "code = %d\n" t
+                    liftIO $ putStrLn msg
+                NeedCaptcha data_ sign_ -> do
+                    liftIO $ putStrLn "需要Captcha"
+                    liftIO $ putStrLn "image: "
+                    liftIO $ putStrLn $ encodeHex data_
+                    liftIO $ putStrLn "sign: "
+                    liftIO $ putStrLn $ encodeHex sign_
+                SliderNeeded url -> do
+                    liftIO $ putStrLn $ "链接: " ++ url
+                    liftIO $ putStrLn "清输入ticket: "
+                    ticket <- liftIO getLine
+                    v <- zoom context $ buildTicketSubmitPacket ticket
+                    sendP v
+                    p <- getPacket
+                    pkt <- parsePacket' p
+                    rsp2 <- zoom context $ decodeLoginResponse $ pkt ^. resp_body . req_body
+                    go rsp2
+                VerificationNeeded msg url phone -> do
+                    liftIO $ putStrLn "需要扫码或短信验证码登录"
+                    liftIO $ putStrLn "请通过链接扫码后重启程序: "
+                    liftIO $ putStrLn msg
+                    liftIO $ putStrLn $ "链接: " ++ url
+                    liftIO $ putStrLn $ "手机号(为空说明不支持): " ++ phone
+                SMSNeeded msg phone -> do
+                    liftIO $ putStrLn "需要短信验证码登录"
+                    liftIO $ putStrLn msg
+                    liftIO $ putStrLn $ "手机: " ++ phone
+                TooManySMSRequest -> do
+                    liftIO $ putStrLn "短信请求过于频繁"
     
 
 clientMainInner :: ClientOPM ()
@@ -145,7 +142,7 @@ outputbs bs = do
 clientMain :: QQContext -> IO ()
 clientMain ctx = do
     _buffer <- liftIO $ newTVarIO B.empty
-    liftIO $ runTCPClient "120.233.17.147" "8080" $ \sock -> do
+    liftIO $ runTCPClient "msfwifi.3g.qq.com" "8080" $ \sock -> do
         let c = Client ctx sock _buffer
         void $ execStateT clientMainInner c
 

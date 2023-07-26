@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
-module Zephyr.Packet.Login.Pow where
+module Zephyr.Packet.Login.Pow (calcPow) where
 import qualified Data.ByteString.Lazy as B
 import Control.Monad.IO.Class
 import Zephyr.Utils.Binary.Get

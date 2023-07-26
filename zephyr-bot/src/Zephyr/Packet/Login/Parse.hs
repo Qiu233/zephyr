@@ -42,17 +42,17 @@ decodeLoginResponse bs = do
             mp (es !> 0x403) (transport . signature . rand_seed .=)
             tgtgt_key_ <- use (transport . device . tgtgt_key)
             decodeT119 (es ?> 0x119) tgtgt_key_
-            pure $ defaultResponse { _success = True }
+            pure LoginSuccess
         2 -> do -- captcha
             transport . signature . t104 .= es ?> 0x104
             if has_ es 0x192 then do
-                let tmp = es ! 0x192
-                pure $ defaultResponse {
-                    _success = False,
-                    _code = t,
-                    _verify_url = utf8FromBytes tmp,
-                    _login_error = SliderNeededError
-                }
+                pure $ SliderNeeded $ utf8FromBytes (es ! 0x192)
+                -- pure $ defaultResponse {
+                --     _success = False,
+                --     _code = t,
+                --     _verify_url = utf8FromBytes tmp,
+                --     _login_error = SliderNeededError
+                -- }
             else if has_ es 0x165 then do
                 let tmp = es ! 0x165
                 let (sign_, data_) = flip runGet tmp $ do
@@ -61,35 +61,32 @@ decodeLoginResponse bs = do
                         sign__ <- getbs $ fromIntegral slen
                         data__ <- getRemaining
                         pure (sign__, data__)
-                pure $ defaultResponse {
-                    _success = False,
-                    _code = t,
-                    _login_error = NeedCaptcha,
-                    _captcha_image = data_,
-                    _captcha_sign = sign_
-                }
-            else
-                pure $ defaultResponse {
-                    _success = False,
-                    _code = t,
-                    _login_error = UnknownLoginError
-                }
+                pure $ NeedCaptcha data_ sign_
+                -- pure $ defaultResponse {
+                --     _success = False,
+                --     _code = t,
+                --     _login_error = NeedCaptcha,
+                --     _captcha_image = data_,
+                --     _captcha_sign = sign_
+                -- }
+            else pure $ UnknownLoginResponse t ""
+                -- pure $ defaultResponse {
+                --     _success = False,
+                --     _code = t,
+                --     _login_error = UnknownLoginError
+                -- }
         40 -> do -- frozen
-            pure $ defaultResponse {
-                _success = False,
-                _code = t,
-                _error_message = "账号被冻结",
-                _login_error = UnknownLoginError
-            }
+            pure AccountFrozen
         162 -> do -- too many sms
-            pure $ defaultResponse {
-                _code = t,
-                _login_error = TooManySMSRequestError
-            }
+            pure TooManySMSRequest
+            -- pure $ defaultResponse {
+            --     _code = t,
+            --     _login_error = TooManySMSRequestError
+            -- }
         204 -> do -- device lock
             transport . signature . t104 .= es ?> 0x104
             transport . signature . rand_seed .= es ?> 0x403
-            undefined
+            pure DeviceLockLogin
         t_ -> do
             ps <-
                 if t_ == 160 || t_ == 239 then do
@@ -102,37 +99,44 @@ decodeLoginResponse bs = do
                                 _ <- getlv
                                 utf8FromBytes <$> getlv
                         if has_ es 0x204 then do
-                            pure $ Just $ defaultResponse {
-                                _success = False,
-                                _code = t,
-                                _login_error = SMSOrVerifyNeededError,
-                                _verify_url = utf8FromBytes $ es ! 0x204,
-                                _sms_phone = phone_,
-                                _error_message = utf8FromBytes $ es ?> 0x17E
-                            }
+                            pure $ Just $ VerificationNeeded
+                                (utf8FromBytes $ es ?> 0x17E)
+                                (utf8FromBytes $ es ! 0x204)
+                                phone_
+                            -- pure $ Just $ defaultResponse {
+                            --     _success = False,
+                            --     _code = t,
+                            --     _login_error = SMSOrVerifyNeededError,
+                            --     _verify_url = utf8FromBytes $ es ! 0x204,
+                            --     _sms_phone = phone_,
+                            --     _error_message = utf8FromBytes $ es ?> 0x17E
+                            -- }
                         else do
-                            pure $ Just $ defaultResponse {
-                                _success = False,
-                                _code = t,
-                                _login_error = SMSNeededError,
-                                _sms_phone = phone_,
-                                _error_message = utf8FromBytes $ es ?> 0x17E
-                            }
+                            pure $ Just $ SMSNeeded (utf8FromBytes $ es ?> 0x17E) phone_
+                            -- pure $ Just $ defaultResponse {
+                            --     _success = False,
+                            --     _code = t,
+                            --     _login_error = SMSNeededError,
+                            --     _sms_phone = phone_,
+                            --     _error_message = utf8FromBytes $ es ?> 0x17E
+                            -- }
                     else if has_ es 0x17B then do -- second time
                         transport . signature . t104 .= es ?> 0x104
-                        pure $ Just $ defaultResponse {
-                            _success = False,
-                            _code = t,
-                            _login_error = SMSNeededError
-                        }
+                        pure $ Just $ SMSNeeded "" "" -- ?
+                        -- pure $ Just $ defaultResponse {
+                        --     _success = False,
+                        --     _code = t,
+                        --     _login_error = SMSNeededError
+                        -- }
                     else if has_ es 0x204 then do
-                        pure $ Just $ defaultResponse {
-                            _success = False,
-                            _code = t,
-                            _login_error = UnsafeDeviceError,
-                            _verify_url = utf8FromBytes $ es ! 0x204,
-                            _error_message = ""
-                        }
+                        pure $ Just $ VerificationNeeded "" (utf8FromBytes $ es ! 0x204) ""
+                        -- pure $ Just $ defaultResponse {
+                        --     _success = False,
+                        --     _code = t,
+                        --     _login_error = UnsafeDeviceError,
+                        --     _verify_url = utf8FromBytes $ es ! 0x204,
+                        --     _error_message = ""
+                        -- }
                     else pure Nothing
             else pure Nothing
             case ps of
@@ -143,28 +147,31 @@ decodeLoginResponse bs = do
                                 _ <- get16be
                                 _ <- getlv -- title
                                 utf8FromBytes <$> getlv
-                        pure $ defaultResponse {
-                            _success = False,
-                            _code = t,
-                            _login_error = OtherLoginError,
-                            _error_message = r_
-                        }
+                        pure $ UnknownLoginResponse t r_
+                        -- pure $ defaultResponse {
+                        --     _success = False,
+                        --     _code = t,
+                        --     _login_error = OtherLoginError,
+                        --     _error_message = r_
+                        -- }
                     else if has_ es 0x146 then do
                         let r_ = flip runGet (es ! 0x149) $ do
                                 _ <- get32be
                                 _ <- getlv -- title
                                 utf8FromBytes <$> getlv
-                        pure $ defaultResponse {
-                            _success = False,
-                            _code = t,
-                            _login_error = OtherLoginError,
-                            _error_message = r_
-                        }
-                    else pure $ defaultResponse {
-                        _success = False,
-                        _code = t,
-                        _login_error = NoResponse
-                    }
+                        pure $ UnknownLoginResponse t r_
+                        -- pure $ defaultResponse {
+                        --     _success = False,
+                        --     _code = t,
+                        --     _login_error = OtherLoginError,
+                        --     _error_message = r_
+                        -- }
+                    else pure $ UnknownLoginResponse t ""
+                    -- else pure $ defaultResponse {
+                    --     _success = False,
+                    --     _code = t,
+                    --     _login_error = NoResponse
+                    -- }
     where
         (?>) d k = fromMaybe mempty (Data.HashMap.lookup k d)
         (_, t, _, r) = flip runGet bs $ do
