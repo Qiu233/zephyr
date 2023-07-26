@@ -20,7 +20,7 @@ buildLoginPacket = do
     tr <- use transport
     codec_ <- use codec
     md5pass <- use password_md5
-    let sub_id_ = tr ^. client_version . sub_id
+    let sub_id_ = tr ^. app_version . sub_id
     tlvs <- sequence [
         T.t18,
         T.t1,

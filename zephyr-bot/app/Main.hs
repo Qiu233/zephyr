@@ -52,7 +52,7 @@ type ClientOPM a = StateT Client IO a
 fetchQIMEI :: ClientOPM ()
 fetchQIMEI = do
     dev <- use $ context . transport . device
-    ver_ <- use $ context . transport . client_version
+    ver_ <- use $ context . transport . app_version
     liftIO $ putStrLn "trying to fetch qimei"
     imeis <- liftIO $ requestQImei_ ver_ dev
     liftIO $ print imeis

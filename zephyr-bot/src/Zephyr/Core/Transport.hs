@@ -8,7 +8,7 @@ import Control.Lens
 
 data Transport = Transport {
     _signature :: Signature,
-    _client_version :: AppVersion,
+    _app_version :: AppVersion,
     _device :: Device
 } deriving (Eq, Show)
 $(makeLenses ''Transport)

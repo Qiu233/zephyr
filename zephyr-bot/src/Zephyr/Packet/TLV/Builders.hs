@@ -47,12 +47,12 @@ t8 = do
 
 t16 :: ContextOPM B.ByteString
 t16 = do
-    ssover_ <- use $ transport . client_version . ssover
-    sub_id_ <- use $ transport . client_version . sub_id
+    ssover_ <- use $ transport . app_version . ssover
+    sub_id_ <- use $ transport . app_version . sub_id
     guid_ <- guidBytes <$> use (transport . device . guid)
-    apk_id_ <- utf8ToBytes <$> use (transport . client_version . apk_id)
-    ver_ <- utf8ToBytes <$> use (transport . client_version . sort_version)
-    sign_ <- use $ transport . client_version . sign
+    apk_id_ <- utf8ToBytes <$> use (transport . app_version . apk_id)
+    ver_ <- utf8ToBytes <$> use (transport . app_version . sort_version)
+    sign_ <- use $ transport . app_version . sign
     pure $ Prim.t16_ ssover_ 16 sub_id_ guid_ apk_id_ ver_ sign_
 
 t18 :: ContextOPM B.ByteString
@@ -66,7 +66,7 @@ t1B size_ margin_ ecLevel = do
 
 t1D :: ContextOPM B.ByteString
 t1D = do
-    misc_bitmap_ <- use $ transport . client_version . misc_bitmap
+    misc_bitmap_ <- use $ transport . app_version . misc_bitmap
     pure $ Prim.t1D_ misc_bitmap_
 
 t1F :: ContextOPM B.ByteString
@@ -87,8 +87,8 @@ t35 = do
 
 t100 :: Word32 -> ContextOPM B.ByteString
 t100 protocol_ = do
-    ssover_ <- use $ transport . client_version . ssover
-    main_sig_map_ <- use $ transport . client_version . main_sig_map
+    ssover_ <- use $ transport . app_version . ssover
+    main_sig_map_ <- use $ transport . app_version . main_sig_map
     pure $ Prim.t100_ ssover_ protocol_ main_sig_map_
 
 t104 :: ContextOPM B.ByteString
@@ -99,8 +99,8 @@ t104 = do
 t106 :: B.ByteString -> ContextOPM B.ByteString
 t106 md5pass = do
     uin_ <- fromIntegral <$> use uin
-    sub_id_ <- use $ transport . client_version . sub_id
-    ssover_ <- use $ transport . client_version . ssover
+    sub_id_ <- use $ transport . app_version . sub_id
+    ssover_ <- use $ transport . app_version . ssover
     guid_ <- guidBytes <$> use (transport . device . guid)
     tgtgt_ <- use $ transport . device . tgtgt_key
     Prim.t106_ uin_ 0 sub_id_ ssover_ md5pass True guid_ tgtgt_ 0
@@ -123,8 +123,8 @@ t10A = do
 
 t116 :: ContextOPM B.ByteString
 t116 = do
-    bitmap_ <- use $ transport . client_version . misc_bitmap
-    sub_sig_map_ <- use $ transport . client_version . sub_sig_map
+    bitmap_ <- use $ transport . app_version . misc_bitmap
+    sub_sig_map_ <- use $ transport . app_version . sub_sig_map
     pure $ Prim.t116_ bitmap_ sub_sig_map_
 
 t124 :: ContextOPM B.ByteString
@@ -168,7 +168,7 @@ t141 = do
 
 t142 :: ContextOPM B.ByteString
 t142 = do
-    id_ <- use $ transport . client_version . apk_id
+    id_ <- use $ transport . app_version . apk_id
     packTLV_ 0x142 $ do
         put16be 0
         lvu8 $ take 32 id_
@@ -217,8 +217,8 @@ t145 = do
 
 t147 :: ContextOPM B.ByteString
 t147 = do
-    version_ <- utf8ToBytes <$> use (transport . client_version . sort_version)
-    sign_ <- use $ transport . client_version . sign
+    version_ <- utf8ToBytes <$> use (transport . app_version . sort_version)
+    sign_ <- use $ transport . app_version . sign
     pure $ Prim.t147_ 16 version_ sign_
 
 t154 :: Word16 -> ContextOPM B.ByteString
@@ -232,8 +232,8 @@ t174 = do
 
 t177 :: ContextOPM B.ByteString
 t177 = do
-    build_time_ <- use $ transport . client_version . build_time
-    sdk_ver_ <- use $ transport . client_version . sdk_ver
+    build_time_ <- use $ transport . app_version . build_time
+    sdk_ver_ <- use $ transport . app_version . sdk_ver
     pure $ Prim.t177_ build_time_ sdk_ver_
 
 t17A :: ContextOPM B.ByteString
@@ -321,8 +321,8 @@ t544 :: String -> Word32 -> ContextOPM (Either String B.ByteString)
 t544 moduleId subCmd = do
     uin_ <- use uin
     guid_ <- guidBytes <$> use (transport . device . guid)
-    sdk_ver_ <- use $ transport . client_version . sdk_ver
-    version_ <- use $ transport . client_version . sort_version
+    sdk_ver_ <- use $ transport . app_version . sdk_ver
+    version_ <- use $ transport . app_version . sort_version
     signer <- wenergy
     Prim.t544_ uin_ moduleId subCmd sdk_ver_ guid_ version_ signer
 
@@ -330,8 +330,8 @@ t544v2 :: String -> Word32 -> ContextOPM (Either String B.ByteString)
 t544v2 moduleId subCmd = do
     uin_ <- use uin
     guid_ <- guidBytes <$> use (transport . device . guid)
-    sdk_ver_ <- use $ transport . client_version . sdk_ver
-    version_ <- use $ transport . client_version . sort_version
+    sdk_ver_ <- use $ transport . app_version . sdk_ver
+    version_ <- use $ transport . app_version . sort_version
     signer <- wenergy
     Prim.t544V2_ uin_ moduleId subCmd sdk_ver_ guid_ version_ signer
 

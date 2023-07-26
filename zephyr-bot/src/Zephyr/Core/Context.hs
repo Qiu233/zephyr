@@ -42,7 +42,7 @@ type ContextOPM = StateT Context IO
 $(makeLenses ''Context)
 
 newContext :: Word64 -> B.ByteString -> Device -> AppVersion -> String -> IO Context
-newContext _uin _password_md5 _device _client_version _sign_server = do
+newContext _uin _password_md5 _device _app_version _sign_server = do
     _signature <- defaultSignature _device
     _seq <- newTVarIO =<< randomIO
     _codec <- newCodec

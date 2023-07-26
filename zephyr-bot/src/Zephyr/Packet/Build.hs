@@ -138,7 +138,7 @@ packSecSign req = do
     tr <- use transport
     let d = tr ^. device
     signer <- wsign
-    let qua_ = tr ^. client_version . qua
+    let qua_ = tr ^. app_version . qua
     rst <- liftIO $ signer
         (fromIntegral $ req ^. sequence_id)
         (show $ req ^. req_uin)
@@ -175,8 +175,8 @@ packBody req = do
             withLength32Desc $ do
                 when (req_type_ == RT_Login) $ do
                     put32be $ req ^. sequence_id
-                    put32be $ tr ^. client_version . sub_id
-                    put32be $ tr ^. client_version . sub_id
+                    put32be $ tr ^. app_version . sub_id
+                    put32be $ tr ^. app_version . sub_id
                     putbs $ B.pack [0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00]
                     let tgt_ = tr ^. signature . tgt
                     if B.length tgt_ == 0 || B.length tgt_ == 4 then
