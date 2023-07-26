@@ -13,7 +13,7 @@ import Zephyr.Packet.Build
 import Zephyr.Core.Request
 import Zephyr.Utils.Binary
 
-buildLoginPacket :: ContextOPM B.ByteString
+buildLoginPacket :: ContextOPM Request
 buildLoginPacket = do
     seq_ <- nextSeq
     uin_ <- use uin
@@ -50,10 +50,9 @@ buildLoginPacket = do
         ]
     let body = TLV 9 tlvs
     b2 <- buildOicqRequestPacket codec_ uin_ 0x810 body
-    let req = Request RT_Login ET_EmptyKey (fromIntegral seq_) uin_ "wtlogin.login" b2
-    packRequest req
+    pure $ Request RT_Login ET_EmptyKey (fromIntegral seq_) uin_ "wtlogin.login" b2
 
-buildTicketSubmitPacket :: String -> ContextOPM B.ByteString
+buildTicketSubmitPacket :: String -> ContextOPM Request
 buildTicketSubmitPacket ticket = do
     seq_ <- nextSeq
     uin_ <- use uin
@@ -72,6 +71,4 @@ buildTicketSubmitPacket ticket = do
         ]
     let body = TLV 2 tlvs
     b2 <- buildOicqRequestPacket codec_ uin_ 0x810 body
-    let req = Request RT_Login ET_EmptyKey (fromIntegral seq_) uin_ "wtlogin.login" b2
-    packRequest req
-
+    pure $ Request RT_Login ET_EmptyKey (fromIntegral seq_) uin_ "wtlogin.login" b2
