@@ -5,9 +5,9 @@
 {-# HLINT ignore "Redundant id" #-}
 module Zephyr.Packet.TLV.Builders where
 
-import Zephyr.Core.Context
+import Zephyr.Core.QQContext
 import qualified Data.ByteString.Lazy as B
-import Control.Lens hiding (Context)
+import Control.Lens
 import Zephyr.Core.Device
 import Zephyr.Utils.Binary
 import Zephyr.Core.AppVersion

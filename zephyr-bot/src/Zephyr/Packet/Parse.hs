@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeApplications #-}
 module Zephyr.Packet.Parse where
 import qualified Data.ByteString.Lazy as B
-import Control.Lens hiding (Context)
+import Control.Lens
 import qualified Zephyr.Core.Signature as Sig
 import Data.Word
 import Zephyr.Encrypt.QQTea
@@ -15,7 +15,7 @@ import Control.Monad
 import Zephyr.Core.Transport
 import Zephyr.Core.Request
 import Control.Monad.Trans.Except
-import Zephyr.Core.Context
+import Zephyr.Core.QQContext
 import qualified Zephyr.Packet.Oicq as Oicq
 import Zephyr.Core.Codec
 import Control.Monad.IO.Class

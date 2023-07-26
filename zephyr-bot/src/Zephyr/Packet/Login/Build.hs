@@ -2,7 +2,7 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Packet.Login.Build where
 
-import Zephyr.Core.Context
+import Zephyr.Core.QQContext
 import qualified Data.ByteString.Lazy as B
 import Control.Lens
 import Zephyr.Core.Transport

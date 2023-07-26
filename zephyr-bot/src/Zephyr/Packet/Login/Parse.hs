@@ -3,7 +3,7 @@
 module Zephyr.Packet.Login.Parse where
 import GHC.Stack
 import qualified Data.ByteString.Lazy as B
-import Zephyr.Core.Context
+import Zephyr.Core.QQContext
 import Zephyr.Packet.Login.Types
 import Data.Word
 import Data.HashMap

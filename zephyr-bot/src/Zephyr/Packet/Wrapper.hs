@@ -13,7 +13,7 @@ import qualified Data.ByteString.Lazy as B
 import Control.Monad
 import Data.Word
 import Control.Monad.Except
-import Zephyr.Core.Context
+import Zephyr.Core.QQContext
 import Control.Lens
 import Zephyr.Core.Transport
 import Zephyr.Core.Device.Types

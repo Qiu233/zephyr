@@ -5,10 +5,10 @@ module Main (main) where
 import Network.Socket
 import qualified Control.Exception as Ex
 import Network.Socket.ByteString.Lazy
-import Zephyr.Core.Context
+import Zephyr.Core.QQContext
 import Data.Word
 import System.Environment
-import Control.Lens hiding (Context)
+import Control.Lens
 import Zephyr.Utils.Common
 import Zephyr.Core.Device.Types
 import Zephyr.Core.Transport
@@ -41,7 +41,7 @@ runTCPClient host port client = withSocketsDo $ do
             pure sock
 
 data Client = Client {
-    _context :: Context,
+    _context :: QQContext,
     _socket :: Socket,
     _buffer :: TVar B.ByteString
 }
@@ -142,7 +142,7 @@ outputbs bs = do
     liftIO $ print $ show $ B.length bs
     liftIO $ putStrLn $ encodeHex bs
 
-clientMain :: Context -> IO ()
+clientMain :: QQContext -> IO ()
 clientMain ctx = do
     _buffer <- liftIO $ newTVarIO B.empty
     liftIO $ runTCPClient "120.233.17.147" "8080" $ \sock -> do

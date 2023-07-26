@@ -5,7 +5,7 @@ module Zephyr.Packet.TLV.Decoders (
 
 ) where
 import qualified Data.ByteString.Lazy as B
-import Zephyr.Core.Context
+import Zephyr.Core.QQContext
 import qualified Zephyr.Encrypt.QQTea as QQTea
 import Zephyr.Packet.Internal
 import Data.Proxy (Proxy(Proxy))

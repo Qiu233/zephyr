@@ -3,14 +3,14 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
-module Zephyr.Core.Context where
+module Zephyr.Core.QQContext where
 import Zephyr.Core.Device (Device)
 import Data.Word
 import Zephyr.Core.AppVersion
 import Zephyr.Core.Signature
 import Control.Concurrent.STM
 import System.Random (randomIO)
-import Control.Lens hiding (Context)
+import Control.Lens
 import Control.Monad.State
 import Prelude hiding (seq)
 import Zephyr.Core.Codec
@@ -25,7 +25,7 @@ data QQProfile = QQProfile {
 
 $(makeLenses ''QQProfile)
 
-data Context = Context {
+data QQContext = QQContext {
     _uin :: Word64,
     _password_md5 :: B.ByteString,
     _transport :: Transport,
@@ -37,18 +37,18 @@ data Context = Context {
     _qqprofile :: QQProfile
 }
 
-type ContextOPM = StateT Context IO
+type ContextOPM = StateT QQContext IO
 
-$(makeLenses ''Context)
+$(makeLenses ''QQContext)
 
-newContext :: Word64 -> B.ByteString -> Device -> AppVersion -> String -> IO Context
+newContext :: Word64 -> B.ByteString -> Device -> AppVersion -> String -> IO QQContext
 newContext _uin _password_md5 _device _app_version _sign_server = do
     _signature <- defaultSignature _device
     _seq <- newTVarIO =<< randomIO
     _codec <- newCodec
     let _transport = Transport { .. }
     let _qqprofile = QQProfile { _nickname = "", _age = 0, _gender = 0 }
-    pure $ Context {..}
+    pure $ QQContext {..}
 
 nextSeq :: ContextOPM Word16
 nextSeq = do

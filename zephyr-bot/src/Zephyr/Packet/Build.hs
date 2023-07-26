@@ -10,7 +10,7 @@ import qualified Data.ByteString.Lazy as B
 import Data.Word
 import Zephyr.Utils.Binary
 import Control.Monad
-import Zephyr.Core.Context
+import Zephyr.Core.QQContext
 import Zephyr.Core.Codec
 import Control.Lens ((^.), use)
 import Control.Monad.IO.Class
