@@ -79,4 +79,4 @@ unmarshal_ codec_ = do
     }
 
 unmarshal :: Codec -> B.ByteString -> Either String Message
-unmarshal codec_ = runGet_ (runExceptT $ unmarshal_ codec_)
+unmarshal codec_ = runGet (runExceptT $ unmarshal_ codec_)

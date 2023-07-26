@@ -1,5 +1,9 @@
 {-# LANGUAGE TypeApplications #-}
-module Zephyr.Packet.TLV.Decoders where
+module Zephyr.Packet.TLV.Decoders (
+    decodeT130,
+    decodeT119,
+
+) where
 import qualified Data.ByteString.Lazy as B
 import Zephyr.Core.Context
 import qualified Zephyr.Encrypt.QQTea as QQTea
@@ -11,31 +15,29 @@ import Data.HashMap
 import Zephyr.Core.Transport
 import Zephyr.Core.Signature
 import Control.Lens
-import Zephyr.Utils.Common (utf8FromBytes, encodeHex)
+import Zephyr.Utils.Common
 import Control.Monad
 import Zephyr.Core.Codec (wt_session_ticket_key)
 import Zephyr.Utils.Time
 import Zephyr.Utils.Binary
 import Zephyr.Utils.Codec
 import Zephyr.Core.Device
-import Control.Monad.IO.Class
 import Data.Maybe
 import GHC.Stack (HasCallStack)
+import Control.Monad.IO.Class
 
 decodeT130 :: B.ByteString -> ContextOPM ()
 decodeT130 bs = do
-    -- liftIO $ putStrLn "decodeT130:"
-    -- liftIO $ putStrLn $ encodeHex bs
+    liftIO $ putStrLn $ "decodeT130: " ++ encodeHex bs
     pure () -- ?
 
 decodeT113 :: B.ByteString -> ContextOPM ()
 decodeT113 bs = do
-    -- liftIO $ putStrLn "decodeT113:"
-    -- liftIO $ putStrLn $ encodeHex bs
+    liftIO $ putStrLn $ "decodeT113: " ++ encodeHex bs
     pure () -- ?
 
 readT11A :: B.ByteString -> (String, Word16, Word16)
-readT11A bs = flip runGet_ bs $ do
+readT11A bs = flip runGet bs $ do
     _ <- get16be
     age_ <- fromIntegral <$> get8
     gender_ <- fromIntegral <$> get8
@@ -45,7 +47,7 @@ readT11A bs = flip runGet_ bs $ do
 
 readT512 :: B.ByteString -> (Map String B.ByteString, Map String B.ByteString)
 readT512 bs = do
-    let ls = flip runGet_ bs $ do
+    let ls = flip runGet bs $ do
             len <- fromIntegral <$> get16be
             replicateM len $ do
                 domain_ <- utf8FromBytes <$> getlv
@@ -59,7 +61,7 @@ readT512 bs = do
 decodeT119 :: HasCallStack => B.ByteString -> B.ByteString -> ContextOPM ()
 decodeT119 data_ ek_ = do
     let d = B.drop 2 $ QQTea.qqteaDecrypt ek_ data_
-    let es = flip runGet_ d $ getTLVEntries (Proxy @Word16) :: Map Word16 B.ByteString
+    let es = flip runGet d $ getTLVEntries (Proxy @Word16) :: Map Word16 B.ByteString
     mp (es !> 0x130) decodeT130
     mp (es !> 0x113) decodeT113
     mp (es !> 0x108) (transport . signature . ksid .=)

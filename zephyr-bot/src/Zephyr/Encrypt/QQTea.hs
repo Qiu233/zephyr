@@ -30,7 +30,7 @@ tea16Encrypt key n = do
         _y = fromIntegral y :: Word64
     (_x .<. 32) .|. _y
     where
-        (k0, k1, k2, k3) = runGet_ (getbe @(Word32, Word32, Word32, Word32)) key
+        (k0, k1, k2, k3) = runGet (getbe @(Word32, Word32, Word32, Word32)) key
         calc a b c s = foldl xor 0 [a + (b .<. 4) , b + s, c + (b .>. 5)]
         transfer = State.modify $ \(x, y, s) ->
             let s' = s + _TEA_DELTA
@@ -45,7 +45,7 @@ tea16Decrypt key n =
         _y = fromIntegral y :: Word64 in
     (_x .<. 32) .|. _y
     where
-        (k0, k1, k2, k3) = runGet_ (getbe @(Word32, Word32, Word32, Word32)) key
+        (k0, k1, k2, k3) = runGet (getbe @(Word32, Word32, Word32, Word32)) key
         calc a b c s = foldl xor 0 [a + (b .<. 4) , b + s, c + (b .>. 5)]
         transfer = State.modify $ \(x, y, s) ->
             let y' = y - calc k2 x  k3 s
@@ -61,7 +61,7 @@ qqteaEncrypt key text = do
             putbs randbs
             putbs text
             putbs $ B.pack [0,0,0,0, 0,0,0]
-    let work_block = runGet_ (getListOfBE @Word64 (div plain_len 8)) plain_text
+    let work_block = runGet (getListOfBE @Word64 (div plain_len 8)) plain_text
     pure $ runPut $ putListBE $ compute_work work_block
     where
         len = fromIntegral $ B.length text ::Int
@@ -74,7 +74,7 @@ qqteaEncrypt key text = do
 
 qqteaDecrypt :: B.ByteString -> B.ByteString -> B.ByteString
 qqteaDecrypt key text =
-    let work_block = runGet_ (getListOfBE @Word64 (div len 8)) text
+    let work_block = runGet (getListOfBE @Word64 (div len 8)) text
         rst = runPut . putListBE $ compute_work work_block
         begin = fromIntegral (B.head rst .&. 7) + 3
     in B.drop begin $ B.dropEnd 7 rst

@@ -1,15 +1,13 @@
-module Zephyr.Packet.Login.CalcPow where
+{-# OPTIONS_GHC -Wno-missing-export-lists #-}
+module Zephyr.Packet.Login.Pow where
 import qualified Data.ByteString.Lazy as B
 import Control.Monad.IO.Class
 import Zephyr.Utils.Binary.Get
 import Zephyr.Utils.Binary
-import Zephyr.Utils.Time
 import Control.Monad
 import Data.Bits
-import qualified Crypto.Hash as Hash
 import Zephyr.Utils.Codec
 import Zephyr.Packet.Internal
-import Data.Functor ((<&>))
 import System.Random (randomRIO)
 
 integer2bs :: Integer -> B.ByteString
@@ -26,7 +24,7 @@ bs2integer bs = inner $ reverse $ B.unpack bs
 
 calcPow :: MonadIO m => B.ByteString -> m B.ByteString
 calcPow bs = do
-    let (a, typ, c, ok, e, f, src, tgt, cpy) = flip runGet_ bs $ do
+    let (a, typ, c, ok, e, f, src, tgt, cpy) = flip runGet bs $ do
             (,,,,,,,,) <$> get8 <*> get8 <*> get8 <*> getb <*> get16be <*> get16be <*> getlv <*> getlv <*> getlv
     (ok_, dst, elp, cnt) <- if typ == 2 && B.length tgt == 32
         then do

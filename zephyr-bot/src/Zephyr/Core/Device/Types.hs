@@ -66,8 +66,8 @@ generateDevice uin = do
     let uinStr = show uin
     let pg = mkStdGen $ fromIntegral uin
     let hash = B.fromStrict . md5OfU8 $ uinStr
-    let _android_id = printf "OICQX.%d%d.%d%c" (runGet_ get16be hash) (B.index hash 2) (B.index hash 3) (head uinStr) :: String
-    let _incremental = runGet_ get32be $ B.drop 12 hash
+    let _android_id = printf "OICQX.%d%d.%d%c" (runGet get16be hash) (B.index hash 2) (B.index hash 3) (head uinStr) :: String
+    let _incremental = runGet get32be $ B.drop 12 hash
 
     let _display = _android_id
         _product = "MRS4S"
@@ -87,7 +87,7 @@ generateDevice uin = do
         _boot_id = show $ createGUID hash
         _proc_version =
             printf "Linux version 4.19.71-%d (konata@takayama.github.com)"
-            (runGet_ get16be $ B.drop 4 hash)
+            (runGet get16be $ B.drop 4 hash)
             :: String
         _base_band = ""
         _sim = "T-Mobile"

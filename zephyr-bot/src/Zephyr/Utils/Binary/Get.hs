@@ -39,13 +39,13 @@ instance BinGet a => GBinGet (K1 i a) where
     ggetbe = K1 <$> getbe
 
 
-runGet :: Get a -> B.ByteString -> Either String a
-runGet (Get f) bs = case f bs of
+runGet_ :: Get a -> B.ByteString -> Either String a
+runGet_ (Get f) bs = case f bs of
     Success a _ -> Right a
     TooFewBytes -> Left "Too few bytes"
 
-runGet_ :: HasCallStack => Get a -> B.ByteString -> a
-runGet_ f bs = either (error . (++ prettyCallStack callStack)) id (runGet f bs)
+runGet :: HasCallStack => Get a -> B.ByteString -> a
+runGet f bs = either (error . (++ prettyCallStack callStack)) id (runGet_ f bs)
 
 get8 :: Get Word8
 get8 = Get $ \bs -> case B.uncons bs of

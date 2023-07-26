@@ -36,8 +36,8 @@ getstr32be = utf8FromBytes <$> getbs32be
 
 parseSSO :: B.ByteString -> Except String (Word32, String, String, B.ByteString)
 parseSSO bs = do
-    let (head_, body_) = runGet_ ((,) <$> getbs32be <*> getbs32be) bs
-    let (seq_, ret_code_, msg_, cmd_, _, compressed_flag) = runGet_ (
+    let (head_, body_) = runGet ((,) <$> getbs32be <*> getbs32be) bs
+    let (seq_, ret_code_, msg_, cmd_, _, compressed_flag) = runGet (
             (,,,,,) <$> get32be <*> get32be <*> getstr32be <*> getstr32be <*> getbs32be <*> get32be
             ) head_
     when (ret_code_ /= 0) $ do throwE $ "ret_code_ /= 0: " ++ show ret_code_
@@ -52,7 +52,7 @@ parsePacket_ :: B.ByteString -> ExceptT String ContextOPM QQResponse
 parsePacket_ pkt = do
     tr <- use transport
     codec_ <- use codec
-    let (type_, enc_type_, _, uin_, body_) = runGet_ (
+    let (type_, enc_type_, _, uin_, body_) = runGet (
             (,,,,) <$> get32be <*> get8 <*> get8 <*> (read @Word64 <$> getstr32be) <*> getRemaining
             ) pkt
     when (type_ /= 0x0A && type_ /= 0x0B) $ do

@@ -13,7 +13,9 @@ import Zephyr.Utils.Common
 import Zephyr.Core.Device.Types
 import Zephyr.Core.Transport
 import Zephyr.Core.AppVersion (androidPhone)
-import Zephyr.Packet.Login
+import Zephyr.Packet.Login.Types
+import Zephyr.Packet.Login.Build
+import Zephyr.Packet.Login.Parse
 import Control.Monad.State
 import Zephyr.Utils.Codec (md5OfU8)
 import qualified Data.ByteString.Lazy as B

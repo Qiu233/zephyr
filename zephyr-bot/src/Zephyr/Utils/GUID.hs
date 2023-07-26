@@ -33,7 +33,7 @@ guidBytes (GUID (a,b,c,d)) = do
 
 createGUID :: B.ByteString -> GUID
 createGUID = do
-    runGet_ $ do
+    runGet $ do
         a <- get32le
         b <- get32le
         c <- get32le

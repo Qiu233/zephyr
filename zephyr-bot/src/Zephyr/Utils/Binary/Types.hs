@@ -24,7 +24,7 @@ data DecodeResult a =
 type PutM = Writer B.ByteString
 type Put = PutM ()
 
-newtype Get a = Get { runGetInner_ :: B.ByteString -> DecodeResult a }
+newtype Get a = Get (B.ByteString -> DecodeResult a)
 runGetInner :: Get a -> B.ByteString -> DecodeResult a
 runGetInner (Get f) = f
 instance Functor Get where
