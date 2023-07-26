@@ -30,6 +30,7 @@ dependencies:
 - array
 - memory >= 0.18.0
 - text
+- hashable
 - hashmap
 - bytestring
 - utf8-string

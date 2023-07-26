@@ -153,3 +153,11 @@ isEmpty = Get $ \bs -> Success (B.null bs) bs
 
 getRemaining :: Get B.ByteString
 getRemaining = Get $ \bs -> Success bs B.empty
+
+tryGet :: Get a -> Get (Maybe a)
+tryGet (Get f) = Get $ \bs -> case f bs of
+    Success a bs' -> Success (Just a) bs'
+    TooFewBytes -> Success Nothing bs
+
+getb :: Get Bool
+getb = (/=0) <$> get8

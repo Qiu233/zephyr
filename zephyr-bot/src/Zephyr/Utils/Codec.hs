@@ -9,6 +9,9 @@ md5Of :: (ByteArrayAccess arr, ByteArray bout) => arr -> bout
 md5Of bs = convert (Hash.hash bs :: Hash.Digest Hash.MD5)
 
 
+sha256 :: (ByteArrayAccess arr, ByteArray bout) => arr -> bout
+sha256 bs = convert (Hash.hash bs :: Hash.Digest Hash.SHA256)
+
 md5Of_ :: ByteArray arr => B.ByteString -> arr
 md5Of_ = md5Of . B.toStrict
 

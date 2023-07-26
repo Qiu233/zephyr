@@ -20,11 +20,10 @@ import qualified Data.ByteString.Lazy as B
 import Zephyr.Core.Device.QIMEI
 import Control.Concurrent.STM
 import Zephyr.Utils.Binary
-import Control.Exception
 import Zephyr.Packet.Parse
-import Zephyr.Encrypt.ECDH (fetchPubKey)
-import Control.Monad.Except (runExcept)
 import Zephyr.Core.Request
+import GHC.Stack (HasCallStack)
+import Text.Printf (printf)
 
 
 runTCPClient :: HostName -> ServiceName -> (Socket -> IO a) -> IO a
@@ -52,7 +51,7 @@ fetchQIMEI :: ClientOPM ()
 fetchQIMEI = do
     dev <- use $ context . transport . device
     ver_ <- use $ context . transport . client_version
-    liftIO $ putStrLn "trying to fetch public key"
+    liftIO $ putStrLn "trying to fetch qimei"
     imeis <- liftIO $ requestQImei_ ver_ dev
     liftIO $ print imeis
     case imeis of
@@ -61,40 +60,92 @@ fetchQIMEI = do
             context . transport . device . qimei16 .= q16
             context . transport . device . qimei36 .= q36
 
-parsePacket_ :: B.ByteString -> ClientOPM (Either String QQResponse)
-parsePacket_ bs = do
-    tr <- use $ context . transport
-    pure $ runExcept $ parsePacket tr bs
+parsePacket' :: HasCallStack => B.ByteString -> ClientOPM QQResponse
+parsePacket' bs = do
+    d_ <- zoom context $ do
+        parsePacket bs
+    case d_ of
+        Left err -> error err
+        Right v -> pure v
 
-clientMainInner :: B.ByteString -> ClientOPM ()
-clientMainInner md5pass = do
-    fetchQIMEI
+sendP :: B.ByteString -> ClientOPM ()
+sendP bs = do
     sock <- use Main.socket
-    v <- zoom context $ do
-        buildLoginPacket md5pass
-    liftIO $ sendAll sock v
-    liftIO $ putStrLn "Waiting:"
-    -- bs <- liftIO $ recv sock 1024
-    -- liftIO $ print $ B.length bs
-    -- liftIO $ putStrLn $ encodeHex bs
-    p <- getPacket
-    liftIO $ print $ B.length p
-    liftIO $ putStrLn $ encodeHex p
-    sso <- parsePacket_ p
-    case sso of
-        Left err -> liftIO $ putStrLn err
-        Right sso_ -> do
-            liftIO $ print sso_
-            let pl = sso_ ^. resp_body . req_body
-            liftIO $ print $ B.length pl
-            liftIO $ putStrLn $ encodeHex pl
+    liftIO $ sendAll sock bs
 
-clientMain :: Context -> B.ByteString -> IO ()
-clientMain ctx md5pass = do
+login :: ClientOPM ()
+login = do
+    v <- zoom context buildLoginPacket
+    sendP v
+    p <- getPacket
+    pkt <- parsePacket' p
+    rsp_ <- zoom context $ decodeLoginResponse (pkt ^. resp_body . req_body)
+    go rsp_
+    where 
+        go rsp = do
+            liftIO $ print rsp
+            if rsp ^. success then
+                liftIO $ putStrLn "Login Success"
+            else
+                case rsp ^. login_error of
+                    NoResponse -> do
+                        liftIO $ putStrLn "无有效响应，请检查Parse算法"
+                    UnknownLoginError -> do
+                        liftIO $ putStrLn "未知错误:"
+                        liftIO $ printf "code = %d\n" (rsp ^. code)
+                        liftIO $ putStrLn $ rsp ^. error_message
+                    NeedCaptcha -> do -- impossible
+                        liftIO $ putStrLn "需要Captcha"
+                        liftIO $ putStrLn "image: "
+                        liftIO $ putStrLn $ encodeHex $ rsp ^. captcha_image
+                        liftIO $ putStrLn "sign: "
+                        liftIO $ putStrLn $ encodeHex $ rsp ^. captcha_sign
+                    SliderNeededError -> do
+                        liftIO $ putStrLn $ "链接: " ++ rsp ^. verify_url
+                        liftIO $ putStrLn "清输入ticket: "
+                        ticket <- liftIO getLine
+                        v <- zoom context $ buildTicketSubmitPacket ticket
+                        sendP v
+                        p <- getPacket
+                        pkt <- parsePacket' p
+                        rsp2 <- zoom context $ decodeLoginResponse $ pkt ^. resp_body . req_body
+                        go rsp2
+                    SMSOrVerifyNeededError -> do
+                        liftIO $ putStrLn "需要扫码或验证码(已废除)"
+                        liftIO $ putStrLn "请通过链接扫码后重启程序: "
+                        liftIO $ putStrLn $ rsp ^. error_message
+                        liftIO $ putStrLn $ "链接: " ++ rsp ^. verify_url
+                    SMSNeededError -> do -- impossible
+                        liftIO $ putStrLn "需要短信认证"
+                        liftIO $ putStrLn $ rsp ^. error_message
+                        liftIO $ putStrLn $ "手机: " ++ rsp ^. sms_phone
+                    UnsafeDeviceError -> do
+                        liftIO $ putStrLn "不安全设备，需要扫码认证"
+                        liftIO $ putStrLn $ "链接: " ++ rsp ^. verify_url
+                    TooManySMSRequestError -> do -- impossible
+                        liftIO $ putStrLn "短信请求过于频繁"
+                    OtherLoginError -> do
+                        liftIO $ putStrLn "其他错误: "
+                        liftIO $ printf "code = %d\n" (rsp ^. code)
+                        liftIO $ putStrLn $ rsp ^. error_message
+    
+
+clientMainInner :: ClientOPM ()
+clientMainInner = do
+    fetchQIMEI
+    login
+
+outputbs :: B.ByteString -> ClientOPM ()
+outputbs bs = do
+    liftIO $ print $ show $ B.length bs
+    liftIO $ putStrLn $ encodeHex bs
+
+clientMain :: Context -> IO ()
+clientMain ctx = do
     _buffer <- liftIO $ newTVarIO B.empty
     liftIO $ runTCPClient "120.233.17.147" "8080" $ \sock -> do
         let c = Client ctx sock _buffer
-        void $ execStateT (clientMainInner md5pass) c
+        void $ execStateT clientMainInner c
 
 
 getPacket :: ClientOPM B.ByteString
@@ -124,5 +175,5 @@ main = do
     uin <- getEnv "UIN" <&> read @Word64
     password <- getEnv "PASSWORD" <&> B.fromStrict . md5OfU8
     let dev = generateDevice uin
-    ctx <- newContext uin dev androidPhone "http://127.0.0.1:6543"
-    clientMain ctx password
+    ctx <- newContext uin password dev androidPhone "http://127.0.0.1:6543"
+    clientMain ctx

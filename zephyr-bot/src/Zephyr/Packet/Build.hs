@@ -1,7 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE FlexibleContexts #-}
 module Zephyr.Packet.Build (
-    marshal,
     buildOicqRequestPacket,
     packRequest,
     TLV(..),
@@ -19,12 +18,12 @@ import Zephyr.Core.Request
 import Zephyr.Core.Transport
 import Zephyr.Core.Signature
 import Zephyr.Packet.Internal
-import qualified Zephyr.Encrypt.ECDH as ECDH
 import qualified Zephyr.Encrypt.QQTea as QQTea
 import Zephyr.Core.AppVersion
 import Zephyr.Core.Device.Types
 import Zephyr.Packet.Wrapper (wsign)
 import qualified Zephyr.Utils.ProtoLite as PL
+import qualified Zephyr.Packet.Oicq as Oicq
 
 
 data TLV = TLV {
@@ -129,53 +128,9 @@ whiteListCommands =
     "wtlogin_device.login",
     "wtlogin_device.tran_sim_emp"]
 
-
-
-marshal :: MonadIO m => Codec -> Message -> m B.ByteString
-marshal Codec{..} msg = do
-    key_ <- case msg ^. encrypt_method of
-        EM_ECDH -> pure $ _ecdh ^. ECDH.shared_key
-        EM_ST -> pure _random_key
-    enc_ <- QQTea.qqteaEncrypt key_ $ msg ^. msg_body
-    let w = runPut $ do
-            put16be 8001
-            put16be $ msg ^. msg_cmd
-            put16be 1
-            put32be $ msg ^. msg_uin
-            put8 0x3
-            put8 $ case msg ^. encrypt_method of
-                EM_ECDH -> 0x87
-                EM_ST -> 0x45
-            put8 0
-            put32be 2
-            put32be 0
-            put32be 0
-            case msg ^. encrypt_method of
-                EM_ECDH -> do
-                    put8 0x02
-                    put8 0x01
-                    putbs _random_key
-                    put16be 0x0131
-                    put16be $ _ecdh ^. ECDH.svr_public_key_ver
-                    lvbs $ _ecdh ^. ECDH.public_key
-                    putbs enc_
-                EM_ST -> do
-                    put8 0x1
-                    put8 0x3
-                    putbs _random_key
-                    put16be 0x0102
-                    put16be 0
-                    putbs enc_
-            put8 0x3
-    let w2 = runPut $ do
-            put8 0x02
-            put16be $ fromIntegral $ B.length w + 3
-            putbs w
-    pure w2
-
 buildOicqRequestPacket :: MonadIO m => Codec -> Word64 -> Word16 -> TLV -> m B.ByteString
 buildOicqRequestPacket codec_ uin_ command_ tlvs_ = do
-    marshal codec_ msg
+    Oicq.marshal codec_ msg
     where msg = Message (fromIntegral uin_) command_ EM_ECDH (marshalTLVs  tlvs_)
 
 packSecSign :: Request -> ContextOPM B.ByteString

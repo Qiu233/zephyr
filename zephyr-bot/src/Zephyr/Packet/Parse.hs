@@ -15,6 +15,10 @@ import Control.Monad
 import Zephyr.Core.Transport
 import Zephyr.Core.Request
 import Control.Monad.Trans.Except
+import Zephyr.Core.Context
+import qualified Zephyr.Packet.Oicq as Oicq
+import Zephyr.Core.Codec
+import Control.Monad.IO.Class
 
 data QQResponse = QQResponse {
     _resp_body :: Request,
@@ -44,8 +48,10 @@ parseSSO bs = do
             _ -> throwE $ "unknown compressed_flag = " ++ show compressed_flag
     pure (seq_, msg_, cmd_, payload_)
 
-parsePacket :: Transport -> B.ByteString -> Except String QQResponse
-parsePacket tr pkt = do
+parsePacket_ :: B.ByteString -> ExceptT String ContextOPM QQResponse
+parsePacket_ pkt = do
+    tr <- use transport
+    codec_ <- use codec
     let (type_, enc_type_, _, uin_, body_) = runGet_ (
             (,,,,) <$> get32be <*> get8 <*> get8 <*> (read @Word64 <$> getstr32be) <*> getRemaining
             ) pkt
@@ -57,6 +63,16 @@ parsePacket tr pkt = do
             0 -> pure body_ -- TODO?
             _ -> throwE $ "unknown encryption type = " ++ show enc_type_
     (seq_, msg_, cmd_, payload_) <- except . runExcept $ parseSSO body__
+    payload__ <- case enc_type_ of
+            2 -> do
+                let s = Oicq.unmarshal codec_ payload_
+                case s of
+                    Left e -> do
+                        liftIO $ putStrLn "error when parsing empty key packet:"
+                        liftIO $ putStrLn e
+                        pure payload_
+                    Right s_ -> pure $ s_ ^. msg_body
+            _ -> pure payload_
     pure $ QQResponse {
         _resp_body = Request {
             _req_type = if type_ == 0x0A then RT_Login else RT_Simple,
@@ -68,7 +84,10 @@ parsePacket tr pkt = do
             _sequence_id = seq_,
             _req_uin = uin_,
             _req_command = cmd_,
-            _req_body = payload_
+            _req_body = payload__
         },
         _resp_msg = msg_
     }
+
+parsePacket :: B.ByteString -> ContextOPM (Either String QQResponse)
+parsePacket pkt = runExceptT $ parsePacket_ pkt

@@ -24,12 +24,13 @@ newCodec = do
     pure $ Codec {..}
 
 data EncryptMethod = EM_ECDH | EM_ST
+    deriving (Eq, Show)
 
 data Message =  Message {
     _msg_uin :: Word32,
     _msg_cmd :: Word16,
     _encrypt_method :: EncryptMethod,
     _msg_body :: B.ByteString
-}
+} deriving (Eq, Show)
 
 $(makeLenses ''Message)

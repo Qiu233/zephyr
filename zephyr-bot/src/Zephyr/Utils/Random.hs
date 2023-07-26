@@ -22,3 +22,6 @@ randPickn n xs = do
 
 randR :: (Random a, MonadIO m) => (a, a) -> m a
 randR = randomRIO
+
+randString :: MonadIO m => Int -> m String
+randString n = randPickn n "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
