@@ -12,12 +12,9 @@ md5Of bs = convert (Hash.hash bs :: Hash.Digest Hash.MD5)
 sha256 :: (ByteArrayAccess arr, ByteArray bout) => arr -> bout
 sha256 bs = convert (Hash.hash bs :: Hash.Digest Hash.SHA256)
 
-md5Of_ :: ByteArray arr => B.ByteString -> arr
-md5Of_ = md5Of . B.toStrict
 
 md5Lazy :: B.ByteString -> B.ByteString
-md5Lazy = B.fromStrict . md5Of_
-
+md5Lazy = B.fromStrict . md5Of . B.toStrict
 
 md5OfU8 :: ByteArray arr => String -> arr
-md5OfU8 = md5Of_ . utf8ToBytes
+md5OfU8 = md5Of . B.toStrict . utf8ToBytes

@@ -47,6 +47,14 @@ runGet_ (Get f) bs = case f bs of
 runGet :: HasCallStack => Get a -> B.ByteString -> a
 runGet f bs = either (error . (++ prettyCallStack callStack)) id (runGet_ f bs)
 
+{-# INLINE get8 #-}
+{-# INLINE get16le #-}
+{-# INLINE get16be #-}
+{-# INLINE get32le #-}
+{-# INLINE get32be #-}
+{-# INLINE get64le #-}
+{-# INLINE get64be #-}
+
 get8 :: Get Word8
 get8 = Get $ \bs -> case B.uncons bs of
     Just (w, bs') -> Success w bs'

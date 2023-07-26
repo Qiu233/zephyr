@@ -46,6 +46,14 @@ instance (GBinPut a, GBinPut b) => GBinPut (a :*: b) where
 runPut :: Put -> B.ByteString
 runPut = execWriter
 
+{-# INLINE put8 #-}
+{-# INLINE put16le #-}
+{-# INLINE put16be #-}
+{-# INLINE put32le #-}
+{-# INLINE put32be #-}
+{-# INLINE put64le #-}
+{-# INLINE put64be #-}
+
 put8 :: Word8 -> Put
 put8 = tell . B.singleton
 
