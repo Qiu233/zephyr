@@ -155,7 +155,7 @@ decodeLoginResponse bs = do
                         --     _error_message = r_
                         -- }
                     else if has_ es 0x146 then do
-                        let r_ = flip runGet (es ! 0x149) $ do
+                        let r_ = flip runGet (es ! 0x146) $ do
                                 _ <- get32be
                                 _ <- getlv -- title
                                 utf8FromBytes <$> getlv
