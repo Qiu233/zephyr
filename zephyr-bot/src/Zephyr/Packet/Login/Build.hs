@@ -13,13 +13,13 @@ import Zephyr.Packet.Build
 import Zephyr.Core.Request
 import Zephyr.Utils.Binary
 
-buildLoginPacket :: ContextOPM Request
+buildLoginPacket :: ContextRM Request
 buildLoginPacket = do
     seq_ <- nextSeq
-    uin_ <- use uin
-    tr <- use transport
-    codec_ <- use codec
-    md5pass <- use password_md5
+    uin_ <- view uin
+    tr <- view transport
+    codec_ <- view codec
+    md5pass <- view password_md5
     let sub_id_ = tr ^. app_version . sub_id
     tlvs <- sequence [
         T.t18,
@@ -52,12 +52,12 @@ buildLoginPacket = do
     b2 <- buildOicqRequestPacket codec_ uin_ 0x810 body
     pure $ Request RT_Login ET_EmptyKey (fromIntegral seq_) uin_ "wtlogin.login" b2
 
-buildTicketSubmitPacket :: String -> ContextOPM Request
+buildTicketSubmitPacket :: String -> ContextRM Request
 buildTicketSubmitPacket ticket = do
     seq_ <- nextSeq
-    uin_ <- use uin
-    codec_ <- use codec
-    t547_ <- use (transport . signature . t547)
+    uin_ <- view uin
+    codec_ <- view codec
+    t547_ <- view (transport . signature . t547)
     tlvs <- sequence [
             T.t193 ticket,
             T.t8,

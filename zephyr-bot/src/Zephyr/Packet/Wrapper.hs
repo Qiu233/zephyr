@@ -74,11 +74,11 @@ wenergy_ server android_id_ guid_ uin_ id_ appVersion salt = do
     let data__ = decodeHex data_
     liftEither $ maybe (Left "返回数据格式不是标准十六进制串。") Right data__
 
-wenergy :: ContextOPM EnergySigner
+wenergy :: ContextRM EnergySigner
 wenergy = do
-    sign_server_ <- use sign_server
-    android_id_ <- use $ transport . device . android_id
-    guid_ <- use $ transport . device . guid
+    sign_server_ <- view sign_server
+    android_id_ <- view $ transport . device . android_id
+    guid_ <- view $ transport . device . guid
     pure $ \uin_ id_ appVersion salt ->
         runExceptT $ wenergy_ sign_server_ android_id_ (show guid_) uin_ id_ appVersion salt
 
@@ -99,10 +99,10 @@ wsign_ server android_id_ guid_ seq_ uin_ cmd_ qua_ buff_ = do
     let r d = liftEither $ maybe (Left "返回数据格式不是标准十六进制串。") Right (decodeHex d)
     (,,) <$> r sign_ <*> r extra_ <*> r token_
 
-wsign :: ContextOPM FekitSigner
+wsign :: ContextRM FekitSigner
 wsign = do
-    sign_server_ <- use sign_server
-    android_id_ <- use $ transport . device . android_id
-    guid_ <- use $ transport . device . guid
+    sign_server_ <- view sign_server
+    android_id_ <- view $ transport . device . android_id
+    guid_ <- view $ transport . device . guid
     pure $ \seq_ uin_ cmd_ qua_ buff_ ->
         runExceptT $ wsign_ sign_server_ android_id_ (show guid_) seq_ uin_ cmd_ qua_ buff_

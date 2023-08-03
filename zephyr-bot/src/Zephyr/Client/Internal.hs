@@ -24,13 +24,19 @@ import Control.Monad.Reader
 import Control.Concurrent
 import Data.Word
 
-withContext :: ContextOPM a -> ClientOPM a
-withContext o = do
+withContextM :: ContextOPM a -> ClientOPM a
+withContextM o = do
     v <- view context
     a <- liftIO $ atomically $ takeTMVar v
     (r, a') <- liftIO $ runStateT o a
     liftIO $ atomically $ putTMVar v a'
     pure r
+
+withContext :: ContextRM a -> ClientOPM a
+withContext o = do
+    v <- view context
+    a <- liftIO $ atomically $ readTMVar v
+    liftIO $ runReaderT o a
 
 
 runTCPClient :: HostName -> ServiceName -> (Socket -> IO a) -> IO a
@@ -72,7 +78,7 @@ getResponse = do
     if B.null r then
         getResponse
     else do
-        t <- lift $ withContext $ parsePacket r
+        t <- lift $ withContextM $ parsePacket r
         liftEither t
 
 getResponse_ :: ClientOPM QQResponse

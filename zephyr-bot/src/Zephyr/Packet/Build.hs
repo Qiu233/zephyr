@@ -12,7 +12,7 @@ import Zephyr.Utils.Binary
 import Control.Monad
 import Zephyr.Core.QQContext
 import Zephyr.Core.Codec
-import Control.Lens ((^.), use)
+import Control.Lens ((^.), view)
 import Control.Monad.IO.Class
 import Zephyr.Core.Request
 import Zephyr.Core.Transport
@@ -133,9 +133,9 @@ buildOicqRequestPacket codec_ uin_ command_ tlvs_ = do
     Oicq.marshal codec_ msg
     where msg = Message (fromIntegral uin_) command_ EM_ECDH (marshalTLVs  tlvs_)
 
-packSecSign :: Request -> ContextOPM B.ByteString
+packSecSign :: Request -> ContextRM B.ByteString
 packSecSign req = do
-    tr <- use transport
+    tr <- view transport
     let d = tr ^. device
     signer <- wsign
     let qua_ = tr ^. app_version . qua
@@ -165,9 +165,9 @@ packSecSign req = do
                     ]
 
 
-packBody :: Request -> ContextOPM B.ByteString
+packBody :: Request -> ContextRM B.ByteString
 packBody req = do
-    tr <- use transport
+    tr <- view transport
     secSign <- if (req ^. req_command) `elem` whiteListCommands
         then packSecSign req
         else pure B.empty
@@ -197,9 +197,9 @@ packBody req = do
     where
         req_type_ = req ^. req_type
 
-packRequest :: Request -> ContextOPM B.ByteString
+packRequest :: Request -> ContextRM B.ByteString
 packRequest req = do
-    tr <- use transport
+    tr <- view transport
     let req_type_ = req ^. req_type
         enc_type_ = if B.length (tr ^. signature . d2) == 0
             then ET_EmptyKey

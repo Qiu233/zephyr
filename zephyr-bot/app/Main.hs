@@ -23,7 +23,7 @@ login :: ClientOPM ()
 login = do
     v <- withContext buildLoginPacket
     pkt <- sendAndWait_ v
-    rsp_ <- withContext $ decodeLoginResponse (pkt ^. pkt_body)
+    rsp_ <- withContextM $ decodeLoginResponse (pkt ^. pkt_body)
     go rsp_
     where 
         go rsp = do
@@ -51,7 +51,7 @@ login = do
                     ticket <- liftIO getLine
                     v <- withContext $ buildTicketSubmitPacket ticket
                     pkt <- sendAndWait_ v
-                    rsp2 <- withContext $ decodeLoginResponse $ pkt ^. pkt_body
+                    rsp2 <- withContextM $ decodeLoginResponse $ pkt ^. pkt_body
                     go rsp2
                 VerificationNeeded msg url phone -> do
                     liftIO $ putStrLn "需要扫码或短信验证码登录"

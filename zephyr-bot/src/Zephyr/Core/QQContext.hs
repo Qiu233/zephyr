@@ -16,6 +16,7 @@ import Prelude hiding (seq)
 import Zephyr.Core.Codec
 import Zephyr.Core.Transport
 import qualified Data.ByteString.Lazy as B
+import Control.Monad.Reader (ReaderT)
 
 data QQProfile = QQProfile {
     _nickname :: String,
@@ -38,6 +39,7 @@ data QQContext = QQContext {
 }
 
 type ContextOPM = StateT QQContext IO
+type ContextRM = ReaderT QQContext IO
 
 $(makeLenses ''QQContext)
 
@@ -50,7 +52,7 @@ newContext _uin _password_md5 _device _app_version _sign_server = do
     let _qqprofile = QQProfile { _nickname = "", _age = 0, _gender = 0 }
     pure $ QQContext {..}
 
-nextSeq :: ContextOPM Word16
+nextSeq :: ContextRM Word16
 nextSeq = do
-    seq_ <- use seq
+    seq_ <- view seq
     liftIO $ atomically $ stateTVar seq_ (\x -> (x, x+1))
