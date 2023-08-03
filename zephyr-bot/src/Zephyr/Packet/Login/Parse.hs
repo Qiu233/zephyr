@@ -1,7 +1,6 @@
 {-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Packet.Login.Parse where
-import GHC.Stack
 import qualified Data.ByteString.Lazy as B
 import Zephyr.Core.QQContext
 import Zephyr.Packet.Login.Types
@@ -19,13 +18,21 @@ import Zephyr.Packet.Login.Pow
 import Zephyr.Packet.TLV.Decoders
 import Zephyr.Packet.Internal
 import Zephyr.Utils.Binary
-import Data.Maybe
 import Data.Proxy
+import Zephyr.Utils.Map
+import Control.Monad.Except
+import Zephyr.Utils.Jce
+import Zephyr.Packet.Jce.RequestPacket
+import Zephyr.Packet.Jce.RequestDataVersion2
+import Zephyr.Utils.Jce.JceMap
+import Zephyr.Packet.Jce.SvcRespRegister
+import Control.Monad.Trans.Except
+import Data.Either
 
 
 
 
-decodeLoginResponse :: HasCallStack => B.ByteString -> ContextOPM LoginResponse
+decodeLoginResponse :: B.ByteString -> ContextOPM LoginResponse
 decodeLoginResponse bs = do
     mp (es !> 0x402) $ \x -> do
         guid_ <- uses (transport . device . guid) guidBytes
@@ -107,11 +114,19 @@ decodeLoginResponse bs = do
                         pure $ UnknownLoginResponse t r_
                     else pure $ UnknownLoginResponse t ""
     where
-        (?>) d k = fromMaybe mempty (Data.HashMap.lookup k d)
         (_, t, _, r) = flip runGet bs $ do
             (,,,) <$> get16be <*> get8 <*> get16be <*> getRemaining
         es = runGet (getTLVEntries (Proxy @Word16)) r :: Map Word16 B.ByteString
-        (!>) = flip Data.HashMap.lookup
         has_ = flip Data.HashMap.member
-        mp :: (Monad m) => Maybe a -> (a -> m ()) -> m ()
-        mp = flip (maybe (pure ()))
+
+decodeClientRegisterResponse :: B.ByteString -> ExceptT String ContextRM ()
+decodeClientRegisterResponse bs = do
+    let request_ = jceUnmarshal bs :: RequestPacket
+    let data_ = jceUnmarshal $ jceUnwrap (request_._s_buffer) :: RequestDataVersion2
+    let m_ = jceUnwrap $ data_._map
+    let svcRspM = jceUnmarshal_ $ B.drop 1 $ jlookupOrEmpty "QQService.SvcRespRegister" $ jlookupOrEmpty "SvcRespRegister" m_ :: Either String SvcRespRegister
+    when (isLeft svcRspM) $ do
+        throwE $ fromLeft undefined svcRspM
+    let svcRsp = fromRight undefined svcRspM
+    when (jceUnwrap svcRsp._result /= "" || jceUnwrap svcRsp._reply_code /= 0) $ do
+        throwE "reg failed"

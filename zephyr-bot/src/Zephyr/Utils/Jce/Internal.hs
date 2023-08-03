@@ -10,6 +10,8 @@ import Control.Monad (replicateM, forM_, replicateM_)
 import Control.Monad.Fix
 import GHC.IsList
 import Zephyr.Utils.Binary
+import Zephyr.Utils.Jce.JceMap
+import GHC.Stack
 
 type JceEntry a = (Word8, a)
 
@@ -92,8 +94,8 @@ getHead = do
     let type_ = b1 .&. 0x0f
     pure (tag_, type_)
 
-ueError :: Show a1 => a1 -> a2
-ueError e = error $ "unexpected type: " ++ show e
+ueError :: HasCallStack => Show a1 => Word8 -> a1 -> a2
+ueError t e = error $ "unexpected type: " ++ show e ++ " at " ++ show t
 
 skipFieldValue :: Word8 -> Get ()
 skipFieldValue type_ = do
@@ -144,7 +146,7 @@ skipTo tag = do
         skipFieldValue type_
         skipTo tag
 
-getJInt :: Word8 -> Get Int64
+getJInt :: HasCallStack => Word8 -> Get Int64
 getJInt tag = do
     type_ <- skipTo tag
     case type_ of
@@ -153,7 +155,7 @@ getJInt tag = do
         1 -> fromIntegral <$> get16be
         2 -> fromIntegral <$> get32be
         3 -> fromIntegral <$> get64be
-        _ -> ueError type_
+        _ -> ueError tag type_
 
 getJString :: Word8 -> Get String
 getJString tag = do
@@ -165,7 +167,7 @@ getJString tag = do
         7 -> do
             l <- fromIntegral <$> get32be
             getutf8 l
-        _ -> ueError type_
+        _ -> ueError tag type_
 
 
 getJBytes :: Word8 -> Get B.ByteString
@@ -176,37 +178,44 @@ getJBytes tag = do
             _ <- get8
             l <- fromIntegral <$> getJInt 0
             getbs l
-        _ -> ueError type_
+        _ -> ueError tag type_
 
 
 class JceData a where
     gjput :: Word8 -> a -> Put
-    gjget :: Word8 -> Get a
+    gjget :: HasCallStack => Word8 -> Get a
+    gjdef :: a
 
 
 instance JceData Int64 where
     gjput = putJInt
     gjget = getJInt
+    gjdef = 0
 
 instance JceData Int32 where
     gjput = putJInt
     gjget n = fromIntegral <$> getJInt n
+    gjdef = 0
 
 instance JceData Int16 where
     gjput = putJInt
     gjget n = fromIntegral <$> getJInt n
+    gjdef = 0
 
-instance JceData Int8 where
+instance JceData Word8 where
     gjput = putJInt
     gjget n = fromIntegral <$> getJInt n
+    gjdef = 0
 
 instance {-# OVERLAPPING #-} JceData String where
     gjput = putJString
     gjget = getJString
+    gjdef = ""
 
 instance JceData B.ByteString where
     gjput = putJBytes
     gjget = getJBytes
+    gjdef = B.empty
 
 instance (JceData a, JceData b) => JceData (JceMap a b) where
     gjput n (JceMap m) = do
@@ -226,7 +235,8 @@ instance (JceData a, JceData b) => JceData (JceMap a b) where
                     v <- gjget 1
                     pure (k, v)
                 pure $ JceMap ls
-            _ -> ueError type_
+            _ -> ueError n type_
+    gjdef = JceMap []
 
 instance JceData a => JceData [a] where
     gjput n m = do
@@ -241,13 +251,6 @@ instance JceData a => JceData [a] where
             9 -> do
                 s <- fromIntegral <$> getJInt 0
                 replicateM s $ gjget 0
-            _ -> ueError type_
-
-newtype JceMap a b = JceMap [(a, b)]
-    deriving (Show, Eq)
-
-instance IsList (JceMap a b) where
-    type Item (JceMap a b) = (a, b)
-    fromList = JceMap
-    toList (JceMap m) = m
+            _ -> ueError n type_
+    gjdef = []
 

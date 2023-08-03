@@ -22,9 +22,9 @@ import Zephyr.Utils.Time
 import Zephyr.Utils.Binary
 import Zephyr.Utils.Codec
 import Zephyr.Core.Device
-import Data.Maybe
 import GHC.Stack (HasCallStack)
 import Control.Monad.IO.Class
+import Zephyr.Utils.Map
 
 decodeT130 :: B.ByteString -> ContextOPM ()
 decodeT130 bs = do
@@ -101,8 +101,3 @@ decodeT119 data_ ek_ = do
     qqprofile . nickname .= nick_
     qqprofile . age .= age_
     qqprofile . gender .= gender_
-    where
-        (?>) d k = fromMaybe mempty (Data.HashMap.lookup k d)
-        (!>) = flip Data.HashMap.lookup
-        mp :: (Monad m) => Maybe a -> (a -> m ()) -> m ()
-        mp = flip (maybe (pure ()))

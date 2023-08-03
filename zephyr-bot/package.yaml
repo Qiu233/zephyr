@@ -60,6 +60,7 @@ library:
   source-dirs: src
   default-extensions:
     - NoFieldSelectors
+    - OverloadedRecordDot
 
 executables:
   zephyr-bot-exe:

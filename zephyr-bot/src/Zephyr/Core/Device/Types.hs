@@ -51,6 +51,8 @@ data Device = Device {
     _imei :: String,
     _android_id :: String,
     _apn :: String,
+    _vendor_name :: String,
+    _vendor_os_name :: String,
     _os_version :: OSVersion,
     _imsi :: B.ByteString,
     _guid :: GUID,
@@ -104,6 +106,8 @@ generateDevice uin = do
         _wifi_ssid = printf "TP-LINK-%X" uin :: String
     let (_imei, _) = randIMEI pg
     let _apn = "wifi"
+        _vendor_name = "MIUI"
+        _vendor_os_name = "mirai"
         _os_version = OSVersion _incremental "10" "REL" 29
     let _imsi = B.pack $ take 16 $ randoms pg
     let _guid = createGUID $ B.fromStrict . md5OfU8 $ (_imei ++ _mac_address)
