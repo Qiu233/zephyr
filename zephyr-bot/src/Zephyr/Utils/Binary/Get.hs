@@ -13,6 +13,7 @@ import qualified Data.ByteString.Lazy.UTF8 as UTF8
 import Control.Monad (replicateM)
 import GHC.Stack (HasCallStack, callStack)
 import GHC.Exception
+import Data.Functor (void)
 
 class GBinGet f where
     ggetle :: Get (f a)
@@ -150,8 +151,8 @@ getbs len' = Get $ \bs ->
         Success (B.take len bs) (B.drop len bs)
     where len = fromIntegral len'
 
-getbsToUTF8 :: Int -> Get String
-getbsToUTF8 len = UTF8.toString <$> getbs len
+getutf8 :: Int -> Get String
+getutf8 len = UTF8.toString <$> getbs len
 
 getListOfBE :: BinGet a => Int -> Get [a]
 getListOfBE len = replicateM len getbe
@@ -169,3 +170,6 @@ tryGet (Get f) = Get $ \bs -> case f bs of
 
 getb :: Get Bool
 getb = (/=0) <$> get8
+
+skip :: Int -> Get ()
+skip len = void $ getbs len

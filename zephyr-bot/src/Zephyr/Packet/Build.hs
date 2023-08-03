@@ -145,7 +145,7 @@ packSecSign req = do
         (req ^. req_command)
         qua_ (req ^. req_body)
     case rst of
-        Left err -> error err --pure B.empty
+        Left _ -> pure B.empty
         Right (sign_, extra_, token_) -> do
             pure $ PL.encodeMessage_ [
                     9 `PL.putPVInt32` 0,
