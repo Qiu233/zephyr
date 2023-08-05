@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Packet.Jce.SvcReqRegister where
 import Zephyr.Packet.Jce.JceCommon
 import qualified Data.ByteString.Lazy as B

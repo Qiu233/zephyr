@@ -8,7 +8,7 @@ import qualified Data.ByteString.Lazy as B
 import Control.Lens
 import Data.HashMap
 import Data.Word
-import Control.Monad.Reader (ReaderT)
+import Control.Monad.Reader (ReaderT, MonadIO (..))
 
 data QQPacket = QQPacket {
     _pkt_seq :: Word16,
@@ -36,3 +36,8 @@ newClient ctx sock = do
         newTMVarIO ctx <*> pure sock <*>
         newTVarIO False <*>
         newTVarIO B.empty <*> newEmptyTMVarIO <*> newTMVarIO Data.HashMap.empty
+
+isClientOnline :: ClientOPM Bool
+isClientOnline = do
+    c <- view online
+    liftIO $ readTVarIO c

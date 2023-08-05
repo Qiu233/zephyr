@@ -1,7 +1,7 @@
+{-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Utils.Map where
 import Data.Maybe
 import Data.HashMap
-import Zephyr.Utils.Binary
 import Data.Hashable
 
 

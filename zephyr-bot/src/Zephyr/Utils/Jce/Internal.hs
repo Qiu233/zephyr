@@ -8,7 +8,6 @@ import Data.Bits
 import Data.Int
 import Control.Monad (replicateM, forM_, replicateM_)
 import Control.Monad.Fix
-import GHC.IsList
 import Zephyr.Utils.Binary
 import Zephyr.Utils.Jce.JceMap
 import GHC.Stack

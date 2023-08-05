@@ -1,5 +1,7 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE NumericUnderscores #-}
 module Main (main) where
 import Zephyr.Core.QQContext
 import Data.Word
@@ -19,6 +21,13 @@ import Zephyr.Client.Types
 import Zephyr.Client.Login
 import Zephyr.Client.Internal
 import Control.Monad.Except (runExceptT)
+import Control.Concurrent
+import Zephyr.Core.Request
+import Data.IORef
+import Control.Monad.Reader
+import Control.Concurrent.Async
+import Control.Monad.STM
+import Control.Concurrent.STM.TVar
 
 login :: ClientOPM Bool
 login = do
@@ -31,6 +40,8 @@ login = do
             case rsp of
                 LoginSuccess -> do
                     liftIO $ putStrLn "登录成功"
+                    onlineV <- view online
+                    liftIO $ atomically $ writeTVar onlineV True
                     return True
                 AccountFrozen -> do
                     liftIO $ putStrLn "账号被冻结"
@@ -64,7 +75,7 @@ login = do
                     liftIO $ putStrLn msg
                     liftIO $ putStrLn $ "链接: " ++ url
                     liftIO $ putStrLn $ "手机号(为空说明不支持): " ++ phone
-                    undefined
+                    pure False
                 SMSNeeded msg phone -> do
                     liftIO $ putStrLn "需要短信验证码登录"
                     liftIO $ putStrLn msg
@@ -86,6 +97,30 @@ registerClient = do
         Right _ -> do
             liftIO $ putStrLn "客户端注册成功"
 
+beginHeartbeat :: ClientOPM (Async ())
+beginHeartbeat = do
+    times <- liftIO $ newIORef (0 :: Int)
+    let f = fix $ \k -> do
+            online_ <- isClientOnline
+            when online_ $ do
+                liftIO $ threadDelay 30_000_000
+                (seq_, uin_) <- withContext ((,) <$> nextSeq <*> view uin)
+                let req_ = Request RT_Login ET_NoEncrypt (fromIntegral seq_) uin_ "Heartbeat.Alive" B.empty
+                runExceptT (sendAndWait req_) >>= \case
+                    Left e -> do
+                        liftIO $ putStrLn "心跳失败: "
+                        liftIO $ print e
+                    Right _ -> do
+                        liftIO $ putStrLn "心跳"
+                        liftIO $ modifyIORef times (+1)
+                        t <- liftIO $ readIORef times
+                        when (t >= 7) $ do
+                            registerClient
+                            liftIO $ writeIORef times 0
+                k
+    s <- asks (runReaderT f)
+    liftIO $ async s
+
 
 clientMainInner :: ClientOPM ()
 clientMainInner = do
@@ -94,11 +129,14 @@ clientMainInner = do
     s <- login
     when s $ do
         registerClient
+        beginHeartbeat >>= liftIO . wait
 
 main :: IO ()
 main = do
     uin_ <- getEnv "UIN" <&> read @Word64
     password <- getEnv "PASSWORD" <&> B.fromStrict . md5OfU8
+    qsign <- getEnv "QSIGN"
+
     let dev = generateDevice uin_
-    ctx <- newContext uin_ password dev androidPhone "http://127.0.0.1:6543"
+    ctx <- newContext uin_ password dev androidPhone qsign
     clientMain ctx clientMainInner
