@@ -1,5 +1,6 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Utils.Jce.JceMap where
 import GHC.IsList
 import Data.Maybe

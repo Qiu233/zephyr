@@ -17,6 +17,7 @@ data QQPacket = QQPacket {
 } deriving (Eq, Show)
 $(makeLenses ''QQPacket)
 
+type ClientOPM = ReaderT Client IO
 data Client = Client {
     _context :: TMVar QQContext,
     _socket :: Socket,
@@ -25,17 +26,19 @@ data Client = Client {
 
     _in_buffer :: TVar B.ByteString,
     _out_buffer :: TMVar B.ByteString,
-    _promises :: TMVar(Map Word16 (TMVar QQPacket))
+    _promises :: TMVar(Map Word16 (TMVar QQPacket)),
+
+    _handlers :: TMVar (Map String [QQPacket -> ClientOPM ()])
 }
 $(makeLenses ''Client)
 
-type ClientOPM = ReaderT Client IO
 newClient :: QQContext -> Socket -> IO Client
 newClient ctx sock = do
     Client <$>
         newTMVarIO ctx <*> pure sock <*>
         newTVarIO False <*>
-        newTVarIO B.empty <*> newEmptyTMVarIO <*> newTMVarIO Data.HashMap.empty
+        newTVarIO B.empty <*> newEmptyTMVarIO <*> newTMVarIO Data.HashMap.empty <*>
+        newTMVarIO Data.HashMap.empty
 
 isClientOnline :: ClientOPM Bool
 isClientOnline = do

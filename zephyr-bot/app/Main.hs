@@ -95,7 +95,8 @@ registerClient = do
             liftIO $ putStrLn "客户端注册失败: "
             liftIO $ print e
         Right _ -> do
-            liftIO $ putStrLn "客户端注册成功"
+            --liftIO $ putStrLn "客户端注册成功"
+            pure ()
 
 beginHeartbeat :: ClientOPM (Async ())
 beginHeartbeat = do
@@ -111,7 +112,6 @@ beginHeartbeat = do
                         liftIO $ putStrLn "心跳失败: "
                         liftIO $ print e
                     Right _ -> do
-                        liftIO $ putStrLn "心跳"
                         liftIO $ modifyIORef times (+1)
                         t <- liftIO $ readIORef times
                         when (t >= 7) $ do

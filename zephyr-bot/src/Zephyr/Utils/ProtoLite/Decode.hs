@@ -24,7 +24,7 @@ getValue (PTag _ _wireType) = case _wireType of
         len <- pvIntDirect <$> getPVInt :: Get Int32
         PVLenPrefixed <$> getbs (fromIntegral len)
     5 -> PVI32 <$> get32le
-    _ -> error "Unknown wire type"
+    _ -> fail "Unknown wire type"
 
 getEntry :: Get PMessageEntry
 getEntry = do

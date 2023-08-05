@@ -71,8 +71,9 @@ getResponse = do
                     len <- get32be
                     getbs $ fromIntegral (len - 4)) x
             case contentM of
-                TooFewBytes -> (B.empty, x)
+                DError "Too few bytes" -> (B.empty, x)
                 Success y r -> (y, r)
+                DError err -> error err
         else
             (B.empty, x)
     if B.null r then

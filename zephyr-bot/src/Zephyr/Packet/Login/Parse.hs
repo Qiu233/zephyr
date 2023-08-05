@@ -28,6 +28,7 @@ import Zephyr.Utils.Jce.JceMap
 import Zephyr.Packet.Jce.SvcRespRegister
 import Control.Monad.Trans.Except
 import Data.Either
+import Data.Maybe (fromMaybe)
 
 
 
@@ -124,7 +125,7 @@ decodeClientRegisterResponse bs = do
     let request_ = jceUnmarshal bs :: RequestPacket
     let data_ = jceUnmarshal $ jceUnwrap (request_._s_buffer) :: RequestDataVersion2
     let m_ = jceUnwrap $ data_._map
-    let svcRspM = jceUnmarshal_ $ B.drop 1 $ jlookupOrEmpty "QQService.SvcRespRegister" $ jlookupOrEmpty "SvcRespRegister" m_ :: Either String SvcRespRegister
+    let svcRspM = jceUnmarshal_ $ B.drop 1 $ fromMaybe B.empty (jlookup "SvcRespRegister" m_ >>= jlookup "QQService.SvcRespRegister") :: Either String SvcRespRegister
     when (isLeft svcRspM) $ do
         throwE $ fromLeft undefined svcRspM
     let svcRsp = fromRight undefined svcRspM

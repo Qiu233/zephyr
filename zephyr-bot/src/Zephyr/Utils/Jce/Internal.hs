@@ -93,8 +93,8 @@ getHead = do
     let type_ = b1 .&. 0x0f
     pure (tag_, type_)
 
-ueError :: HasCallStack => Show a1 => Word8 -> a1 -> a2
-ueError t e = error $ "unexpected type: " ++ show e ++ " at " ++ show t
+ueError :: Show a => Word8 -> a -> Get b
+ueError t e = fail $ "unexpected type: " ++ show e ++ " at " ++ show t
 
 skipFieldValue :: Word8 -> Get ()
 skipFieldValue type_ = do
@@ -145,7 +145,7 @@ skipTo tag = do
         skipFieldValue type_
         skipTo tag
 
-getJInt :: HasCallStack => Word8 -> Get Int64
+getJInt :: Word8 -> Get Int64
 getJInt tag = do
     type_ <- skipTo tag
     case type_ of
