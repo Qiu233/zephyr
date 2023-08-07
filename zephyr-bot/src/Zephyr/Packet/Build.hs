@@ -1,5 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveGeneric #-}
 module Zephyr.Packet.Build (
     buildOicqRequestPacket,
     packRequest,
@@ -8,6 +10,8 @@ module Zephyr.Packet.Build (
 ) where
 import qualified Data.ByteString.Lazy as B
 import Data.Word
+import Data.Int
+import GHC.Generics
 import Zephyr.Utils.Binary
 import Control.Monad
 import Zephyr.Core.QQContext
@@ -22,7 +26,7 @@ import qualified Zephyr.Encrypt.QQTea as QQTea
 import Zephyr.Core.AppVersion
 import Zephyr.Core.Device.Types
 import Zephyr.Packet.Wrapper (wsign)
-import qualified Zephyr.Utils.ProtoLite as PL
+import ProtoLite as PL
 import qualified Zephyr.Packet.Oicq as Oicq
 
 
@@ -133,6 +137,28 @@ buildOicqRequestPacket codec_ uin_ command_ tlvs_ = do
     Oicq.marshal codec_ msg
     where msg = Message (fromIntegral uin_) command_ EM_ECDH (marshalTLVs  tlvs_)
 
+data PBSSOReserveField = PBSSOReserveField {
+    _flag :: ProtoField (Variant Int32) 9,
+    _qimei :: ProtoField String 12,
+    _newconn_flag :: ProtoField (Variant Int32) 14,
+    _uid :: ProtoField String 16,
+    _imsi :: ProtoField (Variant Int32) 18,
+    _network_type :: ProtoField (Variant Int32) 19,
+    _ip_stack_type :: ProtoField (Variant Int32) 20,
+    _message_type :: ProtoField (Variant Int32) 21,
+    _sec_info :: ProtoField PBSSOSecureInfo 24,
+    _sso_ip_origin :: ProtoField (Variant Int32) 28
+} deriving (Generic, Show)
+instance ProtoBuf PBSSOReserveField
+
+data PBSSOSecureInfo = PBSSOSecureInfo {
+    _sec_sig :: ProtoField B.ByteString 1,
+    _sec_device_token :: ProtoField B.ByteString 2,
+    _sec_extra :: ProtoField B.ByteString 3
+} deriving (Generic, Show)
+instance ProtoBuf PBSSOSecureInfo
+
+
 packSecSign :: Request -> ContextRM B.ByteString
 packSecSign req = do
     tr <- view transport
@@ -147,22 +173,38 @@ packSecSign req = do
     case rst of
         Left _ -> pure B.empty
         Right (sign_, extra_, token_) -> do
-            pure $ PL.encodeMessage_ [
-                    9 `PL.putPVInt32` 0,
-                    12 `PL.putLenUTF8` (d ^. qimei16),
-                    14 `PL.putPVInt32` 0,
-                    16 `PL.putLenUTF8` show (req ^. req_uin),
-                    18 `PL.putPVInt32` 0,
-                    19 `PL.putPVInt32` 1,
-                    20 `PL.putPVInt32` 1,
-                    21 `PL.putPVInt32` 0,
-                    24 `PL.putLenBytes` PL.encodeMessage_ [
-                        1 `PL.putLenBytes` sign_,
-                        2 `PL.putLenBytes` token_,
-                        3 `PL.putLenBytes` extra_
-                        ],
-                    28 `PL.putPVInt32` 0
-                    ]
+            -- pure $ PL.encodeMessage_ [
+            --         9 `PL.putPVInt32` 0,
+            --         12 `PL.putLenUTF8` (d ^. qimei16),
+            --         14 `PL.putPVInt32` 0,
+            --         16 `PL.putLenUTF8` show (req ^. req_uin),
+            --         18 `PL.putPVInt32` 0,
+            --         19 `PL.putPVInt32` 1,
+            --         20 `PL.putPVInt32` 1,
+            --         21 `PL.putPVInt32` 0,
+            --         24 `PL.putLenBytes` PL.encodeMessage_ [
+            --             1 `PL.putLenBytes` sign_,
+            --             2 `PL.putLenBytes` token_,
+            --             3 `PL.putLenBytes` extra_
+            --             ],
+            --         28 `PL.putPVInt32` 0
+            --         ]
+            pure $ PL.encode $ PBSSOReserveField {
+                _flag = 0,
+                _qimei = ProtoField $ d ^. qimei16,
+                _newconn_flag = 0,
+                _uid = ProtoField $ show (req ^. req_uin),
+                _imsi = 0,
+                _network_type = 1,
+                _ip_stack_type = 1,
+                _message_type = 0,
+                _sec_info = ProtoField $ PBSSOSecureInfo {
+                    _sec_sig = ProtoField $ sign_,
+                    _sec_device_token = ProtoField $ token_,
+                    _sec_extra = ProtoField $ extra_
+                },
+                _sso_ip_origin = 0
+            }
 
 
 packBody :: Request -> ContextRM B.ByteString

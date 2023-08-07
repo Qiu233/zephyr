@@ -145,6 +145,15 @@ skipTo tag = do
         skipFieldValue type_
         skipTo tag
 
+skipToStructEnd :: Get ()
+skipToStructEnd = do
+    fix $ \loop -> do
+        (tag_, type_) <- getHead
+        if tag_ == 11 then pure ()
+        else do
+            skipFieldValue type_
+            loop
+
 getJInt :: Word8 -> Get Int64
 getJInt tag = do
     type_ <- skipTo tag
@@ -186,22 +195,22 @@ class JceData a where
     gjdef :: a
 
 
-instance JceData Int64 where
+instance {-# OVERLAPPING #-} JceData Int64 where
     gjput = putJInt
     gjget = getJInt
     gjdef = 0
 
-instance JceData Int32 where
+instance {-# OVERLAPPING #-} JceData Int32 where
     gjput = putJInt
     gjget n = fromIntegral <$> getJInt n
     gjdef = 0
 
-instance JceData Int16 where
+instance {-# OVERLAPPING #-} JceData Int16 where
     gjput = putJInt
     gjget n = fromIntegral <$> getJInt n
     gjdef = 0
 
-instance JceData Word8 where
+instance {-# OVERLAPPING #-} JceData Word8 where
     gjput = putJInt
     gjget n = fromIntegral <$> getJInt n
     gjdef = 0
@@ -211,12 +220,12 @@ instance {-# OVERLAPPING #-} JceData String where
     gjget = getJString
     gjdef = ""
 
-instance JceData B.ByteString where
+instance {-# OVERLAPPING #-} JceData B.ByteString where
     gjput = putJBytes
     gjget = getJBytes
     gjdef = B.empty
 
-instance (JceData a, JceData b) => JceData (JceMap a b) where
+instance {-# OVERLAPPING #-} (JceData a, JceData b) => JceData (JceMap a b) where
     gjput n (JceMap m) = do
         putHead 8 n
         let l = length m
@@ -237,7 +246,7 @@ instance (JceData a, JceData b) => JceData (JceMap a b) where
             _ -> ueError n type_
     gjdef = JceMap []
 
-instance JceData a => JceData [a] where
+instance {-# OVERLAPPING #-} JceData a => JceData [a] where
     gjput n m = do
         putHead 9 n
         let l = length m

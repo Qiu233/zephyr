@@ -7,6 +7,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 module Zephyr.Utils.Jce.Generic where
 
 import GHC.Generics
@@ -20,7 +22,7 @@ import Zephyr.Utils.Binary
 import GHC.Stack
 
 
-newtype JceField (t :: Type) (n :: Natural) = JceField t
+newtype JceField (t :: Type) (n :: Natural) = JceField { jval :: t }
     deriving (Eq, Num, IsString, IsList)
 
 jceUnwrap :: JceField t n -> t
@@ -69,3 +71,18 @@ instance (KnownNat n, JceData t) => Jce (JceField t n) where
     jput (JceField t) = gjput (fromIntegral . natVal $ (Proxy :: Proxy n)) t
     jget = JceField <$> gjget (fromIntegral . natVal $ (Proxy :: Proxy n))
     jdef = JceField gjdef
+
+instance Jce a => JceData a where
+    gjdef = jdef
+    gjput n v = do
+        putHead 10 n
+        jput v
+        putHead 11 n
+    gjget n = do
+        type_ <- skipTo n
+        case type_ of
+            10 -> do
+                v <- jget
+                skipToStructEnd
+                pure v
+            _ -> ueError n type_

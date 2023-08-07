@@ -89,11 +89,15 @@ getResponse_ = do
         Left err -> error err
         Right v -> pure v
 
+sendBytes :: B.ByteString -> ClientOPM ()
+sendBytes bs = do
+    v <- view out_buffer
+    liftIO $ atomically $ putTMVar v bs
+
 sendPacket :: Request -> ClientOPM ()
 sendPacket r = do
     bs <- withContext $ packRequest r
-    v <- view out_buffer
-    liftIO $ atomically $ putTMVar v bs
+    sendBytes bs
 
 netLoopSend :: ClientOPM ()
 netLoopSend = do

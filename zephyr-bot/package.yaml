@@ -20,6 +20,7 @@ description:         Haskell re-implementation of QQBot licence.
 
 dependencies:
 - base >= 4.7 && < 5
+- protolite
 - template-haskell
 - mtl
 - transformers

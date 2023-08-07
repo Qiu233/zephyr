@@ -40,7 +40,9 @@ packages:
 # - git: https://github.com/commercialhaskell/stack.git
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a
 #
-# extra-deps: []
+extra-deps:
+- git: https://github.com/Qiu233/protolite.git
+  commit: d0bf2ab1c01ff7dc81dff5a9c790cbc246e77513
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

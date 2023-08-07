@@ -2,6 +2,8 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# HLINT ignore "Redundant id" #-}
 module Zephyr.Packet.TLV.Builders where
 
@@ -15,12 +17,13 @@ import Zephyr.Core.Signature as Sig
 import Prelude hiding (id, seq)
 import Zephyr.Utils.GUID (guidBytes)
 import Zephyr.Utils.Common
-import qualified Zephyr.Utils.ProtoLite as PL
 import Data.Word
 import Zephyr.Packet.Internal
 import Zephyr.Core.Transport
 import qualified Zephyr.Packet.TLV.Prim as Prim
 import Zephyr.Packet.Wrapper (wenergy)
+import ProtoLite as PL
+import GHC.Generics
 
 packTLV :: Word16 -> Put -> B.ByteString
 packTLV t p = runPut $ do
@@ -182,6 +185,19 @@ t143 = do
 guidFlag :: Word32
 guidFlag = 0x1000000
 
+data PBDeviceInfo = PBDeviceInfo {
+    _bootloader :: ProtoField String 1,
+    _proc_version :: ProtoField String 2,
+    _code_name :: ProtoField String 3,
+    _incremental :: ProtoField (Variant Word32) 4,
+    _fingerprint :: ProtoField String 5,
+    _boot_id :: ProtoField String 6,
+    _android_id :: ProtoField String 7,
+    _base_band :: ProtoField String 8,
+    _incremental2 :: ProtoField (Variant Word32) 9
+} deriving (Generic)
+instance ProtoBuf PBDeviceInfo
+
 t144 :: ContextRM B.ByteString
 t144 = do
     imei_ <- views (transport . device . imei) utf8ToBytes
@@ -195,19 +211,16 @@ t144 = do
     tgtgt_key_ <- view $ transport . device . tgtgt_key
 
     d <- view $ transport . device
-    let pb = PL.encodeMessage_ [
-            1 `PL.putLenUTF8` (d ^. bootloader),
-            2 `PL.putLenUTF8` (d ^. proc_version),
-            3 `PL.putLenUTF8` (d ^. os_version . codeName),
-            4 `PL.putPVUInt32` (d ^. os_version . incremental),
-            -- TODO: why oicq put word32 while proto file definition says it's string?
-            -- By now I decided to follow oicq's implementation
-            5 `PL.putLenUTF8` (d ^. fingerprint),
-            6 `PL.putLenUTF8` (d ^. boot_id),
-            7 `PL.putLenUTF8` (d ^. android_id),
-            8 `PL.putLenUTF8` (d ^. base_band),
-            9 `PL.putPVUInt32` (d ^. os_version . incremental)
-            ]
+    let pb = PL.encode $ PBDeviceInfo
+            (ProtoField $ d ^. bootloader)
+            (ProtoField $ d ^. proc_version)
+            (ProtoField $ d ^. os_version . codeName)
+            (ProtoField $ Variant $ d ^. os_version . incremental)
+            (ProtoField $ d ^. fingerprint)
+            (ProtoField $ d ^. boot_id)
+            (ProtoField $ d ^. android_id)
+            (ProtoField $ d ^. base_band)
+            (ProtoField $ Variant $ d ^. os_version . incremental)
     Prim.t144_ imei_ pb os_type_ release_ sim_ apn_ False True False guidFlag model_ guid_ brand_ tgtgt_key_
 
 t145 :: ContextRM B.ByteString
