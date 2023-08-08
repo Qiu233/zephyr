@@ -20,6 +20,7 @@ import Text.Printf (printf)
 import Zephyr.Client.Types
 import Zephyr.Client.Login
 import Zephyr.Client.Internal
+import Zephyr.Client.Init
 import Control.Monad.Except (runExceptT)
 import Control.Concurrent
 import Zephyr.Core.Request

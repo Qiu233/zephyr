@@ -9,6 +9,8 @@ import Control.Lens
 import Data.HashMap
 import Data.Word
 import Control.Monad.Reader (ReaderT, MonadIO (..))
+import Zephyr.Client.Highway
+import Zephyr.Client.Events
 
 data QQPacket = QQPacket {
     _pkt_seq :: Word16,
@@ -17,10 +19,18 @@ data QQPacket = QQPacket {
 } deriving (Eq, Show)
 $(makeLenses ''QQPacket)
 
+data Events = Events {
+    _server_updated :: TVar [Client -> ServerUpdatedEventArgs -> IO Bool]
+}
+
+emptyEvents :: IO Events
+emptyEvents = Events <$> newTVarIO []
+
 type ClientOPM = ReaderT Client IO
 data Client = Client {
     _context :: TMVar QQContext,
     _socket :: Socket,
+    _servers :: TVar [(String, Int)],
 
     _online :: TVar Bool,
 
@@ -28,17 +38,11 @@ data Client = Client {
     _out_buffer :: TMVar B.ByteString,
     _promises :: TMVar(Map Word16 (TMVar QQPacket)),
 
-    _handlers :: TMVar (Map String [QQPacket -> ClientOPM ()])
+    _events :: Events,
+    _handlers :: TVar (Map String (QQPacket -> ClientOPM ())),
+    _highway_session :: HighwaySession
 }
 $(makeLenses ''Client)
-
-newClient :: QQContext -> Socket -> IO Client
-newClient ctx sock = do
-    Client <$>
-        newTMVarIO ctx <*> pure sock <*>
-        newTVarIO False <*>
-        newTVarIO B.empty <*> newEmptyTMVarIO <*> newTMVarIO Data.HashMap.empty <*>
-        newTMVarIO Data.HashMap.empty
 
 isClientOnline :: ClientOPM Bool
 isClientOnline = do

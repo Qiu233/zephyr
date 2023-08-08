@@ -25,9 +25,6 @@ import GHC.Stack
 newtype JceField (t :: Type) (n :: Natural) = JceField { jval :: t }
     deriving (Eq, Num, IsString, IsList)
 
-jceUnwrap :: JceField t n -> t
-jceUnwrap (JceField t) = t
-
 instance Show t => Show (JceField t n) where
     show (JceField t) = show t
 

@@ -3,8 +3,7 @@ module Zephyr.Utils.Jce (
     Jce,
     jceMarshal,
     jceUnmarshal,
-    jceUnmarshal_,
-    jceUnwrap
+    jceUnmarshal_
 ) where
 import GHC.Stack
 

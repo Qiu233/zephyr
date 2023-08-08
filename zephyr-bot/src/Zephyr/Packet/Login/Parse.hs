@@ -123,11 +123,11 @@ decodeLoginResponse bs = do
 decodeClientRegisterResponse :: B.ByteString -> ExceptT String ContextRM ()
 decodeClientRegisterResponse bs = do
     let request_ = jceUnmarshal bs :: RequestPacket
-    let data_ = jceUnmarshal $ jceUnwrap (request_._s_buffer) :: RequestDataVersion2
-    let m_ = jceUnwrap $ data_._map
+    let data_ = jceUnmarshal $ request_._s_buffer.jval :: RequestDataVersion2
+    let m_ = data_._map.jval
     let svcRspM = jceUnmarshal_ $ B.drop 1 $ fromMaybe B.empty (jlookup "SvcRespRegister" m_ >>= jlookup "QQService.SvcRespRegister") :: Either String SvcRespRegister
     when (isLeft svcRspM) $ do
         throwE $ fromLeft undefined svcRspM
     let svcRsp = fromRight undefined svcRspM
-    when (jceUnwrap svcRsp._result /= "" || jceUnwrap svcRsp._reply_code /= 0) $ do
+    when (svcRsp._result.jval /= "" || svcRsp._reply_code.jval /= 0) $ do
         throwE "reg failed"

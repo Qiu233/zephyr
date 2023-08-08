@@ -6,7 +6,9 @@ module Zephyr.Packet.Build (
     buildOicqRequestPacket,
     packRequest,
     TLV(..),
-    packBody
+    packBody,
+    buildUniRequestData,
+    uniPackRequest
 ) where
 import qualified Data.ByteString.Lazy as B
 import Data.Word
@@ -268,3 +270,16 @@ packRequest req = do
             put8 0
             withLength32Desc $ pututf8 $ show $ req ^. req_uin
             putbs body_
+
+buildUniRequestData :: B.ByteString -> B.ByteString
+buildUniRequestData bs = do
+    runPut $ do
+        put8 0x0a
+        putbs bs
+        put8 0x0b
+
+uniPackRequest :: String -> B.ByteString -> ContextRM Request
+uniPackRequest cmd_ body_ =do
+    seq_ <- fromIntegral <$> nextSeq
+    uin_ <- view uin
+    pure $ Request RT_Simple ET_D2Key seq_ uin_ cmd_ body_
