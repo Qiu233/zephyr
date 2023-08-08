@@ -30,7 +30,7 @@ import Control.Concurrent.Async
 import Control.Monad.STM
 import Control.Concurrent.STM.TVar
 
-login :: ClientOPM Bool
+login :: ReaderT Client IO Bool
 login = do
     v <- withContext buildLoginPacket
     pkt <- sendAndWait_ v
@@ -86,7 +86,7 @@ login = do
                     liftIO $ putStrLn "短信请求过于频繁"
                     pure False
 
-registerClient :: ClientOPM ()
+registerClient :: ReaderT Client IO ()
 registerClient = do
     p <- withContext buildClientRegisterPacket
     pkt <- sendAndWait_ p
@@ -99,7 +99,7 @@ registerClient = do
             --liftIO $ putStrLn "客户端注册成功"
             pure ()
 
-beginHeartbeat :: ClientOPM (Async ())
+beginHeartbeat :: ReaderT Client IO (Async ())
 beginHeartbeat = do
     times <- liftIO $ newIORef (0 :: Int)
     let f = fix $ \k -> do
@@ -123,7 +123,7 @@ beginHeartbeat = do
     liftIO $ async s
 
 
-clientMainInner :: ClientOPM ()
+clientMainInner :: ReaderT Client IO ()
 clientMainInner = do
     fetchQIMEI
     _ <- startNetLoop

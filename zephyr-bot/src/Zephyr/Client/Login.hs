@@ -7,9 +7,9 @@ import Zephyr.Core.Transport
 import Control.Lens
 import Control.Monad.IO.Class
 import Zephyr.Core.Device
-import Control.Monad.Fix (fix)
+import Control.Monad.Reader
 
-fetchQIMEI :: ClientOPM ()
+fetchQIMEI :: ReaderT Client IO ()
 fetchQIMEI = withContextM rc
     where 
         rc = fix $ \fetchQIMEI_ -> do

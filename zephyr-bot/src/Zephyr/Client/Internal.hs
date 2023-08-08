@@ -22,7 +22,7 @@ import Control.Monad.Reader
 import Control.Concurrent
 import Data.Word
 
-withContextM :: ContextOPM a -> ClientOPM a
+withContextM :: ContextOPM a -> ReaderT Client IO a
 withContextM o = do
     v <- view context
     a <- liftIO $ atomically $ takeTMVar v
@@ -30,16 +30,14 @@ withContextM o = do
     liftIO $ atomically $ putTMVar v a'
     pure r
 
-withContext :: ContextRM a -> ClientOPM a
+withContext :: ContextRM a -> ReaderT Client IO a
 withContext o = do
     v <- view context
     a <- liftIO $ atomically $ readTMVar v
     liftIO $ runReaderT o a
 
 
-
-
-getResponse :: ExceptT String ClientOPM QQResponse
+getResponse :: ExceptT String (ReaderT Client IO) QQResponse
 getResponse = do
     sock <- view Zephyr.Client.Types.socket
     v <- view in_buffer
@@ -63,24 +61,24 @@ getResponse = do
         t <- lift $ withContextM $ parsePacket r
         liftEither t
 
-getResponse_ :: ClientOPM QQResponse
+getResponse_ :: ReaderT Client IO QQResponse
 getResponse_ = do
     r <- runExceptT getResponse
     case r of
         Left err -> error err
         Right v -> pure v
 
-sendBytes :: B.ByteString -> ClientOPM ()
+sendBytes :: B.ByteString -> ReaderT Client IO ()
 sendBytes bs = do
     v <- view out_buffer
     liftIO $ atomically $ putTMVar v bs
 
-sendPacket :: Request -> ClientOPM ()
+sendPacket :: Request -> ReaderT Client IO ()
 sendPacket r = do
     bs <- withContext $ packRequest r
     sendBytes bs
 
-netLoopSend :: ClientOPM ()
+netLoopSend :: ReaderT Client IO ()
 netLoopSend = do
     v <- view out_buffer
     bs <- liftIO $ atomically $ takeTMVar v
@@ -89,7 +87,7 @@ netLoopSend = do
         liftIO $ sendAll sock bs
     netLoopSend
 
-netLoopRecv :: ClientOPM ()
+netLoopRecv :: ReaderT Client IO ()
 netLoopRecv = do
     r <- runExceptT getResponse
     case r of
@@ -124,7 +122,7 @@ netLoopRecv = do
                     liftIO $ atomically $ putTMVar promisesV_ promises_
     netLoopRecv
 
-startNetLoop :: ClientOPM (Async ())
+startNetLoop :: ReaderT Client IO (Async ())
 startNetLoop = do
     r <- ask
     let recv_ = runReaderT netLoopRecv r
@@ -137,7 +135,7 @@ waitTimeout i t = do
         Left _ -> return Nothing
         Right r -> return (Just r)
 
-putPromise :: Word16 -> ClientOPM (TMVar QQPacket)
+putPromise :: Word16 -> ReaderT Client IO (TMVar QQPacket)
 putPromise seqID = do
     promisesV_ <- view promises
     promise <- liftIO newEmptyTMVarIO
@@ -146,14 +144,14 @@ putPromise seqID = do
         putTMVar promisesV_ $ insert seqID promise promises_
         pure promise
 
-removePromise :: Word16 -> ClientOPM ()
+removePromise :: Word16 -> ReaderT Client IO ()
 removePromise seqID = do
     promisesV_ <- view promises
     liftIO $ atomically $ do
         promises_ <- takeTMVar promisesV_
         putTMVar promisesV_ $ delete seqID promises_
 
-waitForPacket :: Int -> Word16 -> ExceptT String ClientOPM QQPacket
+waitForPacket :: Int -> Word16 -> ExceptT String (ReaderT Client IO) QQPacket
 waitForPacket timeout seqID = do
     promise <- lift $ putPromise seqID
     rst <- liftIO $ withAsync (atomically $ takeTMVar promise) $ \async_ -> do
@@ -161,13 +159,13 @@ waitForPacket timeout seqID = do
     lift $ removePromise seqID
     maybe (throwE "No response received within time limit.") pure rst
 
-sendAndWait :: Request -> ExceptT String ClientOPM QQPacket
+sendAndWait :: Request -> ExceptT String (ReaderT Client IO) QQPacket
 sendAndWait r = do
     let seq_ = fromIntegral $ r ^. sequence_id
     lift $ sendPacket r
     waitForPacket 1000000 seq_
 
-sendAndWait_ :: Request -> ClientOPM QQPacket
+sendAndWait_ :: Request -> (ReaderT Client IO) QQPacket
 sendAndWait_ r = do
     pkt <- runExceptT (sendAndWait r)
     case pkt of

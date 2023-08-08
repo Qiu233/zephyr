@@ -26,7 +26,6 @@ data Events = Events {
 emptyEvents :: IO Events
 emptyEvents = Events <$> newTVarIO []
 
-type ClientOPM = ReaderT Client IO
 data Client = Client {
     _context :: TMVar QQContext,
     _socket :: Socket,
@@ -39,12 +38,12 @@ data Client = Client {
     _promises :: TMVar(Map Word16 (TMVar QQPacket)),
 
     _events :: Events,
-    _handlers :: TVar (Map String (QQPacket -> ClientOPM ())),
+    _handlers :: TVar (Map String (QQPacket -> ReaderT Client IO ())),
     _highway_session :: HighwaySession
 }
 $(makeLenses ''Client)
 
-isClientOnline :: ClientOPM Bool
+isClientOnline :: ReaderT Client IO Bool
 isClientOnline = do
     c <- view online
     liftIO $ readTVarIO c

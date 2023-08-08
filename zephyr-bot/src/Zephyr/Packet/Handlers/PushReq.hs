@@ -61,7 +61,7 @@ data SrvIPAddr = SrvIPAddr {
 } deriving (Show, Generic)
 instance ProtoBuf SrvIPAddr
 
-handlePushReqPacket :: QQPacket -> ClientOPM ()
+handlePushReqPacket :: QQPacket -> ReaderT Client IO ()
 handlePushReqPacket (QQPacket _ _ bs) = do
     let request_ = jceUnmarshal bs :: RequestPacket
     let data_ = jceUnmarshal $ request_._s_buffer.jval :: RequestDataVersion2
@@ -120,7 +120,7 @@ handlePushReqPacket (QQPacket _ _ bs) = do
             resp <- buildConfPushRespPacket (fromIntegral t) seq_ jceBuf
             sendPacket resp
 
-buildConfPushRespPacket :: Int32 -> Int64 -> B.ByteString -> ClientOPM Request
+buildConfPushRespPacket :: Int32 -> Int64 -> B.ByteString -> ReaderT Client IO Request
 buildConfPushRespPacket t_ seq_ jceBuf_ = do
     let req = runPut $ do
             putJ32 1 $ fromIntegral t_
