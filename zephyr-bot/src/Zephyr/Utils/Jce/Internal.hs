@@ -129,12 +129,7 @@ skipFieldValue type_ = do
             s <- fromIntegral <$> getJInt 0
             skip s
         10 -> do
-            fix $ \loop -> do
-                (tag_, type__) <- getHead
-                if tag_ == 11 then pure ()
-                else do
-                    skipFieldValue type__
-                    loop
+            skipToStructEnd
         _ -> pure ()
 
 skipTo :: Word8 -> Get Word8
@@ -148,8 +143,8 @@ skipTo tag = do
 skipToStructEnd :: Get ()
 skipToStructEnd = do
     fix $ \loop -> do
-        (tag_, type_) <- getHead
-        if tag_ == 11 then pure ()
+        (_, type_) <- getHead
+        if type_ == 11 then pure ()
         else do
             skipFieldValue type_
             loop
@@ -183,7 +178,7 @@ getJBytes tag = do
     type_ <- skipTo tag
     case type_ of
         13 -> do
-            _ <- get8
+            _ <- getHead
             l <- fromIntegral <$> getJInt 0
             getbs l
         _ -> ueError tag type_

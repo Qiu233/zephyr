@@ -29,6 +29,7 @@ import Zephyr.Client.Events
 import Zephyr.Client.Internal
 import Debug.Trace (traceM)
 import Zephyr.Packet.Data.PushReq
+import Text.Printf
 
 newtype C501RspBody = C501RspBody {
     _c501_rsp_body :: ProtoField (Maybe SubCmd0X501RspBody) 1281
@@ -63,6 +64,8 @@ handlePushReqPacket client (QQPacket _ _ bs) = do
     let m_ = data_._map.jval
     let r1 = B.drop 1 $ fromMaybe B.empty (jlookup "PushReq" m_ >>= jlookup "ConfigPush.PushReq")
     let (t, jceBuf, seq_) = runGet ((,,) <$> getJInt 1 <*> getJBytes 2 <*> getJInt 3) r1
+    
+    traceM $ "ConfigPushSvc.PushReq: " ++ printf "%d" t
     rM <- if B.length jceBuf > 0 && t == 1
         then do
             let JceField servers_ = jceUnmarshal jceBuf :: JceField [SsoServerInfo] 1
@@ -100,11 +103,13 @@ handlePushReqPacket client (QQPacket _ _ bs) = do
                         x._service_type.protoOptDef == 10,
                         let y = x._service_addrs.protoVal.repeated
                         ]
-                appendAddrs hw [(ip_,port_) |
-                    z <- addrs2_,
-                    let ip_ = z._addr_ip.protoOptDef,
-                    let port_ = fromIntegral $ z._addr_port.protoOptDef.variant
-                    ]
+                let addrs3 = [(ip_,port_) |
+                        z <- addrs2_,
+                        let ip_ = z._addr_ip.protoOptDef,
+                        let port_ = fromIntegral $ z._addr_port.protoOptDef.variant
+                        ]
+                traceM $ show addrs3
+                appendAddrs hw addrs3
             pure Nothing
         else do
             pure Nothing
