@@ -35,12 +35,15 @@ clientMain ctx clientMainInner = do
 
 newClient :: QQContext -> Socket -> IO Client
 newClient ctx sock = do
-    Client <$>
-        newTMVarIO ctx <*>
-        pure sock <*>
-        newTVarIO [] <*>
-        newTVarIO False <*>
-        newTVarIO B.empty <*> newEmptyTMVarIO <*> newTMVarIO Data.HashMap.empty <*>
-        emptyEvents <*>
-        newTVarIO defaultHandlers <*>
-        defaultHighwaySession (ctx ^. uin) (fromIntegral $ ctx ^. transport . app_version . sub_id)
+    let handlers_ = newTVarIO emptyHandlers
+    c <- Client <$>
+            newTMVarIO ctx <*>
+            pure sock <*>
+            newTVarIO [] <*>
+            newTVarIO False <*>
+            newTVarIO B.empty <*> newEmptyTMVarIO <*> newTMVarIO Data.HashMap.empty <*>
+            emptyEvents <*>
+            handlers_ <*>
+            defaultHighwaySession (ctx ^. uin) (fromIntegral $ ctx ^. transport . app_version . sub_id)
+    setDefaultHandlers c
+    pure c

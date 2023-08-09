@@ -38,7 +38,7 @@ data Client = Client {
     _promises :: TMVar(Map Word16 (TMVar QQPacket)),
 
     _events :: Events,
-    _handlers :: TVar (Map String (QQPacket -> Client -> IO ())),
+    _handlers :: TVar (Map String (QQPacket -> IO ())),
     _highway_session :: HighwaySession
 }
 $(makeLenses ''Client)

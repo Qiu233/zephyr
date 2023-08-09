@@ -56,8 +56,8 @@ data SrvIPAddr = SrvIPAddr {
 } deriving (Show, Generic)
 instance ProtoBuf SrvIPAddr
 
-handlePushReqPacket :: QQPacket -> Client -> IO ()
-handlePushReqPacket (QQPacket _ _ bs) client = do
+handlePushReqPacket :: Client -> QQPacket ->  IO ()
+handlePushReqPacket client (QQPacket _ _ bs) = do
     let request_ = jceUnmarshal bs :: RequestPacket
     let data_ = jceUnmarshal $ request_._s_buffer.jval :: RequestDataVersion2
     let m_ = data_._map.jval

@@ -111,7 +111,7 @@ netLoopRecv client = do
                     let handlerM_ = Data.HashMap.lookup cmd_ handlers_
                     case handlerM_ of
                         Just handler_ -> do
-                            handler_ pkt client
+                            handler_ pkt
                         Nothing -> do
                             promises_ <- liftIO $ atomically $ takeTMVar promisesV_
                             case Data.HashMap.lookup seq_ promises_ of
