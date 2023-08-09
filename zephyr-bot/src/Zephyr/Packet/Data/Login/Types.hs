@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
-module Zephyr.Packet.Login.Types where
+module Zephyr.Packet.Data.Login.Types where
 
 import Data.Word
 import qualified Data.ByteString.Lazy as B

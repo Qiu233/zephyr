@@ -8,7 +8,7 @@ import qualified Data.ByteString.Lazy as B
 import Control.Lens
 import Data.HashMap
 import Data.Word
-import Control.Monad.Reader (ReaderT, MonadIO (..))
+import Control.Monad.Reader (MonadIO (..))
 import Zephyr.Client.Highway
 import Zephyr.Client.Events
 

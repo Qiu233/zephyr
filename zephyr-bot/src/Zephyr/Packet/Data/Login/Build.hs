@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE OverloadedLists #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
-module Zephyr.Packet.Login.Build where
+module Zephyr.Packet.Data.Login.Build where
 
 import Zephyr.Core.QQContext
 import qualified Data.ByteString.Lazy as B

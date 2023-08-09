@@ -13,8 +13,6 @@ import Zephyr.Core.Transport
 import Zephyr.Core.AppVersion
 import Control.Monad.IO.Class
 import qualified Control.Exception as Ex
-import Control.Monad
-import Control.Monad.Reader
 
 runTCPClient :: HostName -> ServiceName -> (Socket -> IO a) -> IO a
 runTCPClient host port client = withSocketsDo $ do

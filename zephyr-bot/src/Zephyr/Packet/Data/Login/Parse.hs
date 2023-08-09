@@ -1,9 +1,9 @@
 {-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
-module Zephyr.Packet.Login.Parse where
+module Zephyr.Packet.Data.Login.Parse where
 import qualified Data.ByteString.Lazy as B
 import Zephyr.Core.QQContext
-import Zephyr.Packet.Login.Types
+import Zephyr.Packet.Data.Login.Types
 import Data.Word
 import Data.HashMap
 import Zephyr.Core.Transport
@@ -14,7 +14,7 @@ import Zephyr.Utils.Common
 import Zephyr.Utils.Random
 import Zephyr.Core.Signature
 import Zephyr.Utils.Codec
-import Zephyr.Packet.Login.Pow
+import Zephyr.Packet.Data.Login.Pow
 import Zephyr.Packet.TLV.Decoders
 import Zephyr.Packet.Internal
 import Zephyr.Utils.Binary

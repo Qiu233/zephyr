@@ -2,9 +2,7 @@
 module Zephyr.Client.Handlers where
 import Zephyr.Client.Types
 import Data.HashMap
-import Zephyr.Packet.Handlers.PushReq
-import Control.Monad.Reader
-
+import Zephyr.Client.Handlers.PushReq
 
 defaultHandlers :: (Map String (QQPacket -> Client -> IO ()))
 defaultHandlers =fromList [

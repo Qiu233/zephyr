@@ -3,7 +3,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE OverloadedLists #-}
-module Zephyr.Packet.Handlers.PushReq where
+module Zephyr.Client.Handlers.PushReq where
 import Zephyr.Client.Types
 import qualified Data.ByteString.Lazy as B
 import Zephyr.Packet.Jce.RequestPacket as RequestPacket
@@ -14,7 +14,6 @@ import Zephyr.Utils.Jce.JceMap
 import Zephyr.Utils.Binary
 import Zephyr.Utils.Jce.Internal
 import Control.Monad
-import Data.Int
 import Data.Word
 import Zephyr.Packet.Jce.SsoServerInfo
 import Zephyr.Packet.Jce.FileStoragePushFSSvcList
@@ -28,12 +27,8 @@ import Zephyr.Client.Highway
 import qualified Data.List
 import Zephyr.Client.Events
 import Zephyr.Client.Internal
-import Control.Monad.Reader
-import Zephyr.Packet.Jce.RequestDataVersion3 (RequestDataVersion3(RequestDataVersion3))
-import Zephyr.Packet.Build (buildUniRequestData, uniPackRequest)
-import Zephyr.Utils.Jce.Generic
-import Zephyr.Core.Request (Request)
 import Debug.Trace (traceM)
+import Zephyr.Packet.Data.PushReq
 
 newtype C501RspBody = C501RspBody {
     _c501_rsp_body :: ProtoField (Maybe SubCmd0X501RspBody) 1281
@@ -116,22 +111,6 @@ handlePushReqPacket (QQPacket _ _ bs) client = do
     case rM of
         Just _ -> pure ()
         Nothing -> do
-            resp <- buildConfPushRespPacket (fromIntegral t) seq_ jceBuf client
+            resp <- withContext (buildConfPushRespPacket (fromIntegral t) seq_ jceBuf) client
             liftIO $ sendPacket resp client
 
-buildConfPushRespPacket :: Int32 -> Int64 -> B.ByteString -> Client -> IO Request
-buildConfPushRespPacket t_ seq_ jceBuf_ client = do
-    let req = runPut $ do
-            putJ32 1 $ fromIntegral t_
-            putJ64 2 seq_
-            putJBytes 3 jceBuf_
-    let buf = RequestDataVersion3 $ JceField [("PushResp", buildUniRequestData req)]
-    let pkt = jdef {
-            _i_version = 3,
-            _s_servant_name = "QQService.ConfigPushSvc.MainServant",
-            _s_func_name = "PushResp",
-            _s_buffer = JceField $ jceMarshal buf,
-            RequestPacket._context = JceField [],
-            RequestPacket._status = JceField  []
-            }
-    withContext (uniPackRequest "ConfigPushSvc.PushResp" $ jceMarshal pkt) client
