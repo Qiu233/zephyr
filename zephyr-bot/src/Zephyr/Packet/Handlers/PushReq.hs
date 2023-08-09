@@ -120,7 +120,7 @@ handlePushReqPacket (QQPacket _ _ bs) client = do
             liftIO $ sendPacket resp client
 
 buildConfPushRespPacket :: Int32 -> Int64 -> B.ByteString -> Client -> IO Request
-buildConfPushRespPacket t_ seq_ jceBuf_ = do
+buildConfPushRespPacket t_ seq_ jceBuf_ client = do
     let req = runPut $ do
             putJ32 1 $ fromIntegral t_
             putJ64 2 seq_
@@ -134,4 +134,4 @@ buildConfPushRespPacket t_ seq_ jceBuf_ = do
             RequestPacket._context = JceField [],
             RequestPacket._status = JceField  []
             }
-    runReaderT $ withContext $ uniPackRequest "ConfigPushSvc.PushResp" $ jceMarshal pkt
+    withContext (uniPackRequest "ConfigPushSvc.PushResp" $ jceMarshal pkt) client

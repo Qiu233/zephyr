@@ -33,9 +33,9 @@ import Control.Concurrent.STM.TVar
 
 login :: Client -> IO Bool
 login client = do
-    v <- runReaderT (withContext buildLoginPacket) client
+    v <- withContext buildLoginPacket client
     pkt <- sendAndWait_ v client
-    rsp_ <- runReaderT (withContextM $ decodeLoginResponse (pkt ^. pkt_body)) client
+    rsp_ <- withContextM (decodeLoginResponse (pkt ^. pkt_body)) client
     let go = fix $ \k rsp -> do
             case rsp of
                 LoginSuccess -> do
@@ -65,9 +65,9 @@ login client = do
                     liftIO $ putStrLn $ "链接: " ++ url
                     liftIO $ putStrLn "清输入ticket: "
                     ticket <- liftIO getLine
-                    v <- runReaderT (withContext $ buildTicketSubmitPacket ticket) client
-                    pkt <- sendAndWait_ v client
-                    rsp2 <- runReaderT (withContextM $ decodeLoginResponse $ pkt ^. pkt_body) client
+                    v_ <- withContext (buildTicketSubmitPacket ticket) client
+                    pkt_ <- sendAndWait_ v_ client
+                    rsp2 <- withContextM (decodeLoginResponse $ pkt_ ^. pkt_body) client
                     k rsp2
                 VerificationNeeded msg url phone -> do
                     liftIO $ putStrLn "需要扫码或短信验证码登录"
@@ -88,9 +88,9 @@ login client = do
 
 registerClient :: Client -> IO ()
 registerClient client = do
-    p <- runReaderT (withContext buildClientRegisterPacket) client
+    p <- withContext buildClientRegisterPacket client
     pkt <- sendAndWait_ p client
-    rst <- runReaderT (withContext $ runExceptT $ decodeClientRegisterResponse $ pkt ^. pkt_body) client
+    rst <- withContext (runExceptT $ decodeClientRegisterResponse $ pkt ^. pkt_body) client
     case rst of
         Left e -> do
             liftIO $ putStrLn "客户端注册失败: "
@@ -106,7 +106,7 @@ beginHeartbeat client = do
             online_ <- isClientOnline client
             when online_ $ do
                 liftIO $ threadDelay 30_000_000
-                (seq_, uin_) <- runReaderT (withContext ((,) <$> nextSeq <*> view uin)) client
+                (seq_, uin_) <- withContext ((,) <$> nextSeq <*> view uin) client
                 let req_ = Request RT_Login ET_NoEncrypt (fromIntegral seq_) uin_ "Heartbeat.Alive" B.empty
                 runExceptT (sendAndWait req_ client) >>= \case
                     Left e -> do

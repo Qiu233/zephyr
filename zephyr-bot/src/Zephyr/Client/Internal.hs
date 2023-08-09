@@ -23,19 +23,19 @@ import Control.Monad.Reader
 import Control.Concurrent
 import Data.Word
 
-withContextM :: ContextOPM a -> ReaderT Client IO a
-withContextM o = do
-    v <- view context
+withContextM :: ContextOPM a -> Client -> IO a
+withContextM o client = do
+    let v = client._context
     a <- liftIO $ atomically $ takeTMVar v
-    (r, a') <- liftIO $ runStateT o a
-    liftIO $ atomically $ putTMVar v a'
+    (r, a') <- runStateT o a
+    atomically $ putTMVar v a'
     pure r
 
-withContext :: ContextRM a -> ReaderT Client IO a
-withContext o = do
-    v <- view context
-    a <- liftIO $ atomically $ readTMVar v
-    liftIO $ runReaderT o a
+withContext :: ContextRM a -> Client -> IO a
+withContext o client = do
+    let v = client._context
+    a <- atomically $ readTMVar v
+    runReaderT o a
 
 
 getResponse :: Client -> ExceptT String IO QQResponse
@@ -59,7 +59,7 @@ getResponse client = do
     if B.null r then
         getResponse client
     else do
-        t <- lift $ runReaderT (withContextM $ parsePacket r) client
+        t <- lift $ withContextM (parsePacket r) client
         liftEither t
 
 getResponse_ :: Client -> IO QQResponse
@@ -76,7 +76,7 @@ sendBytes bs cli = do
 
 sendPacket :: Request -> Client -> IO ()
 sendPacket r client= do
-    bs <- runReaderT (withContext $ packRequest r) client
+    bs <- withContext (packRequest r) client
     sendBytes bs client
 
 netLoopSend :: Client -> IO ()

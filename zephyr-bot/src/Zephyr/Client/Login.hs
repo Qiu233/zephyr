@@ -11,7 +11,7 @@ import Control.Monad.Reader
 
 fetchQIMEI :: Client -> IO ()
 fetchQIMEI client = do
-    runReaderT (withContextM rc) client
+    withContextM rc client
     where 
         rc = fix $ \fetchQIMEI_ -> do
             dev <- use (transport . device)
