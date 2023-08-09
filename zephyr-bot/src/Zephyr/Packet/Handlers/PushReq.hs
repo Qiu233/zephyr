@@ -61,8 +61,8 @@ data SrvIPAddr = SrvIPAddr {
 } deriving (Show, Generic)
 instance ProtoBuf SrvIPAddr
 
-handlePushReqPacket :: QQPacket -> ReaderT Client IO ()
-handlePushReqPacket (QQPacket _ _ bs) = do
+handlePushReqPacket :: QQPacket -> Client -> IO ()
+handlePushReqPacket (QQPacket _ _ bs) client = do
     let request_ = jceUnmarshal bs :: RequestPacket
     let data_ = jceUnmarshal $ request_._s_buffer.jval :: RequestDataVersion2
     let m_ = data_._map.jval
@@ -79,20 +79,19 @@ handlePushReqPacket (QQPacket _ _ bs) = do
                         ".com" `Data.List.isInfixOf` s._server.jval
                         ]
                 traceM $ "servers2__:" ++ show servers2__
-                hsV <- views events (._server_updated)
+                let hsV = client._events._server_updated
+                let srvV = client._servers
                 hs <- liftIO $ readTVarIO hsV
                 let ea = ServerUpdatedEventArgs servers2__
-                cli <- ask
-                rs <- sequence [liftIO $ h cli ea | h <- hs]
+                rs <- sequence [liftIO $ h client ea | h <- hs]
                 when (and rs) $ do
-                    srvV <- view servers
                     liftIO $ atomically $
                         modifyTVar srvV (++ map (\x ->(x._server.jval, fromIntegral $ x._port.jval)) servers2__)
                 pure $ Just ()
         else if B.length jceBuf > 0 && t == 2 then do
             let l = jceUnmarshal jceBuf :: FileStoragePushFSSvcList
             let rsp = decode $ l._big_data_channel.jval._pb_buf.jval :: C501RspBody
-            hw <- view highway_session
+            let hw = client._highway_session
             liftIO $ do
                 let rspbody_ = rsp._c501_rsp_body.protoVal
                 atomically $ writeTVar (hw ^. hw_sig_session) $
@@ -117,10 +116,10 @@ handlePushReqPacket (QQPacket _ _ bs) = do
     case rM of
         Just _ -> pure ()
         Nothing -> do
-            resp <- buildConfPushRespPacket (fromIntegral t) seq_ jceBuf
-            sendPacket resp
+            resp <- buildConfPushRespPacket (fromIntegral t) seq_ jceBuf client
+            liftIO $ sendPacket resp client
 
-buildConfPushRespPacket :: Int32 -> Int64 -> B.ByteString -> ReaderT Client IO Request
+buildConfPushRespPacket :: Int32 -> Int64 -> B.ByteString -> Client -> IO Request
 buildConfPushRespPacket t_ seq_ jceBuf_ = do
     let req = runPut $ do
             putJ32 1 $ fromIntegral t_
@@ -135,4 +134,4 @@ buildConfPushRespPacket t_ seq_ jceBuf_ = do
             RequestPacket._context = JceField [],
             RequestPacket._status = JceField  []
             }
-    withContext $ uniPackRequest "ConfigPushSvc.PushResp" $ jceMarshal pkt
+    runReaderT $ withContext $ uniPackRequest "ConfigPushSvc.PushResp" $ jceMarshal pkt

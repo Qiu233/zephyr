@@ -29,11 +29,11 @@ runTCPClient host port client = withSocketsDo $ do
             pure sock
 
 
-clientMain :: QQContext -> ReaderT Client IO () -> IO ()
+clientMain :: QQContext -> (Client -> IO ()) -> IO ()
 clientMain ctx clientMainInner = do
     liftIO $ runTCPClient "msfwifi.3g.qq.com" "8080" $ \sock -> do
         c <- newClient ctx sock
-        void $ runReaderT clientMainInner c
+        clientMainInner c
 
 newClient :: QQContext -> Socket -> IO Client
 newClient ctx sock = do

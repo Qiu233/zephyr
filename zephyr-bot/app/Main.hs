@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NumericUnderscores #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 module Main (main) where
 import Zephyr.Core.QQContext
 import Data.Word
@@ -30,18 +31,16 @@ import Control.Concurrent.Async
 import Control.Monad.STM
 import Control.Concurrent.STM.TVar
 
-login :: ReaderT Client IO Bool
-login = do
-    v <- withContext buildLoginPacket
-    pkt <- sendAndWait_ v
-    rsp_ <- withContextM $ decodeLoginResponse (pkt ^. pkt_body)
-    go rsp_
-    where
-        go rsp = do
+login :: Client -> IO Bool
+login client = do
+    v <- runReaderT (withContext buildLoginPacket) client
+    pkt <- sendAndWait_ v client
+    rsp_ <- runReaderT (withContextM $ decodeLoginResponse (pkt ^. pkt_body)) client
+    let go = fix $ \k rsp -> do
             case rsp of
                 LoginSuccess -> do
                     liftIO $ putStrLn "登录成功"
-                    onlineV <- view online
+                    let onlineV = client._online
                     liftIO $ atomically $ writeTVar onlineV True
                     return True
                 AccountFrozen -> do
@@ -66,10 +65,10 @@ login = do
                     liftIO $ putStrLn $ "链接: " ++ url
                     liftIO $ putStrLn "清输入ticket: "
                     ticket <- liftIO getLine
-                    v <- withContext $ buildTicketSubmitPacket ticket
-                    pkt <- sendAndWait_ v
-                    rsp2 <- withContextM $ decodeLoginResponse $ pkt ^. pkt_body
-                    go rsp2
+                    v <- runReaderT (withContext $ buildTicketSubmitPacket ticket) client
+                    pkt <- sendAndWait_ v client
+                    rsp2 <- runReaderT (withContextM $ decodeLoginResponse $ pkt ^. pkt_body) client
+                    k rsp2
                 VerificationNeeded msg url phone -> do
                     liftIO $ putStrLn "需要扫码或短信验证码登录"
                     liftIO $ putStrLn "请通过链接扫码后重启程序: "
@@ -85,12 +84,13 @@ login = do
                 TooManySMSRequest -> do
                     liftIO $ putStrLn "短信请求过于频繁"
                     pure False
+    go rsp_
 
-registerClient :: ReaderT Client IO ()
-registerClient = do
-    p <- withContext buildClientRegisterPacket
-    pkt <- sendAndWait_ p
-    rst <- withContext $ runExceptT $ decodeClientRegisterResponse $ pkt ^. pkt_body
+registerClient :: Client -> IO ()
+registerClient client = do
+    p <- runReaderT (withContext buildClientRegisterPacket) client
+    pkt <- sendAndWait_ p client
+    rst <- runReaderT (withContext $ runExceptT $ decodeClientRegisterResponse $ pkt ^. pkt_body) client
     case rst of
         Left e -> do
             liftIO $ putStrLn "客户端注册失败: "
@@ -99,16 +99,16 @@ registerClient = do
             --liftIO $ putStrLn "客户端注册成功"
             pure ()
 
-beginHeartbeat :: ReaderT Client IO (Async ())
-beginHeartbeat = do
+beginHeartbeat :: Client -> IO (Async ())
+beginHeartbeat client = do
     times <- liftIO $ newIORef (0 :: Int)
     let f = fix $ \k -> do
-            online_ <- isClientOnline
+            online_ <- isClientOnline client
             when online_ $ do
                 liftIO $ threadDelay 30_000_000
-                (seq_, uin_) <- withContext ((,) <$> nextSeq <*> view uin)
+                (seq_, uin_) <- runReaderT (withContext ((,) <$> nextSeq <*> view uin)) client
                 let req_ = Request RT_Login ET_NoEncrypt (fromIntegral seq_) uin_ "Heartbeat.Alive" B.empty
-                runExceptT (sendAndWait req_) >>= \case
+                runExceptT (sendAndWait req_ client) >>= \case
                     Left e -> do
                         liftIO $ putStrLn "心跳失败: "
                         liftIO $ print e
@@ -116,21 +116,21 @@ beginHeartbeat = do
                         liftIO $ modifyIORef times (+1)
                         t <- liftIO $ readIORef times
                         when (t >= 7) $ do
-                            registerClient
+                            registerClient client
                             liftIO $ writeIORef times 0
                 k
-    s <- asks (runReaderT f)
-    liftIO $ async s
+    --s <- f
+    liftIO $ async f
 
 
-clientMainInner :: ReaderT Client IO ()
-clientMainInner = do
-    fetchQIMEI
-    _ <- startNetLoop
-    s <- login
+clientMainInner :: Client -> IO ()
+clientMainInner client = do
+    fetchQIMEI client
+    _ <- startNetLoop client
+    s <- login client
     when s $ do
-        registerClient
-        beginHeartbeat >>= liftIO . wait
+        registerClient client
+        beginHeartbeat client >>= liftIO . wait
 
 main :: IO ()
 main = do

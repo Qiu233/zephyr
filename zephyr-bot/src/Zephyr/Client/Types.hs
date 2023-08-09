@@ -38,12 +38,12 @@ data Client = Client {
     _promises :: TMVar(Map Word16 (TMVar QQPacket)),
 
     _events :: Events,
-    _handlers :: TVar (Map String (QQPacket -> ReaderT Client IO ())),
+    _handlers :: TVar (Map String (QQPacket -> Client -> IO ())),
     _highway_session :: HighwaySession
 }
 $(makeLenses ''Client)
 
-isClientOnline :: ReaderT Client IO Bool
-isClientOnline = do
-    c <- view online
+isClientOnline :: Client -> IO Bool
+isClientOnline client = do
+    let c = client._online
     liftIO $ readTVarIO c

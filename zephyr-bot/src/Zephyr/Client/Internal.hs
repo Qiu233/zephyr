@@ -1,5 +1,6 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 module Zephyr.Client.Internal where
 import Zephyr.Core.QQContext
 import Control.Monad.IO.Class
@@ -37,10 +38,10 @@ withContext o = do
     liftIO $ runReaderT o a
 
 
-getResponse :: ExceptT String (ReaderT Client IO) QQResponse
-getResponse = do
-    sock <- view Zephyr.Client.Types.socket
-    v <- view in_buffer
+getResponse :: Client -> ExceptT String IO QQResponse
+getResponse client = do
+    let sock = client._socket
+    let v = client._in_buffer
     vs <- liftIO $ recv sock 1024
     when (B.null vs) $ throwE  "Connection closed"
     liftIO $ atomically $ modifyTVar v (<> vs)
@@ -56,77 +57,80 @@ getResponse = do
         else
             (B.empty, x)
     if B.null r then
-        getResponse
+        getResponse client
     else do
-        t <- lift $ withContextM $ parsePacket r
+        t <- lift $ runReaderT (withContextM $ parsePacket r) client
         liftEither t
 
-getResponse_ :: ReaderT Client IO QQResponse
-getResponse_ = do
-    r <- runExceptT getResponse
+getResponse_ :: Client -> IO QQResponse
+getResponse_ client = do
+    r <- runExceptT $ getResponse client
     case r of
         Left err -> error err
         Right v -> pure v
 
-sendBytes :: B.ByteString -> ReaderT Client IO ()
-sendBytes bs = do
-    v <- view out_buffer
+sendBytes :: B.ByteString -> Client ->  IO ()
+sendBytes bs cli = do
+    let v = cli._out_buffer
     liftIO $ atomically $ putTMVar v bs
 
-sendPacket :: Request -> ReaderT Client IO ()
-sendPacket r = do
-    bs <- withContext $ packRequest r
-    sendBytes bs
+sendPacket :: Request -> Client -> IO ()
+sendPacket r client= do
+    bs <- runReaderT (withContext $ packRequest r) client
+    sendBytes bs client
 
-netLoopSend :: ReaderT Client IO ()
-netLoopSend = do
-    v <- view out_buffer
-    bs <- liftIO $ atomically $ takeTMVar v
-    unless (B.null bs) $ do
-        sock <- view Zephyr.Client.Types.socket
-        liftIO $ sendAll sock bs
-    netLoopSend
+netLoopSend :: Client -> IO ()
+netLoopSend client = do
+    let v = client._out_buffer
+    let sock = client._socket
+    let rc = fix $ \k -> do
+            bs <- liftIO $ atomically $ takeTMVar v
+            unless (B.null bs) $ do
+                liftIO $ sendAll sock bs
+            k
+    rc
 
-netLoopRecv :: ReaderT Client IO ()
-netLoopRecv = do
-    r <- runExceptT getResponse
-    case r of
-        Left err -> do
-            liftIO $ putStrLn $ "packet dropped due to: " ++ err
-        Right v -> do
-            let seq_ = fromIntegral $ v ^. resp_body . sequence_id
-            let cmd_ = v ^. resp_body . req_command
-            let pkt = QQPacket {
-                    _pkt_seq = seq_,
-                    _pkt_cmd = cmd_,
-                    _pkt_body = v ^. resp_body . req_body
-                }
-            handlersV_ <- view handlers
-            handlers_ <- liftIO $ readTVarIO handlersV_
-            let handlerM_ = Data.HashMap.lookup cmd_ handlers_
-            case handlerM_ of
-                Just handler_ -> do
-                    handler_ pkt
-                Nothing -> do
-                    promisesV_ <- view promises
-                    promises_ <- liftIO $ atomically $ takeTMVar promisesV_
-                    case Data.HashMap.lookup seq_ promises_ of
-                        Nothing -> liftIO $ do
-                            putStrLn "packet discarded due to no promise: "
-                            print pkt
-                        Just promise -> liftIO $ do
-                            s <- atomically $ tryPutTMVar promise pkt
-                            unless s $ do
-                                putStrLn "packet discarded due to promise already filled: "
-                                print pkt
-                    liftIO $ atomically $ putTMVar promisesV_ promises_
-    netLoopRecv
+netLoopRecv :: Client -> IO ()
+netLoopRecv client = do
+    let handlersV_ = client._handlers
+    let promisesV_ = client._promises
+    let rc = fix $ \k -> do
+            r <- runExceptT $ getResponse client
+            case r of
+                Left err -> do
+                    liftIO $ putStrLn $ "packet dropped due to: " ++ err
+                Right v -> do
+                    let seq_ = fromIntegral $ v ^. resp_body . sequence_id
+                    let cmd_ = v ^. resp_body . req_command
+                    let pkt = QQPacket {
+                            _pkt_seq = seq_,
+                            _pkt_cmd = cmd_,
+                            _pkt_body = v ^. resp_body . req_body
+                        }
+                    handlers_ <- liftIO $ readTVarIO handlersV_
+                    let handlerM_ = Data.HashMap.lookup cmd_ handlers_
+                    case handlerM_ of
+                        Just handler_ -> do
+                            handler_ pkt client
+                        Nothing -> do
+                            promises_ <- liftIO $ atomically $ takeTMVar promisesV_
+                            case Data.HashMap.lookup seq_ promises_ of
+                                Nothing -> liftIO $ do
+                                    putStrLn "packet discarded due to no promise: "
+                                    print pkt
+                                Just promise -> liftIO $ do
+                                    s <- atomically $ tryPutTMVar promise pkt
+                                    unless s $ do
+                                        putStrLn "packet discarded due to promise already filled: "
+                                        print pkt
+                            liftIO $ atomically $ putTMVar promisesV_ promises_
+            k
+    rc
 
-startNetLoop :: ReaderT Client IO (Async ())
-startNetLoop = do
-    r <- ask
-    let recv_ = runReaderT netLoopRecv r
-    let send_ = runReaderT netLoopSend r
+startNetLoop :: Client -> IO (Async ())
+startNetLoop client = do
+    let recv_ = netLoopRecv client
+    let send_ = netLoopSend client
     liftIO $ async $ concurrently_ recv_ send_
 
 waitTimeout :: Int -> Async a -> IO (Maybe a)
@@ -135,39 +139,39 @@ waitTimeout i t = do
         Left _ -> return Nothing
         Right r -> return (Just r)
 
-putPromise :: Word16 -> ReaderT Client IO (TMVar QQPacket)
-putPromise seqID = do
-    promisesV_ <- view promises
+putPromise :: Word16 -> Client -> IO (TMVar QQPacket)
+putPromise seqID client = do
+    let promisesV_ = client._promises
     promise <- liftIO newEmptyTMVarIO
     liftIO $ atomically $ do
         promises_ <- takeTMVar promisesV_
         putTMVar promisesV_ $ insert seqID promise promises_
         pure promise
 
-removePromise :: Word16 -> ReaderT Client IO ()
-removePromise seqID = do
-    promisesV_ <- view promises
+removePromise :: Word16 -> Client -> IO ()
+removePromise seqID client = do
+    let promisesV_ = client._promises
     liftIO $ atomically $ do
         promises_ <- takeTMVar promisesV_
         putTMVar promisesV_ $ delete seqID promises_
 
-waitForPacket :: Int -> Word16 -> ExceptT String (ReaderT Client IO) QQPacket
-waitForPacket timeout seqID = do
-    promise <- lift $ putPromise seqID
+waitForPacket :: Int -> Word16 -> Client -> ExceptT String IO QQPacket
+waitForPacket timeout seqID client = do
+    promise <- lift $ putPromise seqID client
     rst <- liftIO $ withAsync (atomically $ takeTMVar promise) $ \async_ -> do
         waitTimeout timeout async_
-    lift $ removePromise seqID
+    lift $ removePromise seqID client
     maybe (throwE "No response received within time limit.") pure rst
 
-sendAndWait :: Request -> ExceptT String (ReaderT Client IO) QQPacket
-sendAndWait r = do
+sendAndWait :: Request -> Client -> ExceptT String IO QQPacket
+sendAndWait r client = do
     let seq_ = fromIntegral $ r ^. sequence_id
-    lift $ sendPacket r
-    waitForPacket 1000000 seq_
+    lift $ sendPacket r client
+    waitForPacket 1000000 seq_ client
 
-sendAndWait_ :: Request -> (ReaderT Client IO) QQPacket
-sendAndWait_ r = do
-    pkt <- runExceptT (sendAndWait r)
+sendAndWait_ :: Request -> Client -> IO QQPacket
+sendAndWait_ r client = do
+    pkt <- runExceptT (sendAndWait r client)
     case pkt of
         Left err -> error err
         Right v -> pure v

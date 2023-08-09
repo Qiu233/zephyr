@@ -9,8 +9,9 @@ import Control.Monad.IO.Class
 import Zephyr.Core.Device
 import Control.Monad.Reader
 
-fetchQIMEI :: ReaderT Client IO ()
-fetchQIMEI = withContextM rc
+fetchQIMEI :: Client -> IO ()
+fetchQIMEI client = do
+    runReaderT (withContextM rc) client
     where 
         rc = fix $ \fetchQIMEI_ -> do
             dev <- use (transport . device)

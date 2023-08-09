@@ -6,7 +6,7 @@ import Zephyr.Packet.Handlers.PushReq
 import Control.Monad.Reader
 
 
-defaultHandlers :: (Map String (QQPacket -> ReaderT Client IO ()))
+defaultHandlers :: (Map String (QQPacket -> Client -> IO ()))
 defaultHandlers =fromList [
         ("ConfigPushSvc.PushReq", handlePushReqPacket)
         ]
