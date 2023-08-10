@@ -22,6 +22,8 @@ import Control.Concurrent.Async
 import Control.Monad.Reader
 import Control.Concurrent
 import Data.Word
+import Zephyr.Client.Log
+import Text.Printf
 
 withContextM :: ContextOPM a -> Client -> IO a
 withContextM o client = do
@@ -116,13 +118,11 @@ netLoopRecv client = do
                             promises_ <- liftIO $ atomically $ takeTMVar promisesV_
                             case Data.HashMap.lookup seq_ promises_ of
                                 Nothing -> liftIO $ do
-                                    putStrLn "packet discarded due to no promise: "
-                                    print pkt
+                                    client._logger.logWarning $ "packet discarded due to no promise or handler: " ++ printf "command = %s" pkt._pkt_cmd
                                 Just promise -> liftIO $ do
                                     s <- atomically $ tryPutTMVar promise pkt
                                     unless s $ do
-                                        putStrLn "packet discarded due to promise already filled: "
-                                        print pkt
+                                        client._logger.logWarning $ "packet discarded due to promise already filled: " ++ printf "command = %s" pkt._pkt_cmd
                             liftIO $ atomically $ putTMVar promisesV_ promises_
             k
     rc

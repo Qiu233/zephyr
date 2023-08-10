@@ -11,6 +11,7 @@ import Data.Word
 import Control.Monad.Reader (MonadIO (..))
 import Zephyr.Client.Highway
 import Zephyr.Client.Events
+import Zephyr.Client.Log
 
 data QQPacket = QQPacket {
     _pkt_seq :: Word16,
@@ -20,7 +21,7 @@ data QQPacket = QQPacket {
 $(makeLenses ''QQPacket)
 
 data Events = Events {
-    _server_updated :: TVar [Client -> ServerUpdatedEventArgs -> IO Bool]
+    _server_updated :: TVar [ServerUpdatedEventArgs -> IO Bool]
 }
 
 emptyEvents :: IO Events
@@ -28,6 +29,7 @@ emptyEvents = Events <$> newTVarIO []
 
 data Client = Client {
     _context :: TMVar QQContext,
+    _logger :: Logger,
     _socket :: Socket,
     _servers :: TVar [(String, Int)],
 

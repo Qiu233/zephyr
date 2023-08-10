@@ -27,9 +27,9 @@ import Zephyr.Client.Highway
 import qualified Data.List
 import Zephyr.Client.Events
 import Zephyr.Client.Internal
-import Debug.Trace (traceM)
 import Zephyr.Packet.Data.PushReq
 import Text.Printf
+import Zephyr.Client.Log
 
 newtype C501RspBody = C501RspBody {
     _c501_rsp_body :: ProtoField (Maybe SubCmd0X501RspBody) 1281
@@ -57,7 +57,7 @@ data SrvIPAddr = SrvIPAddr {
 } deriving (Show, Generic)
 instance ProtoBuf SrvIPAddr
 
-handlePushReqPacket :: Client -> QQPacket ->  IO ()
+handlePushReqPacket :: Client -> QQPacket -> IO ()
 handlePushReqPacket client (QQPacket _ _ bs) = do
     let request_ = jceUnmarshal bs :: RequestPacket
     let data_ = jceUnmarshal $ request_._s_buffer.jval :: RequestDataVersion2
@@ -65,7 +65,7 @@ handlePushReqPacket client (QQPacket _ _ bs) = do
     let r1 = B.drop 1 $ fromMaybe B.empty (jlookup "PushReq" m_ >>= jlookup "ConfigPush.PushReq")
     let (t, jceBuf, seq_) = runGet ((,,) <$> getJInt 1 <*> getJBytes 2 <*> getJInt 3) r1
     
-    traceM $ "ConfigPushSvc.PushReq: " ++ printf "%d" t
+    client._logger.logInfo $ "Handling command = `ConfigPushSvc.PushReq`: " ++ printf "t = %d" t
     rM <- if B.length jceBuf > 0 && t == 1
         then do
             let JceField servers_ = jceUnmarshal jceBuf :: JceField [SsoServerInfo] 1
@@ -76,12 +76,11 @@ handlePushReqPacket client (QQPacket _ _ bs) = do
                         s <- servers_,
                         ".com" `Data.List.isInfixOf` s._server.jval
                         ]
-                traceM $ "servers2__:" ++ show servers2__
                 let hsV = client._events._server_updated
                 let srvV = client._servers
                 hs <- liftIO $ readTVarIO hsV
                 let ea = ServerUpdatedEventArgs servers2__
-                rs <- sequence [liftIO $ h client ea | h <- hs]
+                rs <- sequence [liftIO $ h ea | h <- hs]
                 when (and rs) $ do
                     liftIO $ atomically $
                         modifyTVar srvV (++ map (\x ->(x._server.jval, fromIntegral $ x._port.jval)) servers2__)
@@ -108,7 +107,6 @@ handlePushReqPacket client (QQPacket _ _ bs) = do
                         let ip_ = z._addr_ip.protoOptDef,
                         let port_ = fromIntegral $ z._addr_port.protoOptDef.variant
                         ]
-                traceM $ show addrs3
                 appendAddrs hw addrs3
             pure Nothing
         else do

@@ -26,10 +26,11 @@ import Control.Monad.Except (runExceptT)
 import Control.Concurrent
 import Zephyr.Core.Request
 import Data.IORef
-import Control.Monad.Reader
 import Control.Concurrent.Async
 import Control.Monad.STM
 import Control.Concurrent.STM.TVar
+import Zephyr.Client.Log
+import Zephyr.Client.Works.Group
 
 login :: Client -> IO Bool
 login client = do
@@ -93,8 +94,8 @@ registerClient client = do
     rst <- withContext (runExceptT $ decodeClientRegisterResponse $ pkt ^. pkt_body) client
     case rst of
         Left e -> do
-            liftIO $ putStrLn "客户端注册失败: "
-            liftIO $ print e
+            client._logger.logError "客户端注册失败: "
+            client._logger.logError e
         Right _ -> do
             --liftIO $ putStrLn "客户端注册成功"
             pure ()
@@ -110,8 +111,8 @@ beginHeartbeat client = do
                 let req_ = Request RT_Login ET_NoEncrypt (fromIntegral seq_) uin_ "Heartbeat.Alive" B.empty
                 runExceptT (sendAndWait req_ client) >>= \case
                     Left e -> do
-                        liftIO $ putStrLn "心跳失败: "
-                        liftIO $ print e
+                        client._logger.logError "心跳失败: "
+                        client._logger.logError e
                     Right _ -> do
                         liftIO $ modifyIORef times (+1)
                         t <- liftIO $ readIORef times
@@ -119,7 +120,6 @@ beginHeartbeat client = do
                             registerClient client
                             liftIO $ writeIORef times 0
                 k
-    --s <- f
     liftIO $ async f
 
 
@@ -130,7 +130,10 @@ clientMainInner client = do
     s <- login client
     when s $ do
         registerClient client
-        beginHeartbeat client >>= liftIO . wait
+        p <- beginHeartbeat client
+        gs <- runExceptT $ getGroupList client
+        print gs
+        wait p
 
 main :: IO ()
 main = do

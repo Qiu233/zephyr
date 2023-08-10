@@ -34,6 +34,7 @@ data QQContext = QQContext {
     _codec :: Codec,
     _sign_server :: String,
     _seq :: TVar Word16,
+    _rq_packet_seq :: TVar Word32,
 
     _qqprofile :: QQProfile
 }
@@ -47,6 +48,7 @@ newContext :: Word64 -> B.ByteString -> Device -> AppVersion -> String -> IO QQC
 newContext _uin _password_md5 _device _app_version _sign_server = do
     _signature <- defaultSignature _device
     _seq <- newTVarIO =<< randomIO
+    _rq_packet_seq <- newTVarIO 1921334513
     _codec <- newCodec
     let _transport = Transport { .. }
     let _qqprofile = QQProfile { _nickname = "", _age = 0, _gender = 0 }
@@ -56,3 +58,8 @@ nextSeq :: ContextRM Word16
 nextSeq = do
     seq_ <- view seq
     liftIO $ atomically $ stateTVar seq_ (\x -> (x, x+1))
+
+nextPacketSeq :: ContextRM Word32
+nextPacketSeq = do
+    seq_ <- view rq_packet_seq
+    liftIO $ atomically $ stateTVar seq_ (\x -> (x, x+2))

@@ -62,6 +62,8 @@ library:
   default-extensions:
     - NoFieldSelectors
     - OverloadedRecordDot
+    - DeriveGeneric
+    - DuplicateRecordFields
 
 executables:
   zephyr-bot-exe:
