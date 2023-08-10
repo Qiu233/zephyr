@@ -2,8 +2,11 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Packet.Jce.SvcRespRegister where
 
-import Zephyr.Packet.Jce.JceCommon
+import Zephyr.Utils.Jce
+import GHC.Generics
 import qualified Data.ByteString.Lazy as B
+import Data.Int
+import Data.Word
 
 data SvcRespRegister = SvcRespRegister {
     _uin                            :: JceField Int64 0,

@@ -1,7 +1,9 @@
 {-# LANGUAGE DataKinds #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Packet.Jce.SsoServerInfo where
-import Zephyr.Packet.Jce.JceCommon
+import Zephyr.Utils.Jce
+import GHC.Generics
+import Data.Int
 
 data SsoServerInfo = SsoServerInfo {
     _server :: JceField String 1,

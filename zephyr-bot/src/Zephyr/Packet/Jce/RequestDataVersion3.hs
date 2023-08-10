@@ -2,7 +2,8 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Packet.Jce.RequestDataVersion3 where
 
-import Zephyr.Packet.Jce.JceCommon
+import Zephyr.Utils.Jce
+import GHC.Generics
 import qualified Data.ByteString.Lazy as B
 import Zephyr.Utils.Jce.JceMap
 
