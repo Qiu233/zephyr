@@ -1,5 +1,4 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Packet.Jce.RequestDataVersion2 where
 

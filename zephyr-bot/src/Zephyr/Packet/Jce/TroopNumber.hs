@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Packet.Jce.TroopNumber where
 import Data.Int
 import Zephyr.Utils.Jce

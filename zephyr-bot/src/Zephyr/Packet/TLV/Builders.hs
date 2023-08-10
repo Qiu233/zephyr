@@ -3,7 +3,6 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# HLINT ignore "Redundant id" #-}
 module Zephyr.Packet.TLV.Builders where
 

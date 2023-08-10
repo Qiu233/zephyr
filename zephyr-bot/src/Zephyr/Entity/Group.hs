@@ -1,4 +1,4 @@
-{-# LANGUAGE DuplicateRecordFields #-}
+{-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Entity.Group where
 import Data.Int
 import Data.Word

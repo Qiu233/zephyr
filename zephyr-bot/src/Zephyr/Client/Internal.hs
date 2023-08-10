@@ -1,6 +1,5 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedRecordDot #-}
 module Zephyr.Client.Internal where
 import Zephyr.Core.QQContext
 import Control.Monad.IO.Class

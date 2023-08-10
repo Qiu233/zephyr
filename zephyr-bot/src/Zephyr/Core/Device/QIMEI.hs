@@ -1,7 +1,4 @@
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE NoFieldSelectors #-}
 module Zephyr.Core.Device.QIMEI (
     Payload,
     genRandomPayloadByDevice,

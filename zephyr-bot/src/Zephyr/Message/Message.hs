@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Message.Message where
 import Data.Int
 import Zephyr.Message.Elements

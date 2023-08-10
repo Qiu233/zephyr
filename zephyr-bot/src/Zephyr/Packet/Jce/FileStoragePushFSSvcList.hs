@@ -1,6 +1,5 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveGeneric #-}
 module Zephyr.Packet.Jce.FileStoragePushFSSvcList where
 import Zephyr.Utils.Jce.Generic
 import Data.Int
