@@ -4,7 +4,7 @@ import Zephyr.Client.Types
 import Zephyr.Packet.Data.Group
 import qualified Data.ByteString.Lazy as B
 import Zephyr.Client.Internal
-import Zephyr.Entity.Group as EG
+import Zephyr.Core.Entity.Group as EG
 import Control.Monad.Except
 
 getGroupList :: Client -> ExceptT String IO [GroupInfo]

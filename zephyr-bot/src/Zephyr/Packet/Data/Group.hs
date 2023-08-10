@@ -13,7 +13,7 @@ import Zephyr.Packet.Jce.RequestDataVersion3
 import Zephyr.Utils.Jce.JceMap
 import Zephyr.Packet.Build
 import Zephyr.Packet.Jce.RequestPacket
-import Zephyr.Entity.Group
+import Zephyr.Core.Entity.Group
 import Control.Monad.Except
 import Zephyr.Utils.Binary
 import Zephyr.Packet.Jce.TroopNumber

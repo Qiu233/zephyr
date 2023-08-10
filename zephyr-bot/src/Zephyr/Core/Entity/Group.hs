@@ -1,13 +1,14 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
-module Zephyr.Entity.Group where
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+module Zephyr.Core.Entity.Group where
 import Data.Int
 import Data.Word
 
 data MemberPermission =
-    Unknown
-    | Owner
-    | Admin
-    | Member
+    MP_Unknown
+    | MP_Owner
+    | MP_Admin
+    | MP_Member
     deriving (Eq, Show, Enum)
 
 data GroupInfo = GroupInfo {
