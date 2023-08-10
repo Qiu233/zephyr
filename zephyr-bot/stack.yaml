@@ -42,7 +42,7 @@ packages:
 #
 extra-deps:
 - git: https://github.com/Qiu233/protolite.git
-  commit: b5125befd13777aeb283abb6ac86875d40792c86
+  commit: 45f97f5f2cfd9d42dc0411a03ed0c4daf2512d92
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

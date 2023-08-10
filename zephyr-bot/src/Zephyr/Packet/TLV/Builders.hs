@@ -22,7 +22,7 @@ import Zephyr.Core.Transport
 import qualified Zephyr.Packet.TLV.Prim as Prim
 import Zephyr.Packet.Wrapper (wenergy)
 import ProtoLite as PL
-import GHC.Generics
+import Zephyr.PB.Data as PBData
 
 packTLV :: Word16 -> Put -> B.ByteString
 packTLV t p = runPut $ do
@@ -184,19 +184,6 @@ t143 = do
 guidFlag :: Word32
 guidFlag = 0x1000000
 
-data PBDeviceInfo = PBDeviceInfo {
-    _bootloader :: ProtoField String 1,
-    _proc_version :: ProtoField String 2,
-    _code_name :: ProtoField String 3,
-    _incremental :: ProtoField (Variant Word32) 4,
-    _fingerprint :: ProtoField String 5,
-    _boot_id :: ProtoField String 6,
-    _android_id :: ProtoField String 7,
-    _base_band :: ProtoField String 8,
-    _incremental2 :: ProtoField (Variant Word32) 9
-} deriving (Generic)
-instance ProtoBuf PBDeviceInfo
-
 t144 :: ContextRM B.ByteString
 t144 = do
     imei_ <- views (transport . device . imei) utf8ToBytes
@@ -210,16 +197,16 @@ t144 = do
     tgtgt_key_ <- view $ transport . device . tgtgt_key
 
     d <- view $ transport . device
-    let pb = PL.encode $ PBDeviceInfo
-            (ProtoField $ d ^. bootloader)
-            (ProtoField $ d ^. proc_version)
-            (ProtoField $ d ^. os_version . codeName)
-            (ProtoField $ Variant $ d ^. os_version . incremental)
-            (ProtoField $ d ^. fingerprint)
-            (ProtoField $ d ^. boot_id)
-            (ProtoField $ d ^. android_id)
-            (ProtoField $ d ^. base_band)
-            (ProtoField $ Variant $ d ^. os_version . incremental)
+    let pb = PL.encode $ PBData.DeviceInfo
+            (optJust  $ d ^. bootloader)
+            (optJust  $ d ^. proc_version)
+            (optJust  $ d ^. os_version . codeName)
+            (optJustV $ d ^. os_version . incremental)
+            (optJust  $ d ^. fingerprint)
+            (optJust  $ d ^. boot_id)
+            (optJust  $ d ^. android_id)
+            (optJust  $ d ^. base_band)
+            (optJustV $ d ^. os_version . incremental)
     Prim.t144_ imei_ pb os_type_ release_ sim_ apn_ False True False guidFlag model_ guid_ brand_ tgtgt_key_
 
 t145 :: ContextRM B.ByteString

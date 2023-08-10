@@ -5,15 +5,15 @@
 
 packages:
 - completed:
-    commit: b5125befd13777aeb283abb6ac86875d40792c86
+    commit: 45f97f5f2cfd9d42dc0411a03ed0c4daf2512d92
     git: https://github.com/Qiu233/protolite.git
     name: protolite
     pantry-tree:
-      sha256: 6cb88fb77ac9cd425d5974d3ea1f6b76b575f9c16268ddcae06deb0753b772ab
-      size: 775
+      sha256: cd4f40a79b2ed940f14779bcdd51a17cccb93774b35138d1f00e7aae89b5bede
+      size: 839
     version: 0.1.0.0
   original:
-    commit: b5125befd13777aeb283abb6ac86875d40792c86
+    commit: 45f97f5f2cfd9d42dc0411a03ed0c4daf2512d92
     git: https://github.com/Qiu233/protolite.git
 snapshots:
 - completed:
