@@ -20,6 +20,13 @@ data GroupInfo = GroupInfo {
     _max_member_count :: Word16
 } deriving (Eq, Show)
 
+data GroupInfoDetailed = GroupInfoDetailed {
+    _basic_info :: GroupInfo,
+    _create_time :: Word32,
+    _group_level :: Word32,
+    _last_msg_seq :: Int64
+} deriving (Eq, Show)
+
 data GroupMemberInfo = GroupMemberInfo {
     _uin :: Int64,
     _nickname :: String,

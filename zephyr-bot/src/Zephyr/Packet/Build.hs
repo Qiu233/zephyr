@@ -1,5 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DataKinds #-}
 module Zephyr.Packet.Build (
     buildOicqRequestPacket,
@@ -7,7 +8,8 @@ module Zephyr.Packet.Build (
     TLV(..),
     packBody,
     buildUniRequestData,
-    uniPackRequest
+    uniPackRequest,
+    packOIDBPackage
 ) where
 import qualified Data.ByteString.Lazy as B
 import Data.Word
@@ -28,6 +30,9 @@ import Zephyr.Packet.Wrapper (wsign)
 import ProtoLite as PL
 import qualified Zephyr.Packet.Oicq as Oicq
 import Zephyr.PB.Data
+import Data.Int
+import Zephyr.PB.OIDB
+import Control.Monad.Reader (asks)
 
 
 data TLV = TLV {
@@ -243,3 +248,14 @@ uniPackRequest cmd_ body_ =do
     seq_ <- fromIntegral <$> nextSeq
     uin_ <- view uin
     pure $ Request RT_Simple ET_D2Key seq_ uin_ cmd_ body_
+
+packOIDBPackage :: ProtoBuf a => Int32 -> Int32 -> a -> ContextRM B.ByteString
+packOIDBPackage cmd srv_type (buf :: a) = do
+    v <- asks (._transport._app_version._sort_version)
+    let def = pdef :: (OIDBSSOPkg a)
+    pure $ PL.encode $ def {
+            _command = optJustV cmd,
+            _service_type = optJustV srv_type,
+            _client_version = optJust $ "Android " ++ v,
+            _body = optJust buf
+            }

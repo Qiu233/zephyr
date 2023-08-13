@@ -6,14 +6,22 @@ import qualified Data.ByteString.Lazy as B
 import Zephyr.Client.Internal
 import Zephyr.Core.Entity.Group as EG
 import Control.Monad.Except
+import Data.Int
 
-getGroupList :: Client -> ExceptT String IO [GroupInfo]
-getGroupList client = do
-    let rc = fix $ \k v -> do
+fetchGroupList :: Client -> ExceptT String IO [GroupInfo]
+fetchGroupList client = rc B.empty
+    where
+        rc = fix $ \k v -> do
             pkt <- liftIO $ withContext (buildGroupListRequestPacket v) client
             rsp <- sendAndWait pkt client
             (gs, vec) <- decodeGroupListResponse rsp._pkt_body
             if B.null vec
                 then pure gs
                 else (gs ++) <$> k vec
-    rc B.empty
+    
+
+fetchGroupInfo :: Client -> Int64 -> ExceptT String IO GroupInfoDetailed
+fetchGroupInfo client group_code = do
+    pkt <- liftIO $ withContext (buildGroupInfoRequest group_code) client
+    rsp <- sendAndWait pkt client
+    decodeGroupInfoResponse rsp._pkt_body

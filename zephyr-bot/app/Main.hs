@@ -31,6 +31,7 @@ import Control.Monad.STM
 import Control.Concurrent.STM.TVar
 import Zephyr.Client.Log
 import Zephyr.Client.Works.Group
+import Zephyr.Core.Entity.Group
 
 login :: Client -> IO Bool
 login client = do
@@ -131,8 +132,16 @@ clientMainInner client = do
     when s $ do
         registerClient client
         p <- beginHeartbeat client
-        gs <- runExceptT $ getGroupList client
-        print gs
+        gs <- runExceptT $ fetchGroupList client
+        case gs of
+            Left e -> do
+                client._logger.logError "获取群列表失败: "
+                client._logger.logError e
+            Right (g:_) -> do
+                print gs
+                gi <- runExceptT $ fetchGroupInfo client g._code
+                print gi
+            Right _ -> pure ()
         wait p
 
 main :: IO ()
