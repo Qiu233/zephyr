@@ -1,8 +1,11 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE NumericUnderscores #-}
 module Zephyr.Client.Init where
 import Zephyr.Core.QQContext
 import Network.Socket
 import Zephyr.Client.Types
+import Zephyr.Client.Internal
 import Control.Concurrent.STM
 import Data.HashMap
 import qualified Data.ByteString.Lazy as B
@@ -15,6 +18,14 @@ import qualified Control.Exception as Ex
 import Zephyr.Client.Log
 import Data.Time
 import Text.Printf
+import Control.Concurrent.Async
+import Data.IORef
+import Control.Monad.Fix
+import Control.Monad
+import Control.Concurrent
+import Zephyr.Core.Request
+import Control.Monad.Except
+import Zephyr.Client.Login
 
 runTCPClient :: HostName -> ServiceName -> (Socket -> IO a) -> IO a
 runTCPClient host port client = withSocketsDo $ do
@@ -68,3 +79,24 @@ defaultLogger = Logger {
         putStrLn $ printf "[%s] [DEBUG]: %s" (show time) s,
     logDump = \_ _ -> pure ()
 }
+
+beginHeartbeat :: Client -> IO (Async ())
+beginHeartbeat client = do
+    times <- newIORef (0 :: Int)
+    async $ fix $ \k -> do
+        online_ <- isClientOnline client
+        when online_ $ do
+            threadDelay 30_000_000
+            (seq_, uin_) <- withContext ((,) <$> nextSeq <*> view uin) client
+            let req_ = Request RT_Login ET_NoEncrypt (fromIntegral seq_) uin_ "Heartbeat.Alive" B.empty
+            runExceptT (sendAndWait req_ client) >>= \case
+                Left e -> do
+                    client._logger.logError "心跳失败: "
+                    client._logger.logError e
+                Right _ -> do
+                    modifyIORef times (+1)
+                    t <- readIORef times
+                    when (t >= 7) $ do
+                        registerClient client
+                        writeIORef times 0
+            k
