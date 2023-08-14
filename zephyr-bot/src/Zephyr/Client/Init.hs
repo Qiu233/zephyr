@@ -44,6 +44,7 @@ newClient ctx sock = do
             pure sock <*>
             newTVarIO [] <*>
             newTVarIO False <*>
+            newTVarIO False <*>
             newTVarIO B.empty <*> newEmptyTMVarIO <*> newTMVarIO Data.HashMap.empty <*>
             emptyEvents <*>
             handlers_ <*>

@@ -71,9 +71,8 @@ getResponse_ client = do
         Right v -> pure v
 
 sendBytes :: B.ByteString -> Client ->  IO ()
-sendBytes bs cli = do
-    let v = cli._out_buffer
-    atomically $ putTMVar v bs
+sendBytes bs cli = atomically $ putTMVar v bs
+    where v = cli._out_buffer
 
 sendPacket :: Request -> Client -> IO ()
 sendPacket r client= do
@@ -82,19 +81,20 @@ sendPacket r client= do
 
 netLoopSend :: Client -> IO ()
 netLoopSend client = do
-    let v = client._out_buffer
-    let sock = client._socket
-    let rc = fix $ \k -> do
-            bs <- atomically $ takeTMVar v
-            unless (B.null bs) $ do
-                sendAll sock bs
-            k
-    rc
+    fix $ \k -> do
+        bs <- atomically $ takeTMVar v
+        unless (B.null bs) $ do
+            sendAll sock bs
+        readTVarIO nlv >>= \case
+            True -> k
+            False -> pure ()
+    where
+        v = client._out_buffer
+        sock = client._socket
+        nlv = client._net_loop
 
 netLoopRecv :: Client -> IO ()
 netLoopRecv client = do
-    let handlersV_ = client._handlers
-    let promisesV_ = client._promises
     fix $ \k -> do
         r <- runExceptT $ getResponse client
         case r of
@@ -123,12 +123,19 @@ netLoopRecv client = do
                                 unless s $ do
                                     client._logger.logWarning $ "packet discarded due to promise already filled: " ++ printf "command = %s" pkt._pkt_cmd
                         atomically $ putTMVar promisesV_ promises_
-        k
+        readTVarIO nlv >>= \case
+            True -> k
+            False -> pure ()
+    where
+        handlersV_ = client._handlers
+        promisesV_ = client._promises
+        nlv = client._net_loop
 
 startNetLoop :: Client -> IO (Async ())
 startNetLoop client = do
     let recv_ = netLoopRecv client
     let send_ = netLoopSend client
+    atomically $ writeTVar client._net_loop True
     async $ concurrently_ recv_ send_
 
 waitTimeout :: Int -> Async a -> IO (Maybe a)

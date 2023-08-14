@@ -18,7 +18,6 @@ import Control.Monad.Trans.Except
 import Zephyr.Core.QQContext
 import qualified Zephyr.Packet.Oicq as Oicq
 import Zephyr.Core.Codec
-import Control.Monad.IO.Class
 
 data QQResponse = QQResponse {
     _resp_body :: Request,

@@ -33,6 +33,7 @@ data Client = Client {
     _servers :: TVar [(String, Int)],
 
     _online :: TVar Bool,
+    _net_loop :: TVar Bool,
 
     _in_buffer :: TVar B.ByteString,
     _out_buffer :: TMVar B.ByteString,
