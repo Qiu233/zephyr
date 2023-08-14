@@ -99,7 +99,7 @@ netLoopRecv client = do
         r <- runExceptT $ getResponse client
         case r of
             Left err -> do
-                putStrLn $ "packet dropped due to: " ++ err
+                client._logger.logWarning $ "packet dropped due to: " ++ err
             Right v -> do
                 let seq_ = fromIntegral $ v ^. resp_body . sequence_id
                 let cmd_ = v ^. resp_body . req_command

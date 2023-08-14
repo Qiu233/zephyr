@@ -68,9 +68,9 @@ parsePacket_ pkt = do
                 let s = Oicq.unmarshal codec_ payload_
                 case s of
                     Left e -> do
-                        liftIO $ putStrLn "error when parsing empty key packet:"
-                        liftIO $ putStrLn e
-                        pure payload_
+                        throwE $ "error when parsing empty key packet: " ++ e
+                        --liftIO $ putStrLn e
+                        --pure payload_
                     Right s_ -> pure $ s_ ^. msg_body
             _ -> pure payload_
     pure $ QQResponse {
