@@ -8,7 +8,6 @@ import qualified Data.ByteString.Lazy as B
 import Control.Lens
 import Data.HashMap
 import Data.Word
-import Control.Monad.Reader (MonadIO (..))
 import Zephyr.Client.Highway
 import Zephyr.Client.Events
 import Zephyr.Client.Log
@@ -48,4 +47,4 @@ $(makeLenses ''Client)
 isClientOnline :: Client -> IO Bool
 isClientOnline client = do
     let c = client._online
-    liftIO $ readTVarIO c
+    readTVarIO c

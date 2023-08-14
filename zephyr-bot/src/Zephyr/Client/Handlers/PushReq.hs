@@ -19,7 +19,6 @@ import Zephyr.Packet.Jce.BigData
 import ProtoLite
 import Control.Lens
 import Control.Concurrent.STM
-import Control.Monad.IO.Class
 import Zephyr.Client.Highway
 import qualified Data.List
 import Zephyr.Client.Events
@@ -50,18 +49,18 @@ handlePushReqPacket client (QQPacket _ _ bs) = do
                         ]
                 let hsV = client._events._server_updated
                 let srvV = client._servers
-                hs <- liftIO $ readTVarIO hsV
+                hs <- readTVarIO hsV
                 let ea = ServerUpdatedEventArgs servers2__
-                rs <- sequence [liftIO $ h ea | h <- hs]
+                rs <- sequence [h ea | h <- hs]
                 when (and rs) $ do
-                    liftIO $ atomically $
+                    atomically $
                         modifyTVar srvV (++ map (\x ->(x._server.jval, fromIntegral $ x._port.jval)) servers2__)
                 pure $ Just ()
         else if B.length jceBuf > 0 && t == 2 then do
             let l = jceUnmarshal jceBuf :: FileStoragePushFSSvcList
             let rsp = decode $ l._big_data_channel.jval._pb_buf.jval :: C501RspBody
             let hw = client._highway_session
-            liftIO $ do
+            do
                 let rspbody_ = rsp._rsp_body.pv
                 atomically $ writeTVar (hw ^. hw_sig_session) $
                     optOrDef (rspbody_ >>= (._c501_sig_session.pv))
@@ -87,5 +86,5 @@ handlePushReqPacket client (QQPacket _ _ bs) = do
         Just _ -> pure ()
         Nothing -> do
             resp <- withContext (buildConfPushRespPacket (fromIntegral t) seq_ jceBuf) client
-            liftIO $ sendPacket resp client
+            sendPacket resp client
 

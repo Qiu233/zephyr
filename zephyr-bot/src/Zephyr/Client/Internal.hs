@@ -27,7 +27,7 @@ import Text.Printf
 withContextM :: ContextOPM a -> Client -> IO a
 withContextM o client = do
     let v = client._context
-    a <- liftIO $ atomically $ takeTMVar v
+    a <- atomically $ takeTMVar v
     (r, a') <- runStateT o a
     atomically $ putTMVar v a'
     pure r
@@ -73,7 +73,7 @@ getResponse_ client = do
 sendBytes :: B.ByteString -> Client ->  IO ()
 sendBytes bs cli = do
     let v = cli._out_buffer
-    liftIO $ atomically $ putTMVar v bs
+    atomically $ putTMVar v bs
 
 sendPacket :: Request -> Client -> IO ()
 sendPacket r client= do
@@ -85,9 +85,9 @@ netLoopSend client = do
     let v = client._out_buffer
     let sock = client._socket
     let rc = fix $ \k -> do
-            bs <- liftIO $ atomically $ takeTMVar v
+            bs <- atomically $ takeTMVar v
             unless (B.null bs) $ do
-                liftIO $ sendAll sock bs
+                sendAll sock bs
             k
     rc
 
@@ -95,42 +95,41 @@ netLoopRecv :: Client -> IO ()
 netLoopRecv client = do
     let handlersV_ = client._handlers
     let promisesV_ = client._promises
-    let rc = fix $ \k -> do
-            r <- runExceptT $ getResponse client
-            case r of
-                Left err -> do
-                    liftIO $ putStrLn $ "packet dropped due to: " ++ err
-                Right v -> do
-                    let seq_ = fromIntegral $ v ^. resp_body . sequence_id
-                    let cmd_ = v ^. resp_body . req_command
-                    let pkt = QQPacket {
-                            _pkt_seq = seq_,
-                            _pkt_cmd = cmd_,
-                            _pkt_body = v ^. resp_body . req_body
-                        }
-                    handlers_ <- liftIO $ readTVarIO handlersV_
-                    let handlerM_ = Data.HashMap.lookup cmd_ handlers_
-                    case handlerM_ of
-                        Just handler_ -> do
-                            handler_ pkt
-                        Nothing -> do
-                            promises_ <- liftIO $ atomically $ takeTMVar promisesV_
-                            case Data.HashMap.lookup seq_ promises_ of
-                                Nothing -> liftIO $ do
-                                    client._logger.logWarning $ "packet discarded due to no promise or handler: " ++ printf "command = %s" pkt._pkt_cmd
-                                Just promise -> liftIO $ do
-                                    s <- atomically $ tryPutTMVar promise pkt
-                                    unless s $ do
-                                        client._logger.logWarning $ "packet discarded due to promise already filled: " ++ printf "command = %s" pkt._pkt_cmd
-                            liftIO $ atomically $ putTMVar promisesV_ promises_
-            k
-    rc
+    fix $ \k -> do
+        r <- runExceptT $ getResponse client
+        case r of
+            Left err -> do
+                putStrLn $ "packet dropped due to: " ++ err
+            Right v -> do
+                let seq_ = fromIntegral $ v ^. resp_body . sequence_id
+                let cmd_ = v ^. resp_body . req_command
+                let pkt = QQPacket {
+                        _pkt_seq = seq_,
+                        _pkt_cmd = cmd_,
+                        _pkt_body = v ^. resp_body . req_body
+                    }
+                handlers_ <- readTVarIO handlersV_
+                let handlerM_ = Data.HashMap.lookup cmd_ handlers_
+                case handlerM_ of
+                    Just handler_ -> do
+                        handler_ pkt
+                    Nothing -> do
+                        promises_ <- atomically $ takeTMVar promisesV_
+                        case Data.HashMap.lookup seq_ promises_ of
+                            Nothing -> do
+                                client._logger.logWarning $ "packet discarded due to no promise or handler: " ++ printf "command = %s" pkt._pkt_cmd
+                            Just promise -> do
+                                s <- atomically $ tryPutTMVar promise pkt
+                                unless s $ do
+                                    client._logger.logWarning $ "packet discarded due to promise already filled: " ++ printf "command = %s" pkt._pkt_cmd
+                        atomically $ putTMVar promisesV_ promises_
+        k
 
 startNetLoop :: Client -> IO (Async ())
 startNetLoop client = do
     let recv_ = netLoopRecv client
     let send_ = netLoopSend client
-    liftIO $ async $ concurrently_ recv_ send_
+    async $ concurrently_ recv_ send_
 
 waitTimeout :: Int -> Async a -> IO (Maybe a)
 waitTimeout i t = do
@@ -141,8 +140,8 @@ waitTimeout i t = do
 putPromise :: Word16 -> Client -> IO (TMVar QQPacket)
 putPromise seqID client = do
     let promisesV_ = client._promises
-    promise <- liftIO newEmptyTMVarIO
-    liftIO $ atomically $ do
+    promise <- newEmptyTMVarIO
+    atomically $ do
         promises_ <- takeTMVar promisesV_
         putTMVar promisesV_ $ insert seqID promise promises_
         pure promise
@@ -150,7 +149,7 @@ putPromise seqID client = do
 removePromise :: Word16 -> Client -> IO ()
 removePromise seqID client = do
     let promisesV_ = client._promises
-    liftIO $ atomically $ do
+    atomically $ do
         promises_ <- takeTMVar promisesV_
         putTMVar promisesV_ $ delete seqID promises_
 

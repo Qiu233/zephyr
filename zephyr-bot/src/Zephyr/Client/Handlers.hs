@@ -17,5 +17,4 @@ setDefaultHandlers client = do
             ("ConfigPushSvc.PushReq", handlePushReqPacket client),
             ("OnlinePush.PbPushGroupMsg", handleGroupMessagePacket client)
             ]
-    atomically $ modifyTVar (client._handlers) (Data.HashMap.union hs)
-    
+    atomically $ modifyTVar client._handlers (Data.HashMap.union hs)

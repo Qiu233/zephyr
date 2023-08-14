@@ -11,7 +11,6 @@ import Zephyr.Client.Highway
 import Control.Lens
 import Zephyr.Core.Transport
 import Zephyr.Core.AppVersion
-import Control.Monad.IO.Class
 import qualified Control.Exception as Ex
 import Zephyr.Client.Log
 import Data.Time
@@ -32,7 +31,7 @@ runTCPClient host port client = withSocketsDo $ do
 
 clientMain :: QQContext -> (Client -> IO ()) -> IO ()
 clientMain ctx clientMainInner = do
-    liftIO $ runTCPClient "msfwifi.3g.qq.com" "8080" $ \sock -> do
+    runTCPClient "msfwifi.3g.qq.com" "8080" $ \sock -> do
         c <- newClient ctx sock
         clientMainInner c
 
