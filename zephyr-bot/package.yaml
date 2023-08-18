@@ -6,8 +6,7 @@ author:              "Qiu"
 maintainer:          "lopi258@outlook.com"
 copyright:           "2023 Qiu"
 
-extra-source-files:
-- CHANGELOG.md
+extra-source-files: []
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
@@ -16,7 +15,7 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Haskell re-implementation of QQBot licence.
+description:         Haskell re-implementation of QQBot protocol.
 
 dependencies:
 - base >= 4.7 && < 5

@@ -14,8 +14,6 @@ maintainer:     lopi258@outlook.com
 copyright:      2023 Qiu
 license:        BSD3
 build-type:     Simple
-extra-source-files:
-    CHANGELOG.md
 
 source-repository head
   type: git
