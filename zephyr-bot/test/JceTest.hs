@@ -1,6 +1,6 @@
 module JceTest where
 import Zephyr.Utils.Common (decodeHex_)
-import Zephyr.Utils.Jce (jceUnmarshal)
+import Zephyr.Jce (jceUnmarshal)
 import Zephyr.Packet.JceStructs
 import Test.Hspec
 

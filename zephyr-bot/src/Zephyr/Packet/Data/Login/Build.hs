@@ -14,10 +14,10 @@ import Zephyr.Packet.Build
 import Zephyr.Core.Request
 import Zephyr.Binary
 import Data.Bits
-import Zephyr.Utils.Jce.Generic
+import Zephyr.Jce.Generic
 import Zephyr.Core.Device
 import Zephyr.Utils.GUID (guidBytes)
-import Zephyr.Utils.Jce (jceMarshal)
+import Zephyr.Jce (jceMarshal)
 import Zephyr.Packet.JceStructs
 import Zephyr.Binary.Put
 

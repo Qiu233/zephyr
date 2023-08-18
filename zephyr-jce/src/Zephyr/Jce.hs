@@ -1,4 +1,4 @@
-module Zephyr.Utils.Jce (
+module Zephyr.Jce (
     JceField(..),
     Jce,
     jceMarshal,
@@ -8,7 +8,7 @@ module Zephyr.Utils.Jce (
 ) where
 import GHC.Stack
 
-import Zephyr.Utils.Jce.Generic
+import Zephyr.Jce.Generic
 import qualified Data.ByteString.Lazy as B
 import Zephyr.Binary
 import Zephyr.Binary.Get

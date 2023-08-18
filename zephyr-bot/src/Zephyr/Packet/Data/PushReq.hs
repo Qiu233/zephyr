@@ -7,8 +7,8 @@ import qualified Data.ByteString.Lazy as B
 import Zephyr.Core.QQContext
 import Zephyr.Core.Request
 import Zephyr.Binary
-import Zephyr.Utils.Jce.Internal
-import Zephyr.Utils.Jce
+import Zephyr.Jce.Internal
+import Zephyr.Jce
 import Zephyr.Packet.Build
 import Zephyr.Packet.JceStructs
 

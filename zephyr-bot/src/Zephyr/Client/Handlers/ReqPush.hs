@@ -2,12 +2,12 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Client.Handlers.ReqPush where
 import Zephyr.Client.Types
-import Zephyr.Utils.Jce
+import Zephyr.Jce
 import qualified Data.ByteString.Lazy as B
 import Data.Maybe
-import Zephyr.Utils.Jce.JceMap
+import Zephyr.Jce.JceMap
 import Zephyr.Binary (runGet, Get)
-import Zephyr.Utils.Jce.Generic
+import Zephyr.Jce.Generic
 import Data.Int
 import Zephyr.Packet.Data.ReqPush
 import Zephyr.Client.Internal

@@ -1,11 +1,11 @@
 {-# LANGUAGE DataKinds #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Packet.JceStructs where
-import Zephyr.Utils.Jce
+import Zephyr.Jce
 import Data.Int
 import GHC.Generics
 import qualified Data.ByteString.Lazy as B
-import Zephyr.Utils.Jce.JceMap
+import Zephyr.Jce.JceMap
 import Data.Word
 
 data BigDataIPInfo = BigDataIPInfo {

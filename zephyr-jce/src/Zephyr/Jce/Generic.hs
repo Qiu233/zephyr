@@ -9,11 +9,11 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
-module Zephyr.Utils.Jce.Generic where
+module Zephyr.Jce.Generic where
 
 import GHC.Generics
 import GHC.TypeNats
-import Zephyr.Utils.Jce.Internal
+import Zephyr.Jce.Internal
 import Data.Proxy
 import Data.Kind
 import Data.String (IsString(..))

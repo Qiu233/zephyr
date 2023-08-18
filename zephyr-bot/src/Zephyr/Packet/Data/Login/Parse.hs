@@ -20,8 +20,8 @@ import Zephyr.Binary
 import Data.Proxy
 import Zephyr.Utils.Map
 import Control.Monad.Except
-import Zephyr.Utils.Jce
-import Zephyr.Utils.Jce.JceMap
+import Zephyr.Jce
+import Zephyr.Jce.JceMap
 import Control.Monad.Trans.Except
 import Data.Either
 import Data.Maybe (fromMaybe)

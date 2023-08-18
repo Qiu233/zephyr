@@ -1,14 +1,14 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
-module Zephyr.Utils.Jce.Internal where
+module Zephyr.Jce.Internal where
 import Data.Word
 import qualified Data.ByteString.Lazy as B
 import Data.Bits
 import Data.Int
 import Control.Monad (replicateM, forM_, replicateM_)
 import Control.Monad.Fix
-import Zephyr.Utils.Jce.JceMap
+import Zephyr.Jce.JceMap
 import GHC.Stack
 import Zephyr.Binary
 import Zephyr.Binary.Get

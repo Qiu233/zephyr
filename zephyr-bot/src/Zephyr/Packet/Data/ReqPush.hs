@@ -6,10 +6,10 @@ import qualified Data.ByteString.Lazy as B
 import Data.Word
 import Zephyr.Core.QQContext
 import Zephyr.Core.Request
-import Zephyr.Utils.Jce.Generic
+import Zephyr.Jce.Generic
 import Zephyr.Packet.Build (buildUniRequestData, uniPackRequestWithSeq)
-import Zephyr.Utils.Jce
-import Zephyr.Utils.Jce.JceMap
+import Zephyr.Jce
+import Zephyr.Jce.JceMap
 import Zephyr.Packet.JceStructs
 import qualified Zephyr.Packet.JceStructs as DelMsgInfo (DelMsgInfo(..))
 

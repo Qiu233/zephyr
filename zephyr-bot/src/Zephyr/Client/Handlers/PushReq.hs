@@ -5,11 +5,11 @@
 module Zephyr.Client.Handlers.PushReq where
 import Zephyr.Client.Types
 import qualified Data.ByteString.Lazy as B
-import Zephyr.Utils.Jce
+import Zephyr.Jce
 import Data.Maybe
-import Zephyr.Utils.Jce.JceMap
+import Zephyr.Jce.JceMap
 import Zephyr.Binary
-import Zephyr.Utils.Jce.Internal
+import Zephyr.Jce.Internal
 import Control.Monad
 import Zephyr.ProtoLite
 import Control.Lens

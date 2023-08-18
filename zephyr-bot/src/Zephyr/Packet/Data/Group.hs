@@ -9,14 +9,14 @@ import Zephyr.Core.QQContext
 import Zephyr.Core.Transport
 import Zephyr.Core.AppVersion
 import Control.Lens hiding (repeated)
-import Zephyr.Utils.Jce
-import Zephyr.Utils.Jce.JceMap
+import Zephyr.Jce
+import Zephyr.Jce.JceMap
 import Zephyr.Packet.Build
 import Zephyr.Core.Entity.Group
 import Control.Monad.Except
 import Zephyr.Binary
 import Data.Maybe
-import Zephyr.Utils.Jce.Internal
+import Zephyr.Jce.Internal
 import Zephyr.PB.OIDB
 import Zephyr.PB.OIDB.OIDB0x88D
 import Zephyr.ProtoLite
