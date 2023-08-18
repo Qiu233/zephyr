@@ -10,15 +10,11 @@ import Zephyr.Core.Transport
 import Zephyr.Core.AppVersion
 import Control.Lens hiding (repeated)
 import Zephyr.Utils.Jce
-import Zephyr.Packet.Jce.TroopListRequest as TLR
-import Zephyr.Packet.Jce.RequestDataVersion3
 import Zephyr.Utils.Jce.JceMap
 import Zephyr.Packet.Build
-import Zephyr.Packet.Jce.RequestPacket
 import Zephyr.Core.Entity.Group
 import Control.Monad.Except
 import Zephyr.Utils.Binary
-import Zephyr.Packet.Jce.TroopNumber
 import Data.Maybe
 import Zephyr.Utils.Jce.Internal
 import Zephyr.PB.OIDB
@@ -28,13 +24,14 @@ import Control.Monad.Trans.Except
 import Text.Printf (printf)
 import Data.Int
 import Control.Monad.Reader (asks)
+import Zephyr.Packet.JceStructs
 
 
 buildGroupListRequestPacket :: B.ByteString -> ContextRM Request
 buildGroupListRequestPacket vecCookie = do
     uin_ <- fromIntegral <$> view uin
     let req = jdef {
-            TLR._uin = uin_,
+            _uin = uin_,
             _get_msf_msg_flag = 1,
             _cookies = JceField vecCookie,
             _group_info = JceField [],

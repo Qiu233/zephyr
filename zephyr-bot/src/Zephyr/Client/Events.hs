@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Client.Events where
-import Zephyr.Packet.Jce.SsoServerInfo
+import Zephyr.Packet.JceStructs
 
 
 data ServerUpdatedEventArgs = ServerUpdatedEventArgs {

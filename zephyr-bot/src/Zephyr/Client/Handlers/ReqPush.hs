@@ -3,18 +3,16 @@
 module Zephyr.Client.Handlers.ReqPush where
 import Zephyr.Client.Types
 import Zephyr.Utils.Jce
-import Zephyr.Packet.Jce.RequestPacket
-import Zephyr.Packet.Jce.RequestDataVersion2
 import qualified Data.ByteString.Lazy as B
 import Data.Maybe
 import Zephyr.Utils.Jce.JceMap
 import Zephyr.Utils.Binary (runGet, Get)
 import Zephyr.Utils.Jce.Generic
-import Zephyr.Packet.Jce.PushMessageInfo
 import Data.Int
 import Zephyr.Packet.Data.ReqPush
 import Zephyr.Client.Internal
 import Zephyr.Client.Log
+import Zephyr.Packet.JceStructs
 
 handleReqPush :: Client -> QQPacket -> IO ()
 handleReqPush client pkt = do

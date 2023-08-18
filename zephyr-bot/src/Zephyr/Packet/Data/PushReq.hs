@@ -6,12 +6,11 @@ import Data.Int
 import qualified Data.ByteString.Lazy as B
 import Zephyr.Core.QQContext
 import Zephyr.Core.Request
-import Zephyr.Packet.Jce.RequestPacket as RequestPacket
 import Zephyr.Utils.Binary
 import Zephyr.Utils.Jce.Internal
-import Zephyr.Packet.Jce.RequestDataVersion3
 import Zephyr.Utils.Jce
 import Zephyr.Packet.Build
+import Zephyr.Packet.JceStructs
 
 buildConfPushRespPacket :: Int32 -> Int64 -> B.ByteString -> ContextRM Request
 buildConfPushRespPacket t_ seq_ jceBuf_ = do
@@ -25,7 +24,7 @@ buildConfPushRespPacket t_ seq_ jceBuf_ = do
             _s_servant_name = "QQService.ConfigPushSvc.MainServant",
             _s_func_name = "PushResp",
             _s_buffer = JceField $ jceMarshal buf,
-            RequestPacket._context = JceField [],
-            RequestPacket._status = JceField  []
+            _context = JceField [],
+            _status = JceField  []
             }
     uniPackRequest "ConfigPushSvc.PushResp" $ jceMarshal pkt

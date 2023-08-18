@@ -18,10 +18,7 @@ import Zephyr.Utils.Jce.Generic
 import Zephyr.Core.Device
 import Zephyr.Utils.GUID (guidBytes)
 import Zephyr.Utils.Jce (jceMarshal)
-
-import Zephyr.Packet.Jce.SvcReqRegister as SvcReqRegister
-import Zephyr.Packet.Jce.RequestPacket as RequestPacket
-import qualified Zephyr.Packet.Jce.RequestDataVersion3 as RequestDataVersion3
+import Zephyr.Packet.JceStructs
 
 buildLoginPacket :: ContextRM Request
 buildLoginPacket = do
@@ -90,15 +87,15 @@ buildClientRegisterPacket = do
     tr <- view transport
     let svc = jdef {
             _conn_type = 0,
-            SvcReqRegister._uin = fromIntegral uin_,
+            _uin = fromIntegral uin_,
             _bid = JceField (1 .|. 2 .|. 4),
-            SvcReqRegister._status = 11,
+            _status = 11,
             _kick_pc = 0,
             _kick_weak = 0,
             _ios_version = JceField (fromIntegral $ tr ^. device . os_version . sdk),
             _net_type = 1,
             _reg_type = 0,
-            SvcReqRegister._guid = JceField (guidBytes $ tr ^. device . guid),
+            _guid = JceField (guidBytes $ tr ^. device . guid),
             _is_set_status = 0,
             _locale_id = 2052,
             _dev_name = JceField (tr ^. device . model),
@@ -110,8 +107,8 @@ buildClientRegisterPacket = do
             _new_sso_ip = 31806887127679168,
             _channel_no = "",
             _cp_id = 0,
-            SvcReqRegister._vendor_name = JceField (tr ^. device . vendor_name),
-            SvcReqRegister._vendor_os_name = JceField (tr ^. device . vendor_os_name),
+            _vendor_name = JceField (tr ^. device . vendor_name),
+            _vendor_os_name = JceField (tr ^. device . vendor_os_name),
             _b769 = JceField $ B.pack [0x0A, 0x04, 0x08, 0x2E, 0x10, 0x00, 0x0A, 0x05, 0x08, 0x9B, 0x02, 0x10, 0x00],
             _set_mute = 0
     }
@@ -119,15 +116,13 @@ buildClientRegisterPacket = do
             put8 0x0A
             putbs $ jceMarshal svc
             put8 0x0B
-    let buf = jdef {
-            RequestDataVersion3._map = JceField [("SvcReqRegister", b)]
-    }
+    let buf = RequestDataVersion3 $ JceField [("SvcReqRegister", b)]
     let pkt = jdef {
             _i_version = 3,
             _s_servant_name = "PushService",
             _s_func_name = "SvcReqRegister",
             _s_buffer = JceField $ jceMarshal buf,
-            RequestPacket._context = [],
-            RequestPacket._status = []
+            _context = [],
+            _status = []
     }
     pure $ Request RT_Login ET_D2Key (fromIntegral seq_) uin_ "StatSvc.register" (jceMarshal pkt)

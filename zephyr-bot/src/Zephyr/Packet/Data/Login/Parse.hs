@@ -22,14 +22,12 @@ import Data.Proxy
 import Zephyr.Utils.Map
 import Control.Monad.Except
 import Zephyr.Utils.Jce
-import Zephyr.Packet.Jce.RequestPacket
-import Zephyr.Packet.Jce.RequestDataVersion2
 import Zephyr.Utils.Jce.JceMap
-import Zephyr.Packet.Jce.SvcRespRegister
 import Control.Monad.Trans.Except
 import Data.Either
 import Data.Maybe (fromMaybe)
 import Control.Monad.Cont
+import Zephyr.Packet.JceStructs
 
 
 

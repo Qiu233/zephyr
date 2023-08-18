@@ -5,17 +5,12 @@
 module Zephyr.Client.Handlers.PushReq where
 import Zephyr.Client.Types
 import qualified Data.ByteString.Lazy as B
-import Zephyr.Packet.Jce.RequestPacket as RequestPacket
-import Zephyr.Packet.Jce.RequestDataVersion2
 import Zephyr.Utils.Jce
 import Data.Maybe
 import Zephyr.Utils.Jce.JceMap
 import Zephyr.Utils.Binary
 import Zephyr.Utils.Jce.Internal
 import Control.Monad
-import Zephyr.Packet.Jce.SsoServerInfo
-import Zephyr.Packet.Jce.FileStoragePushFSSvcList
-import Zephyr.Packet.Jce.BigData
 import ProtoLite
 import Control.Lens
 import Control.Concurrent.STM
@@ -29,6 +24,7 @@ import Zephyr.Client.Log
 import Zephyr.PB.CMD0x6FF.SubCMD0x501
 import Control.Monad.Cont
 import Zephyr.Utils.Codec
+import Zephyr.Packet.JceStructs
 
 handlePushReqPacket :: Client -> QQPacket -> IO ()
 handlePushReqPacket client (QQPacket _ _ bs) = do
