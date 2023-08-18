@@ -39,10 +39,9 @@ withContext o client = do
     runReaderT o a
 
 
-getResponse :: Client -> ExceptT String IO QQResponse
-getResponse client = do
+getResponse :: Client -> TVar B.ByteString -> ExceptT String IO QQResponse
+getResponse client v = do
     let sock = client._socket
-    let v = client._in_buffer
     vs <- liftIO $ recv sock 1024
     when (B.null vs) $ throwE  "Connection closed"
     liftIO $ atomically $ modifyTVar v (<> vs)
@@ -52,23 +51,16 @@ getResponse client = do
                     len <- get32be
                     getbs $ fromIntegral (len - 4)) x
             case contentM of
-                DError "Too few bytes" -> (B.empty, x)
+                TooFewBytes -> (B.empty, x)
                 Success y r -> (y, r)
                 DError err -> error err
         else
             (B.empty, x)
     if B.null r then
-        getResponse client
+        getResponse client v
     else do
         t <- lift $ withContextM (parsePacket r) client
         liftEither t
-
-getResponse_ :: Client -> IO QQResponse
-getResponse_ client = do
-    r <- runExceptT $ getResponse client
-    case r of
-        Left err -> error err
-        Right v -> pure v
 
 sendBytes :: B.ByteString -> Client ->  IO ()
 sendBytes bs cli = atomically $ putTMVar v bs
@@ -95,8 +87,9 @@ netLoopSend client = do
 
 netLoopRecv :: Client -> IO ()
 netLoopRecv client = do
+    buf <- newTVarIO B.empty
     fix $ \k -> do
-        r <- runExceptT $ getResponse client
+        r <- runExceptT $ getResponse client buf
         case r of
             Left err -> do
                 client._logger.logWarning $ "packet dropped due to: " ++ err

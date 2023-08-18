@@ -44,6 +44,7 @@ runGet_ :: Get a -> B.ByteString -> Either String a
 runGet_ (Get f) bs = case f bs of
     Success a _ -> Right a
     DError e -> Left e
+    TooFewBytes -> Left "Too few bytes"
 
 runGet :: HasCallStack => Get a -> B.ByteString -> a
 runGet f bs = either (error . (++ prettyCallStack callStack)) id (runGet_ f bs)
@@ -59,7 +60,7 @@ runGet f bs = either (error . (++ prettyCallStack callStack)) id (runGet_ f bs)
 get8 :: Get Word8
 get8 = Get $ \bs -> case B.uncons bs of
     Just (w, bs') -> Success w bs'
-    Nothing -> tooFewBytes
+    Nothing -> TooFewBytes
 
 get16le :: Get Word16
 get16le = do
@@ -144,13 +145,10 @@ instance (BinGet a, BinGet b, BinGet c, BinGet d) => BinGet (a, b, c, d) where
     getbe = (,,,) <$> getbe <*> getbe <*> getbe <*> getbe
 
 
-tooFewBytes :: DecodeResult a
-tooFewBytes = DError "Too few bytes"
-
 getbs :: Int -> Get B.ByteString
 getbs len' = Get $ \bs ->
     if B.length bs < len then
-        tooFewBytes
+        TooFewBytes
     else
         Success (B.take len bs) (B.drop len bs)
     where len = fromIntegral len'
@@ -171,6 +169,7 @@ tryGet :: Get a -> Get (Maybe a)
 tryGet (Get f) = Get $ \bs -> case f bs of
     Success a bs' -> Success (Just a) bs'
     DError _ -> Success Nothing bs
+    TooFewBytes -> Success Nothing bs
 
 getb :: Get Bool
 getb = (/=0) <$> get8

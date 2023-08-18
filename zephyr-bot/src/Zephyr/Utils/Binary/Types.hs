@@ -19,7 +19,8 @@ infixl 7 .>.
 
 data DecodeResult a =
     Success !a !B.ByteString |
-    DError !String
+    DError !String |
+    TooFewBytes
 
 type PutM = Writer B.ByteString
 type Put = PutM ()
@@ -31,17 +32,21 @@ instance Functor Get where
     fmap f (Get g) = Get $ \bs -> case g bs of
         Success a bs' -> Success (f a) bs'
         DError e -> DError e
+        TooFewBytes -> TooFewBytes
 instance Applicative Get where
     pure a = Get $ \bs -> Success a bs
     Get f <*> Get a = Get $ \bs -> case f bs of
         Success f' bs' -> case a bs' of
             Success a' bs'' -> Success (f' a') bs''
             DError e -> DError e
+            TooFewBytes -> TooFewBytes
         DError e -> DError e
+        TooFewBytes -> TooFewBytes
 instance Monad Get where
     return = pure
     Get a >>= f = Get $ \bs -> case a bs of
         Success a' bs' -> runGetInner (f a') bs'
         DError e -> DError e
+        TooFewBytes -> TooFewBytes
 instance MonadFail Get where
     fail e = Get $ \_ -> DError e

@@ -56,7 +56,7 @@ newClient ctx sock = do
             newTVarIO [] <*>
             newTVarIO False <*>
             newTVarIO False <*>
-            newTVarIO B.empty <*> newEmptyTMVarIO <*> newTMVarIO Data.HashMap.empty <*>
+            newEmptyTMVarIO <*> newTMVarIO Data.HashMap.empty <*>
             emptyEvents <*>
             handlers_ <*>
             defaultHighwaySession (ctx ^. uin) (fromIntegral $ ctx ^. transport . app_version . sub_id)

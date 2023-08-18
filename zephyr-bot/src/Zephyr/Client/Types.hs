@@ -35,7 +35,6 @@ data Client = Client {
     _online :: TVar Bool,
     _net_loop :: TVar Bool,
 
-    _in_buffer :: TVar B.ByteString,
     _out_buffer :: TMVar B.ByteString,
     _promises :: TMVar(Map Word16 (TMVar QQPacket)),
 
