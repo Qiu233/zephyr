@@ -1,8 +1,9 @@
-{-# OPTIONS_GHC -Wno-missing-export-lists #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TemplateHaskellQuotes #-}
 {-# LANGUAGE QuasiQuotes #-}
-module Zephyr.Packet.Data.Message where
+module Zephyr.Packet.Data.Message (
+    parseMessageElems
+) where
 import Zephyr.PB.Msg
 import Zephyr.Message.Elements
 import Control.Monad.State
@@ -134,7 +135,6 @@ tryParseText (ParseContext _break _yield _continue x) = do
     when (isJust x._text.pv) $ do
         let text_ = x._text.optOrDef
         let str_ = text_._str.pv
-        -- TODO: review early exits
         when (B.length text_._attr6_buf.optOrDef > 0) $ do
             let target_ = fromIntegral $ flip runGet text_._attr6_buf.optOrDef $ skip 7 >> get32be
             _yield $ parseAt target_ str_ AT_GroupMember
@@ -172,7 +172,6 @@ tryParseRichMessage (ParseContext _break _yield _continue x) = do
                 _yield $ newRichXml content_ $ fromIntegral sid
             when (validateJSON $ utf8ToBytes content_) $ do
                 _yield $ newRichJson content_
-            -- TODO: handle json
             _yield $ TextElement content_
 
 tryParseCustomFace :: MsgParser
@@ -303,20 +302,20 @@ parseMessageElems elems = do
     flip runCont id $ do
         callCC $ \break' -> do
             catMaybes <$> sequence (flip fmap elems $ \x -> do
-                    callCC $ \ex' -> do
-                        let yield' = ex' . Just
-                        let continue' = ex' Nothing
-                        let ctx = ParseContext break' yield' continue' x
-                        tryParseReply ctx
-                        tryParseQFile ctx
-                        tryParseLightApp ctx
-                        tryParseShortVideo ctx
-                        tryParseText ctx
-                        tryParseRichMessage ctx
-                        tryParseCustomFace ctx
-                        tryParseMarketFace ctx
-                        tryParseOfflineImage ctx
-                        tryParseQQWalletMessage ctx
-                        tryParseFace ctx
-                        tryParseCommonElem ctx
-                        pure Nothing)
+                callCC $ \ex' -> do
+                    let yield' = ex' . Just
+                    let continue' = ex' Nothing
+                    let ctx = ParseContext break' yield' continue' x
+                    tryParseReply ctx
+                    tryParseQFile ctx
+                    tryParseLightApp ctx
+                    tryParseShortVideo ctx
+                    tryParseText ctx
+                    tryParseRichMessage ctx
+                    tryParseCustomFace ctx
+                    tryParseMarketFace ctx
+                    tryParseOfflineImage ctx
+                    tryParseQQWalletMessage ctx
+                    tryParseFace ctx
+                    tryParseCommonElem ctx
+                    pure Nothing)
