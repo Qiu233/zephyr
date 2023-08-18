@@ -29,6 +29,7 @@ import Zephyr.Packet.Jce.SvcRespRegister
 import Control.Monad.Trans.Except
 import Data.Either
 import Data.Maybe (fromMaybe)
+import Control.Monad.Cont
 
 
 
@@ -74,45 +75,41 @@ decodeLoginResponse bs = do
             transport . signature . rand_seed .= es ?> 0x403
             pure DeviceLockLogin
         t_ -> do
-            ps <-
-                if t_ == 160 || t_ == 239 then do
-                    if has_ es 0x174 then do
-                        let t174_ = es ! 0x174
-                        transport . signature . t104 .= es ?> 0x104
-                        transport . signature . t174 .= t174_
-                        transport . signature . rand_seed .= es ?> 0x403
-                        let phone_ = flip runGet (es ! 0x178) $ do
-                                _ <- getlv
-                                utf8FromBytes <$> getlv
-                        if has_ es 0x204 then do
-                            pure $ Just $ VerificationNeeded
-                                (utf8FromBytes $ es ?> 0x17E)
-                                (utf8FromBytes $ es ! 0x204)
-                                phone_
-                        else do
-                            pure $ Just $ SMSNeeded (utf8FromBytes $ es ?> 0x17E) phone_
-                    else if has_ es 0x17B then do -- second time
-                        transport . signature . t104 .= es ?> 0x104
-                        pure $ Just $ SMSNeeded "" "" -- ?
-                    else if has_ es 0x204 then do
-                        pure $ Just $ VerificationNeeded "" (utf8FromBytes $ es ! 0x204) ""
-                    else pure Nothing
-            else pure Nothing
-            case ps of
-                Just x -> pure x
-                Nothing -> do
+            flip runContT pure $ do
+                callCC $ \exit -> do
+                    when (t_ == 160 || t_ == 239) $ do
+                        if has_ es 0x174 then do
+                            let t174_ = es ! 0x174
+                            transport . signature . t104 .= es ?> 0x104
+                            transport . signature . t174 .= t174_
+                            transport . signature . rand_seed .= es ?> 0x403
+                            let phone_ = flip runGet (es ! 0x178) $ do
+                                    _ <- getlv
+                                    utf8FromBytes <$> getlv
+                            if has_ es 0x204 then do
+                                exit $ VerificationNeeded
+                                    (utf8FromBytes $ es ?> 0x17E)
+                                    (utf8FromBytes $ es ! 0x204)
+                                    phone_
+                            else do
+                                exit $ SMSNeeded (utf8FromBytes $ es ?> 0x17E) phone_
+                        else if has_ es 0x17B then do -- second time
+                            transport . signature . t104 .= es ?> 0x104
+                            exit $ SMSNeeded "" "" -- ?
+                        else when (has_ es 0x204) $ do
+                            exit $ VerificationNeeded "" (utf8FromBytes $ es ! 0x204) ""
                     if has_ es 0x149 then do
-                        let r_ = flip runGet (es ! 0x149) $ do
+                        pure $ UnknownLoginResponse t $
+                            flip runGet (es ! 0x149) $ do
                                 _ <- get16be
                                 _ <- getlv -- title
                                 utf8FromBytes <$> getlv
-                        pure $ UnknownLoginResponse t r_
                     else if has_ es 0x146 then do
-                        let r_ = flip runGet (es ! 0x146) $ do
+                        pure $ UnknownLoginResponse t $
+                            flip runGet (es ! 0x146) $ do
                                 _ <- get32be
                                 _ <- getlv -- title
                                 utf8FromBytes <$> getlv
-                        pure $ UnknownLoginResponse t r_
                     else pure $ UnknownLoginResponse t ""
     where
         (_, t, _, r) = flip runGet bs $ do
