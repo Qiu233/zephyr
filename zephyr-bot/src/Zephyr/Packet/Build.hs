@@ -9,6 +9,7 @@ module Zephyr.Packet.Build (
     packBody,
     buildUniRequestData,
     uniPackRequest,
+    uniPackRequestWithSeq,
     packOIDBPackage
 ) where
 import qualified Data.ByteString.Lazy as B
@@ -244,10 +245,15 @@ buildUniRequestData bs = do
         put8 0x0b
 
 uniPackRequest :: String -> B.ByteString -> ContextRM Request
-uniPackRequest cmd_ body_ =do
+uniPackRequest cmd_ body_ = do
     seq_ <- fromIntegral <$> nextSeq
     uin_ <- view uin
     pure $ Request RT_Simple ET_D2Key seq_ uin_ cmd_ body_
+
+uniPackRequestWithSeq :: Word16 -> String -> B.ByteString -> ContextRM Request
+uniPackRequestWithSeq seq_ cmd_ body_ = do
+    uin_ <- view uin
+    pure $ Request RT_Simple ET_D2Key (fromIntegral seq_) uin_ cmd_ body_
 
 packOIDBPackage :: ProtoBuf a => Int32 -> Int32 -> a -> ContextRM B.ByteString
 packOIDBPackage cmd srv_type (buf :: a) = do
