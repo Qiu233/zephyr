@@ -63,20 +63,23 @@ newClient ctx sock = do
     setDefaultHandlers c
     pure c
 
+ftime :: UTCTime -> String
+ftime = formatTime defaultTimeLocale "%Y-%m-%d %H:%M:%S"
+
 defaultLogger :: Logger
 defaultLogger = Logger {
     logInfo = \s -> do
         time <- getCurrentTime
-        putStrLn $ printf "[%s] [INFO]: %s" (show time) s,
+        putStrLn $ printf "[%s] [INFO]: %s" (ftime time) s,
     logWarning = \s -> do
         time <- getCurrentTime
-        putStrLn $ printf "[%s] [WARN]: %s" (show time) s,
+        putStrLn $ printf "[%s] [WARN]: %s" (ftime time) s,
     logError = \s -> do
         time <- getCurrentTime
-        putStrLn $ printf "[%s] [ERROR]: %s" (show time) s,
+        putStrLn $ printf "[%s] [ERROR]: %s" (ftime time) s,
     logDebug = \s -> do
         time <- getCurrentTime
-        putStrLn $ printf "[%s] [DEBUG]: %s" (show time) s,
+        putStrLn $ printf "[%s] [DEBUG]: %s" (ftime time) s,
     logDump = \_ _ -> pure ()
 }
 
