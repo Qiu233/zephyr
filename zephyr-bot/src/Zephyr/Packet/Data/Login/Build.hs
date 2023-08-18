@@ -12,13 +12,14 @@ import qualified Zephyr.Packet.TLV.Builders as T
 import Zephyr.Core.Signature
 import Zephyr.Packet.Build
 import Zephyr.Core.Request
-import Zephyr.Utils.Binary
+import Zephyr.Binary
 import Data.Bits
 import Zephyr.Utils.Jce.Generic
 import Zephyr.Core.Device
 import Zephyr.Utils.GUID (guidBytes)
 import Zephyr.Utils.Jce (jceMarshal)
 import Zephyr.Packet.JceStructs
+import Zephyr.Binary.Put
 
 buildLoginPacket :: ContextRM Request
 buildLoginPacket = do

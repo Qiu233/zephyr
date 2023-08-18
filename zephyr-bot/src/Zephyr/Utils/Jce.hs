@@ -10,7 +10,8 @@ import GHC.Stack
 
 import Zephyr.Utils.Jce.Generic
 import qualified Data.ByteString.Lazy as B
-import Zephyr.Utils.Binary
+import Zephyr.Binary
+import Zephyr.Binary.Get
 
 
 jceMarshal :: Jce a => a -> B.ByteString

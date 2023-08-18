@@ -1,17 +1,18 @@
 {-# LANGUAGE DefaultSignatures, TypeOperators, FlexibleContexts #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
-module Zephyr.Utils.Binary.Put where
+module Zephyr.Binary.Put where
 import GHC.Generics
 
 import qualified Data.ByteString.Lazy as B
 import Control.Monad.Trans.Writer
 
-import Zephyr.Utils.Binary.Types
+import Zephyr.Binary.Types
 import Data.Word
 import Data.Int
 import GHC.Float
 import qualified Data.ByteString.Lazy.UTF8 as UTF8
 import qualified Data.ByteString as SB
+import Zephyr.Binary.OP
 
 class GBinPut f where
     gputle :: f a -> Put
@@ -27,21 +28,18 @@ class BinPut a where
     putbe a = gputbe $ from a
 
 
--- instance GBinPut a => GBinPut (M1 i c a) where
---     gputle = gputle . unM1
---     gputbe = gputbe . unM1
+instance GBinPut a => GBinPut (M1 i c a) where
+    gputle = gputle . unM1
+    gputbe = gputbe . unM1
 
--- instance BinPut a => GBinPut (K1 i a) where
---     gputle = putle . unK1
---     gputbe = putbe . unK1
+instance BinPut a => GBinPut (K1 i a) where
+    gputle = putle . unK1
+    gputbe = putbe . unK1
 
 instance (GBinPut a, GBinPut b) => GBinPut (a :*: b) where
     gputle (a :*: b) = gputle a >> gputle b
     gputbe (a :*: b) = gputbe a >> gputbe b
 
--- instance GBinPut (a :+: b) where
---     gputle _ = undefined
---     gputbe _ = undefined
 
 runPut :: Put -> B.ByteString
 runPut = execWriter
@@ -120,10 +118,6 @@ instance BinPut Int64 where
     putle = put64le . fromIntegral
     putbe = put64be . fromIntegral
 
--- instance BinPut a => BinPut [a] where
---     putle = mapM_ putle
---     putbe = mapM_ putbe
-
 instance BinPut B.ByteString where
     putle = putbs
     putbe = putbs
@@ -139,8 +133,3 @@ pututf8 s = putbs (UTF8.fromString s)
 
 putListBE :: BinPut a => [a] -> Put
 putListBE = mapM_ putbe
-
--- putPrefLE :: (BinPut a, BinPut b) => (a -> b) -> a -> Put
--- putPrefLE f a = do
---     putle $ f a
---     putle a

@@ -18,7 +18,7 @@ import Data.Proxy
 import Data.Kind
 import Data.String (IsString(..))
 import GHC.IsList (IsList)
-import Zephyr.Utils.Binary
+import Zephyr.Binary
 import GHC.Stack
 
 

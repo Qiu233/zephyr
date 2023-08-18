@@ -10,12 +10,11 @@ import Zephyr.Core.QQContext
 import qualified Data.ByteString.Lazy as B
 import Control.Lens
 import Zephyr.Core.Device
-import Zephyr.Utils.Binary
+import Zephyr.Binary
 import Zephyr.Core.AppVersion
 import Zephyr.Core.Signature as Sig
 import Prelude hiding (id, seq)
 import Zephyr.Utils.GUID (guidBytes)
-import Zephyr.Utils.Common
 import Data.Word
 import Zephyr.Packet.Internal
 import Zephyr.Core.Transport
@@ -23,6 +22,8 @@ import qualified Zephyr.Packet.TLV.Prim as Prim
 import Zephyr.Packet.Wrapper (wenergy)
 import ProtoLite as PL
 import Zephyr.PB.Data as PBData
+import Zephyr.Binary.OP
+import Zephyr.Binary.Put
 
 packTLV :: Word16 -> Put -> B.ByteString
 packTLV t p = runPut $ do

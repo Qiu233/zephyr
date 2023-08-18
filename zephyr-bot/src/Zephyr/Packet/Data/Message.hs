@@ -11,10 +11,12 @@ import ProtoLite
 import Control.Lens
 import Data.Maybe
 import qualified Data.ByteString.Lazy as B
-import Zephyr.Utils.Binary
+import Zephyr.Binary
+import Zephyr.Binary.Get
+import Zephyr.Binary.OP
 import Zephyr.PB.Msg.ObjMsg
 import qualified Codec.Compression.Zlib as ZLib
-import Zephyr.Utils.Common (utf8FromBytes, encodeHex, utf8ToBytes)
+import Zephyr.Utils.Common (encodeHex)
 import Data.Int
 import Zephyr.PB.Msg.TextMsgExt
 import Control.Monad.Cont

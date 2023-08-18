@@ -14,7 +14,7 @@ import Zephyr.Utils.Jce.JceMap
 import Zephyr.Packet.Build
 import Zephyr.Core.Entity.Group
 import Control.Monad.Except
-import Zephyr.Utils.Binary
+import Zephyr.Binary
 import Data.Maybe
 import Zephyr.Utils.Jce.Internal
 import Zephyr.PB.OIDB

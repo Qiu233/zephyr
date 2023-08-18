@@ -6,7 +6,7 @@ import Zephyr.Utils.Jce
 import qualified Data.ByteString.Lazy as B
 import Data.Maybe
 import Zephyr.Utils.Jce.JceMap
-import Zephyr.Utils.Binary (runGet, Get)
+import Zephyr.Binary (runGet, Get)
 import Zephyr.Utils.Jce.Generic
 import Data.Int
 import Zephyr.Packet.Data.ReqPush

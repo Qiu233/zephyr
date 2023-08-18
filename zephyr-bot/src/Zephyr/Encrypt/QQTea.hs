@@ -8,7 +8,10 @@ module Zephyr.Encrypt.QQTea (
 import Data.Word
 import qualified Data.ByteString.Lazy as B
 import Control.Monad.IO.Class
-import Zephyr.Utils.Binary
+import Zephyr.Binary
+import Zephyr.Binary.Put
+import Zephyr.Binary.Get
+import Zephyr.Binary.OP
 import qualified Control.Monad.State as State
 import Control.Monad (replicateM_)
 import Data.Bits ((.|.), (.&.), xor)

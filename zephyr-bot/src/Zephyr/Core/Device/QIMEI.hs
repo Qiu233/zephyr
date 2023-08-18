@@ -43,6 +43,7 @@ import Control.Monad.Trans.Maybe (MaybeT (runMaybeT))
 import Control.Monad (guard)
 import Data.Either (isRight, fromRight)
 import Zephyr.Utils.MTL
+import Zephyr.Binary.OP
 
 aesEncrypt :: B.ByteString -> B.ByteString -> B.ByteString
 aesEncrypt src' key' = do

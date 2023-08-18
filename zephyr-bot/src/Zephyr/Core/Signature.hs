@@ -6,9 +6,9 @@ import qualified Data.ByteString.Lazy as B
 import Control.Lens
 import Data.Word
 import Zephyr.Core.Device.Types
-import Zephyr.Utils.Common (utf8ToBytes)
 import Text.Printf
 import Data.HashMap
+import Zephyr.Binary.OP
 
 data Signature = Signature {
     _login_bitmap :: Word64,

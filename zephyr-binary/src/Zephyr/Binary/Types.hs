@@ -1,21 +1,14 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
-module Zephyr.Utils.Binary.Types (
+module Zephyr.Binary.Types (
     PutM, Put , Get(..),
     DecodeResult(..),
-    (.<.), (.>.),
     runGetInner
 ) where
 import qualified Data.ByteString.Lazy as B
 import Control.Monad.Trans.Writer
-import Data.Bits
 
-infixl 7 .<.
-infixl 7 .>.
-(.<.) :: Bits a => a -> Int -> a
-(.<.) = shiftL
-(.>.) :: Bits a => a -> Int -> a
-(.>.) = shiftR
+
 
 data DecodeResult a =
     Success !a !B.ByteString |

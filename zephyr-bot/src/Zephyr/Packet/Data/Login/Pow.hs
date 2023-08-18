@@ -2,13 +2,14 @@
 module Zephyr.Packet.Data.Login.Pow (calcPow) where
 import qualified Data.ByteString.Lazy as B
 import Control.Monad.IO.Class
-import Zephyr.Utils.Binary.Get
-import Zephyr.Utils.Binary
+import Zephyr.Binary.Get
+import Zephyr.Binary
 import Control.Monad
 import Data.Bits
 import Zephyr.Utils.Codec
 import Zephyr.Packet.Internal
 import System.Random (randomRIO)
+import Zephyr.Binary.Put
 
 integer2bs :: Integer -> B.ByteString
 integer2bs i = B.pack $ reverse $ inner i

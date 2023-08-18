@@ -11,12 +11,13 @@ import Text.Printf
 import Control.Lens
 import Zephyr.Utils.Codec (md5OfU8, md5Lazy)
 import Prelude hiding (product)
-import Zephyr.Utils.Binary
+import Zephyr.Binary
 import Zephyr.Utils.GUID
 import Data.Int
 import Control.Monad.Trans.State as State
 import Control.Monad (replicateM)
 import System.Random (mkStdGen, Random (randoms, randomR), RandomGen)
+import Zephyr.Binary.Get
 
 
 -- | OSVersion incremental release codeName sdk

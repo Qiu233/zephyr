@@ -1,8 +1,7 @@
 module JceTest where
 import Zephyr.Utils.Common (decodeHex_)
 import Zephyr.Utils.Jce (jceUnmarshal)
-import Zephyr.Packet.Jce.FileStoragePushFSSvcList
-import Zephyr.Packet.Jce.BigData
+import Zephyr.Packet.JceStructs
 import Test.Hspec
 
 jceTest = do

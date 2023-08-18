@@ -4,7 +4,7 @@
 {-# OPTIONS_GHC -Wno-unused-local-binds #-}
 module Zephyr.Packet.Wrapper (wenergy, wsign) where
 import Zephyr.Packet.TLV.Prim (EnergySigner, FekitSigner)
-import Zephyr.Utils.Common (encodeHex, decodeHex, utf8FromBytes)
+import Zephyr.Utils.Common (encodeHex, decodeHex)
 import Text.Printf
 import Zephyr.Utils.HTTP
 import qualified Data.Aeson as Aeson
@@ -18,6 +18,7 @@ import Control.Lens
 import Zephyr.Core.Transport
 import Zephyr.Core.Device.Types
 import Data.Int (Int64)
+import Zephyr.Binary.OP
 
 data EnergyResp m = EnergyResp {
     _code :: Int,

@@ -6,7 +6,7 @@ import Data.Int
 import qualified Data.ByteString.Lazy as B
 import Zephyr.Core.QQContext
 import Zephyr.Core.Request
-import Zephyr.Utils.Binary
+import Zephyr.Binary
 import Zephyr.Utils.Jce.Internal
 import Zephyr.Utils.Jce
 import Zephyr.Packet.Build

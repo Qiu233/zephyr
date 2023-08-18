@@ -40,10 +40,3 @@ encodeHex =
         toc y = if x < 10 then toEnum @Char $ fromEnum '0' + x
                 else toEnum @Char $ fromEnum 'A' + x - 10
                 where x = fromIntegral y
-
-utf8ToBytes :: String -> B.ByteString
-utf8ToBytes = UTF8.fromString
-
-utf8FromBytes :: B.ByteString -> String
-utf8FromBytes = UTF8.toString
-

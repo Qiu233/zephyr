@@ -1,11 +1,13 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Zephyr.Packet.Internal where
-import Zephyr.Utils.Binary
+import Zephyr.Binary
 import qualified Data.ByteString.Lazy as B
 import Data.HashMap
 import Data.Proxy
 import Data.Hashable
+import Zephyr.Binary.Get
+import Zephyr.Binary.Put
 
 lv :: Put -> Put
 lv p = do

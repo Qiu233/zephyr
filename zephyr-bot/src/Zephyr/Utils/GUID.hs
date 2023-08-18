@@ -5,10 +5,12 @@ module Zephyr.Utils.GUID (
 ) where
 import Data.Word
 import Text.Printf
-import Zephyr.Utils.Binary
+import Zephyr.Binary
 import qualified Data.ByteString.Lazy as B
 import Zephyr.Utils.Common
 import Data.Char (toLower)
+import Zephyr.Binary.Put
+import Zephyr.Binary.Get
 
 newtype GUID = GUID (Word32, Word32, Word32, Word32)
     deriving (Eq)

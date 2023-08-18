@@ -8,7 +8,6 @@ import qualified Data.ByteString.Lazy as B
 import Zephyr.Client.Types
 import Control.Monad
 import Control.Monad.State
-import Zephyr.Utils.Binary
 import Control.Lens
 import Network.Socket.ByteString.Lazy
 import Zephyr.Packet.Build
@@ -23,6 +22,8 @@ import Control.Concurrent
 import Data.Word
 import Zephyr.Client.Log
 import Text.Printf
+import Zephyr.Binary.Types
+import Zephyr.Binary.Get
 
 withContextM :: ContextOPM a -> Client -> IO a
 withContextM o client = do

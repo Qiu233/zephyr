@@ -1,13 +1,13 @@
-name:                zephyr-bot
+name:                zephyr-binary
 version:             0.1.0.0
-github:              "Qiu233/zephyr-bot"
-license:             BSD3
+# github:              "githubuser/zephyr-binary"
+# license:             MIT
 author:              "Qiu"
 maintainer:          "lopi258@outlook.com"
 copyright:           "2023 Qiu"
 
 extra-source-files:
-- CHANGELOG.md
+- README.md
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
@@ -16,37 +16,14 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Haskell re-implementation of QQBot licence.
+description:         None
 
 dependencies:
 - base >= 4.7 && < 5
-- template-haskell
-- mtl
-- regex
-- transformers
-- lens
-- time
-- random
-- async
-- array
-- memory >= 0.18.0
-- text
-- hashable
-- hashmap
 - bytestring
 - utf8-string
-- base64-bytestring
-- zlib
-- aeson
-- aeson-pretty
-- cryptonite
-- stm
-- network
-- HsOpenSSL
-- http-client
-- http-client-tls
-- protolite
-- zephyr-binary
+- mtl
+- transformers
 
 ghc-options:
 - -Wall
@@ -61,26 +38,9 @@ ghc-options:
 
 library:
   source-dirs: src
-  default-extensions:
-    - NoFieldSelectors
-    - OverloadedRecordDot
-    - DeriveGeneric
-    - DuplicateRecordFields
-    - TypeApplications
-
-executables:
-  zephyr-bot-exe:
-    main:                Main.hs
-    source-dirs:         app
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - zephyr-bot
 
 tests:
-  zephyr-bot-test:
+  zephyr-binary-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
@@ -88,6 +48,4 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - hspec
-    - hspec-expectations
-    - zephyr-bot
+    - zephyr-binary

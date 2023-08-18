@@ -8,9 +8,11 @@ import Data.Bits
 import Data.Int
 import Control.Monad (replicateM, forM_, replicateM_)
 import Control.Monad.Fix
-import Zephyr.Utils.Binary
 import Zephyr.Utils.Jce.JceMap
 import GHC.Stack
+import Zephyr.Binary
+import Zephyr.Binary.Get
+import Zephyr.Binary.Put
 
 type JceEntry a = (Word8, a)
 

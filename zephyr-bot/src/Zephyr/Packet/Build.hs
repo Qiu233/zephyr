@@ -14,7 +14,7 @@ module Zephyr.Packet.Build (
 ) where
 import qualified Data.ByteString.Lazy as B
 import Data.Word
-import Zephyr.Utils.Binary
+import Zephyr.Binary
 import Control.Monad
 import Zephyr.Core.QQContext
 import Zephyr.Core.Codec
@@ -34,6 +34,7 @@ import Zephyr.PB.Data
 import Data.Int
 import Zephyr.PB.OIDB
 import Control.Monad.Reader (asks)
+import Zephyr.Binary.Put
 
 
 data TLV = TLV {

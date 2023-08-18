@@ -1,8 +1,8 @@
 {-# LANGUAGE DefaultSignatures, TypeOperators, FlexibleContexts #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
-module Zephyr.Utils.Binary.Get where
+module Zephyr.Binary.Get where
 
-import Zephyr.Utils.Binary.Types
+import Zephyr.Binary.Types
 import qualified Data.ByteString.Lazy as B
 import GHC.Generics
 import Data.Word
@@ -14,6 +14,7 @@ import Control.Monad (replicateM)
 import GHC.Stack (HasCallStack, callStack)
 import GHC.Exception
 import Data.Functor (void)
+import Zephyr.Binary.OP
 
 class GBinGet f where
     ggetle :: Get (f a)

@@ -10,11 +10,10 @@ module Zephyr.Utils.Codec (
 import qualified Crypto.Hash as Hash
 import Data.ByteArray
 import qualified Data.ByteString.Lazy as B
-import Zephyr.Utils.Common (utf8ToBytes)
 import Data.Word
-import Zephyr.Utils.Binary.Types
 import Data.Bits
 import Zephyr.Utils.Codec.JSON
+import Zephyr.Binary.OP
 
 md5Of :: (ByteArrayAccess arr, ByteArray bout) => arr -> bout
 md5Of bs = convert (Hash.hash bs :: Hash.Digest Hash.MD5)

@@ -8,7 +8,7 @@ import qualified Data.ByteString.Lazy as B
 import Zephyr.Utils.Jce
 import Data.Maybe
 import Zephyr.Utils.Jce.JceMap
-import Zephyr.Utils.Binary
+import Zephyr.Binary
 import Zephyr.Utils.Jce.Internal
 import Control.Monad
 import ProtoLite

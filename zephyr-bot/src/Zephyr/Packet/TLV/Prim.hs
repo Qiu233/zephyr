@@ -2,16 +2,17 @@
 module Zephyr.Packet.TLV.Prim where
 import Data.Word
 import qualified Data.ByteString.Lazy as B
-import Zephyr.Utils.Binary
+import Zephyr.Binary
 import Zephyr.Packet.Internal
 import Control.Monad
 import Zephyr.Utils.Codec (md5Lazy)
 import qualified Zephyr.Encrypt.QQTea as QQTea
 import Zephyr.Utils.Time (getEpochTime)
-import Zephyr.Utils.Common (utf8ToBytes)
 import Control.Monad.IO.Class
 import System.Random (randomIO)
 import Data.Bifunctor
+import Zephyr.Binary.Put
+import Zephyr.Binary.OP
 
 tlv :: Word16 -> Put -> B.ByteString
 tlv tag body_ = do

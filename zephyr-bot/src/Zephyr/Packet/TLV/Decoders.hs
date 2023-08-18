@@ -9,7 +9,7 @@ import qualified Zephyr.Encrypt.QQTea as QQTea
 import Zephyr.Packet.Internal
 import Data.Proxy (Proxy(Proxy))
 import Data.Word
-import Zephyr.Utils.Binary.Get
+import Zephyr.Binary.Get
 import Data.HashMap
 import Zephyr.Core.Transport
 import Zephyr.Core.Signature
@@ -18,12 +18,14 @@ import Zephyr.Utils.Common
 import Control.Monad
 import Zephyr.Core.Codec (wt_session_ticket_key)
 import Zephyr.Utils.Time
-import Zephyr.Utils.Binary
+import Zephyr.Binary
 import Zephyr.Utils.Codec
 import Zephyr.Core.Device
 import GHC.Stack (HasCallStack)
 import Control.Monad.IO.Class
 import Zephyr.Utils.Map
+import Zephyr.Binary.Put
+import Zephyr.Binary.OP
 
 decodeT130 :: B.ByteString -> ContextOPM ()
 decodeT130 bs = do

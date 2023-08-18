@@ -10,14 +10,13 @@ import Zephyr.Core.Transport
 import Zephyr.Core.Device
 import Zephyr.Utils.GUID
 import Control.Lens
-import Zephyr.Utils.Common
 import Zephyr.Utils.Random
 import Zephyr.Core.Signature
 import Zephyr.Utils.Codec
 import Zephyr.Packet.Data.Login.Pow
 import Zephyr.Packet.TLV.Decoders
 import Zephyr.Packet.Internal
-import Zephyr.Utils.Binary
+import Zephyr.Binary
 import Data.Proxy
 import Zephyr.Utils.Map
 import Control.Monad.Except
@@ -28,6 +27,8 @@ import Data.Either
 import Data.Maybe (fromMaybe)
 import Control.Monad.Cont
 import Zephyr.Packet.JceStructs
+import Zephyr.Binary.OP
+import Zephyr.Binary.Get
 
 
 

@@ -7,9 +7,8 @@ import Control.Lens
 import qualified Zephyr.Core.Signature as Sig
 import Data.Word
 import Zephyr.Encrypt.QQTea
-import Zephyr.Utils.Binary
+import Zephyr.Binary
 import qualified Codec.Compression.Zlib as ZLib
-import Zephyr.Utils.Common (utf8FromBytes)
 import Control.Monad
 import Zephyr.Core.Transport
 import Zephyr.Core.Request
@@ -17,6 +16,8 @@ import Control.Monad.Trans.Except
 import Zephyr.Core.QQContext
 import qualified Zephyr.Packet.Oicq as Oicq
 import Zephyr.Core.Codec
+import Zephyr.Binary.Get
+import Zephyr.Binary.OP
 
 data QQResponse = QQResponse {
     _resp_body :: Request,

@@ -6,10 +6,12 @@ import qualified Data.ByteString.Lazy as B
 import Control.Lens
 import qualified Zephyr.Encrypt.ECDH as ECDH
 import qualified Zephyr.Encrypt.QQTea as QQTea
-import Zephyr.Utils.Binary
+import Zephyr.Binary
 import Zephyr.Packet.Internal
 import Control.Monad.Except
 import Control.Monad.Trans.Except
+import Zephyr.Binary.Put
+import Zephyr.Binary.Get
 
 marshal :: MonadIO m => Codec -> Message -> m B.ByteString
 marshal Codec{..} msg = do
