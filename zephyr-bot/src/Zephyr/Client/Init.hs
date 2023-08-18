@@ -25,7 +25,7 @@ import Control.Monad
 import Control.Concurrent
 import Zephyr.Core.Request
 import Control.Monad.Except
-import Zephyr.Client.Login
+import Zephyr.Client.Works.Login
 
 runTCPClient :: HostName -> ServiceName -> (Socket -> IO a) -> IO a
 runTCPClient host port client = withSocketsDo $ do

@@ -15,5 +15,5 @@ handleGroupMessagePacket client packet = do
     -- client._logger.logInfo $ "Group message packet: " ++ show m
     let s = repeated' m._message.optOrDef._body.optOrDef._rich_text.optOrDef._elems
     let es = parseMessageElems s
-    client._logger.logInfo $ printf "Parsed message elements: \n%s" $ concatMap ((++ "\n") . show) es
+    client._logger.logInfo $ printf "Parsed message elements:  %s" $ concatMap (\x -> (printf "{%s} " $ show x) :: String) es
     --undefined

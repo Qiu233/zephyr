@@ -122,7 +122,7 @@ data MessageElement =
     deriving (Eq)
 
 instance Show MessageElement where
-    show (TextElement s) = printf "[文字]: %s" s
+    show (TextElement s) = printf "[文字]: %s" $ show s
     show (VoiceElement v) = printf "[语音]: %s" $ show v
     show (GroupVoiceElement v _) = printf "[语音]: %s" $ show v
     show (PrivateVoiceElement v _) = printf "[语音]: %s" $ show v

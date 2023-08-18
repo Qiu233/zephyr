@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
-module Zephyr.Client.Login where
+module Zephyr.Client.Works.Login where
 import Zephyr.Client.Types
 import Zephyr.Client.Internal
 import Zephyr.Core.QQContext
