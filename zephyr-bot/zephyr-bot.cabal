@@ -6,7 +6,7 @@ cabal-version: 1.12
 
 name:           zephyr-bot
 version:        0.1.0.0
-description:    Haskell re-implementation of QQBot licence.
+description:    Haskell re-implementation of QQBot protocol.
 homepage:       https://github.com/Qiu233/zephyr-bot#readme
 bug-reports:    https://github.com/Qiu233/zephyr-bot/issues
 author:         Qiu
