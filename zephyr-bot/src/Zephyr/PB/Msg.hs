@@ -256,7 +256,7 @@ instance ProtoBuf ExtraInfo
 data VideoFile = VideoFile {
     _file_uuid                                 :: ProtoFieldOptional Bytes 1,
     _file_md5                                  :: ProtoFieldOptional Bytes 2,
-    _file_name                                 :: ProtoFieldOptional Bytes 3,
+    _file_name                                 :: ProtoFieldOptional String 3,
     _file_format                               :: ProtoFieldOptional VInt32 4,
     _file_time                                 :: ProtoFieldOptional VInt32 5,
     _file_size                                 :: ProtoFieldOptional VInt32 6,
@@ -512,3 +512,42 @@ data PushMessagePacket = PushMessagePacket {
     _general_flag                              :: ProtoFieldOptional VInt32 9
 } deriving (Eq, Show, Generic)
 instance ProtoBuf PushMessagePacket
+
+data ResvAttr = ResvAttr {
+    _image_biz_type :: ProtoFieldOptional VUInt32 1,
+    _image_show :: ProtoFieldOptional AnimationImageShow 7
+} deriving (Eq, Show, Generic)
+instance ProtoBuf ResvAttr
+
+data AnimationImageShow = AnimationImageShow {
+    _effect_id              :: ProtoFieldOptional VInt32 1,
+    _animation_param        :: ProtoFieldOptional Bytes 2
+} deriving (Eq, Show, Generic)
+instance ProtoBuf AnimationImageShow
+
+data MsgElemInfoServtype3 = MsgElemInfoServtype3 {
+    _flash_troop_pic :: ProtoFieldOptional CustomFace 1,
+    _flash_c2c_pic :: ProtoFieldOptional NotOnlineImage 2
+} deriving (Eq, Show, Generic)
+instance ProtoBuf MsgElemInfoServtype3
+
+data MsgElemInfoServtype33 = MsgElemInfoServtype33 {
+    _index :: ProtoFieldOptional VUInt32 1,
+    _text :: ProtoFieldOptional String 2,
+    _compat :: ProtoFieldOptional Bytes 3,
+    _buf :: ProtoFieldOptional Bytes 4
+} deriving (Eq, Show, Generic)
+instance ProtoBuf MsgElemInfoServtype33
+
+data MsgElemInfoServtype37 = MsgElemInfoServtype37 {
+    _pack_id :: ProtoFieldOptional Bytes 1,
+    _sticker_id :: ProtoFieldOptional Bytes 2,
+    _qsid :: ProtoFieldOptional VUInt32 3,
+    _source_type :: ProtoFieldOptional VUInt32 4,
+    _sticker_type :: ProtoFieldOptional VUInt32 5,
+    _result_id :: ProtoFieldOptional Bytes 6,
+    _text :: ProtoFieldOptional String 7,
+    _surprise_id :: ProtoFieldOptional Bytes 8,
+    _random_type :: ProtoFieldOptional VUInt32 9
+} deriving (Eq, Show, Generic)
+instance ProtoBuf MsgElemInfoServtype37

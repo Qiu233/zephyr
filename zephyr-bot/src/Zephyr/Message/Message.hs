@@ -11,7 +11,7 @@ data GroupMessage = GroupMessage {
     _group_name :: String,
     _sender :: Sender,
     _time :: Int32,
-    _elements :: [MsgElement],
+    _elements :: [MessageElement],
     _original_objects :: PBMsg.Message
 } deriving (Eq, Show)
 

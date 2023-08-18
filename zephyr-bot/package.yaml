@@ -23,6 +23,7 @@ dependencies:
 - protolite
 - template-haskell
 - mtl
+- regex
 - transformers
 - lens
 - time
