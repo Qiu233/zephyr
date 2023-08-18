@@ -1,0 +1,216 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.35.1.
+--
+-- see: https://github.com/sol/hpack
+
+name:           zephyr-bot
+version:        0.1.0.0
+description:    Haskell re-implementation of QQBot licence.
+homepage:       https://github.com/Qiu233/zephyr-bot#readme
+bug-reports:    https://github.com/Qiu233/zephyr-bot/issues
+author:         Qiu
+maintainer:     lopi258@outlook.com
+copyright:      2023 Qiu
+license:        BSD3
+build-type:     Simple
+extra-source-files:
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/Qiu233/zephyr-bot
+
+library
+  exposed-modules:
+      Zephyr.Client.Events
+      Zephyr.Client.Handlers
+      Zephyr.Client.Handlers.PbPushGroupMsg
+      Zephyr.Client.Handlers.PushReq
+      Zephyr.Client.Handlers.ReqPush
+      Zephyr.Client.Highway
+      Zephyr.Client.Init
+      Zephyr.Client.Internal
+      Zephyr.Client.Log
+      Zephyr.Client.Types
+      Zephyr.Client.Works.Group
+      Zephyr.Client.Works.Login
+      Zephyr.Core.AppVersion
+      Zephyr.Core.Codec
+      Zephyr.Core.Device
+      Zephyr.Core.Device.QIMEI
+      Zephyr.Core.Device.Types
+      Zephyr.Core.Entity.Group
+      Zephyr.Core.QQContext
+      Zephyr.Core.Request
+      Zephyr.Core.Signature
+      Zephyr.Core.Transport
+      Zephyr.Encrypt.ECDH
+      Zephyr.Encrypt.QQTea
+      Zephyr.Message.Elements
+      Zephyr.Message.Face
+      Zephyr.Message.Image
+      Zephyr.Message.Message
+      Zephyr.Packet.Build
+      Zephyr.Packet.Data.Group
+      Zephyr.Packet.Data.Login.Build
+      Zephyr.Packet.Data.Login.Parse
+      Zephyr.Packet.Data.Login.Pow
+      Zephyr.Packet.Data.Login.Types
+      Zephyr.Packet.Data.Message
+      Zephyr.Packet.Data.PushReq
+      Zephyr.Packet.Data.ReqPush
+      Zephyr.Packet.Internal
+      Zephyr.Packet.JceStructs
+      Zephyr.Packet.Oicq
+      Zephyr.Packet.Parse
+      Zephyr.Packet.TLV.Builders
+      Zephyr.Packet.TLV.Decoders
+      Zephyr.Packet.TLV.Prim
+      Zephyr.Packet.Wrapper
+      Zephyr.PB.CMD0x6FF.SubCMD0x501
+      Zephyr.PB.Data
+      Zephyr.PB.Msg
+      Zephyr.PB.Msg.ObjMsg
+      Zephyr.PB.Msg.TextMsgExt
+      Zephyr.PB.OIDB
+      Zephyr.PB.OIDB.OIDB0x88D
+      Zephyr.Utils.Codec
+      Zephyr.Utils.Codec.JSON
+      Zephyr.Utils.Common
+      Zephyr.Utils.GUID
+      Zephyr.Utils.HTTP
+      Zephyr.Utils.Map
+      Zephyr.Utils.MTL
+      Zephyr.Utils.Random
+      Zephyr.Utils.Time
+  other-modules:
+      Paths_zephyr_bot
+  hs-source-dirs:
+      src
+  default-extensions:
+      NoFieldSelectors
+      OverloadedRecordDot
+      DeriveGeneric
+      DuplicateRecordFields
+      TypeApplications
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      HsOpenSSL
+    , aeson
+    , aeson-pretty
+    , array
+    , async
+    , base >=4.7 && <5
+    , base64-bytestring
+    , bytestring
+    , cryptonite
+    , hashable
+    , hashmap
+    , http-client
+    , http-client-tls
+    , lens
+    , memory >=0.18.0
+    , mtl
+    , network
+    , random
+    , regex
+    , stm
+    , template-haskell
+    , text
+    , time
+    , transformers
+    , utf8-string
+    , zephyr-binary
+    , zephyr-jce
+    , zephyr-protolite
+    , zlib
+  default-language: Haskell2010
+
+executable zephyr-bot-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_zephyr_bot
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      HsOpenSSL
+    , aeson
+    , aeson-pretty
+    , array
+    , async
+    , base >=4.7 && <5
+    , base64-bytestring
+    , bytestring
+    , cryptonite
+    , hashable
+    , hashmap
+    , http-client
+    , http-client-tls
+    , lens
+    , memory >=0.18.0
+    , mtl
+    , network
+    , random
+    , regex
+    , stm
+    , template-haskell
+    , text
+    , time
+    , transformers
+    , utf8-string
+    , zephyr-binary
+    , zephyr-bot
+    , zephyr-jce
+    , zephyr-protolite
+    , zlib
+  default-language: Haskell2010
+
+test-suite zephyr-bot-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Common
+      DeviceTest
+      EncryptTest
+      JceTest
+      Templates
+      Paths_zephyr_bot
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      HsOpenSSL
+    , aeson
+    , aeson-pretty
+    , array
+    , async
+    , base >=4.7 && <5
+    , base64-bytestring
+    , bytestring
+    , cryptonite
+    , hashable
+    , hashmap
+    , hspec
+    , hspec-expectations
+    , http-client
+    , http-client-tls
+    , lens
+    , memory >=0.18.0
+    , mtl
+    , network
+    , random
+    , regex
+    , stm
+    , template-haskell
+    , text
+    , time
+    , transformers
+    , utf8-string
+    , zephyr-binary
+    , zephyr-bot
+    , zephyr-jce
+    , zephyr-protolite
+    , zlib
+  default-language: Haskell2010
