@@ -196,7 +196,7 @@ tryParseMarketFace :: MsgParser
 tryParseMarketFace (ParseContext _break _yield _continue x) = do
     when (isJust x._market_face.pv) $ do
         let face_ = x._market_face.optOrDef
-        _break [MarketFaceElement $ MarketFaceElementArgs {
+        _yield $ MarketFaceElement $ MarketFaceElementArgs {
             _name = utf8FromBytes face_._face_name.optOrDef,
             _face_id = face_._face_id.optOrDef,
             _tab_id = face_._tab_id.optOrDefV,
@@ -205,7 +205,7 @@ tryParseMarketFace (ParseContext _break _yield _continue x) = do
             _media_type = face_._media_type.optOrDefV,
             _encrypt_key = face_._key.optOrDef,
             _content = utf8FromBytes face_._mobile_param.optOrDef
-        }]
+        }
 
 tryParseOfflineImage :: MsgParser
 tryParseOfflineImage (ParseContext _break _yield _continue x) = do
