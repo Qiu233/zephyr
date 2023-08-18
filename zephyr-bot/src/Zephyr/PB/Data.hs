@@ -1,8 +1,8 @@
 {-# LANGUAGE DataKinds #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.PB.Data where
-import ProtoLite
-import ProtoLite.Aliases
+import Zephyr.ProtoLite
+import Zephyr.ProtoLite.Aliases
 import GHC.Generics
 
 

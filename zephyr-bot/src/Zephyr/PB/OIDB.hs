@@ -2,9 +2,9 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.PB.OIDB where
 
-import ProtoLite.Aliases
+import Zephyr.ProtoLite.Aliases
 import GHC.Generics (Generic)
-import ProtoLite
+import Zephyr.ProtoLite
 
 data OIDBSSOPkg t = OIDBSSOPkg {
     _command        :: ProtoFieldOptional VInt32 1,

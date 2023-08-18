@@ -2,8 +2,8 @@
 {-# LANGUAGE DataKinds #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.PB.Msg where
-import ProtoLite
-import ProtoLite.Aliases
+import Zephyr.ProtoLite
+import Zephyr.ProtoLite.Aliases
 import GHC.Generics
 
 -- Don't touch this file unless necessary.

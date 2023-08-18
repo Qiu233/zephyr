@@ -11,7 +11,7 @@ import Zephyr.Utils.Jce.JceMap
 import Zephyr.Binary
 import Zephyr.Utils.Jce.Internal
 import Control.Monad
-import ProtoLite
+import Zephyr.ProtoLite
 import Control.Lens
 import Control.Concurrent.STM
 import Zephyr.Client.Highway

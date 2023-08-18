@@ -2,7 +2,7 @@
 {-# LANGUAGE DataKinds #-}
 module Zephyr.Client.Handlers.PbPushGroupMsg where
 import Zephyr.Client.Types
-import ProtoLite
+import Zephyr.ProtoLite
 import Zephyr.Client.Log
 import Zephyr.PB.Msg
 import Zephyr.Packet.Data.Message (parseMessageElems)

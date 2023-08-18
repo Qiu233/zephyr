@@ -7,7 +7,7 @@ module Zephyr.Packet.Data.Message (
 import Zephyr.PB.Msg
 import Zephyr.Message.Elements
 import Control.Monad.State
-import ProtoLite
+import Zephyr.ProtoLite
 import Control.Lens
 import Data.Maybe
 import qualified Data.ByteString.Lazy as B

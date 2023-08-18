@@ -45,8 +45,8 @@ dependencies:
 - HsOpenSSL
 - http-client
 - http-client-tls
-- protolite
 - zephyr-binary
+- zephyr-protolite
 
 ghc-options:
 - -Wall

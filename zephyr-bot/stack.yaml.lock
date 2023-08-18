@@ -3,18 +3,7 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages:
-- completed:
-    commit: 2adb19fc57fffb8ed314d23bcafb4c7fe178a10d
-    git: https://github.com/Qiu233/protolite.git
-    name: protolite
-    pantry-tree:
-      sha256: 1948bf5daa4f48c1ec21e9eb9a840e2b71752ce3b9be25d526b74a5194e3dc75
-      size: 839
-    version: 0.1.0.0
-  original:
-    commit: 2adb19fc57fffb8ed314d23bcafb4c7fe178a10d
-    git: https://github.com/Qiu233/protolite.git
+packages: []
 snapshots:
 - completed:
     sha256: c4381351ba5837a6356fcc0ebeb7a61fdcaf3a085c903a6f730f56b131d5cb58

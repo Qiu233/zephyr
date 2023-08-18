@@ -2,8 +2,8 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.PB.OIDB.OIDB0x88D where
 
-import ProtoLite
-import ProtoLite.Aliases
+import Zephyr.ProtoLite
+import Zephyr.ProtoLite.Aliases
 import GHC.Generics
 
 data D88DRspBody = D88DRspBody {

@@ -1,8 +1,8 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 {-# LANGUAGE DataKinds #-}
 module Zephyr.PB.Msg.TextMsgExt where
-import ProtoLite
-import ProtoLite.Aliases
+import Zephyr.ProtoLite
+import Zephyr.ProtoLite.Aliases
 import GHC.Generics
 
 data ExtChannelInfo = ExtChannelInfo {

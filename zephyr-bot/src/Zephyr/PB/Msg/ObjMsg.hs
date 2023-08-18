@@ -2,8 +2,8 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.PB.Msg.ObjMsg where
 
-import ProtoLite
-import ProtoLite.Aliases
+import Zephyr.ProtoLite
+import Zephyr.ProtoLite.Aliases
 import GHC.Generics (Generic)
 
 data MsgPic = MsgPic {

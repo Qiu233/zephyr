@@ -1,0 +1,54 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.35.1.
+--
+-- see: https://github.com/sol/hpack
+
+name:           zephyr-protolite
+version:        0.1.0.0
+synopsis:       Lightweight generic protobuf en/decoder implementation.
+category:       Data
+author:         Qiu
+maintainer:     lopi258@outlook.com
+copyright:      2023 Qiu
+build-type:     Simple
+extra-source-files:
+    README.md
+
+library
+  exposed-modules:
+      Zephyr.ProtoLite
+      Zephyr.ProtoLite.Aliases
+  other-modules:
+      Zephyr.ProtoLite.Decode
+      Zephyr.ProtoLite.Encode
+      Zephyr.ProtoLite.Generic
+      Zephyr.ProtoLite.Types
+      Paths_zephyr_protolite
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      base >=4.7 && <5
+    , bytestring
+    , utf8-string
+    , zephyr-binary
+  default-language: Haskell2010
+
+test-suite protolite-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_zephyr_protolite
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , bytestring
+    , hspec
+    , hspec-expectations
+    , utf8-string
+    , zephyr-binary
+    , zephyr-protolite
+  default-language: Haskell2010

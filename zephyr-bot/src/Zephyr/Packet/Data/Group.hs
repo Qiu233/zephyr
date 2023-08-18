@@ -19,7 +19,7 @@ import Data.Maybe
 import Zephyr.Utils.Jce.Internal
 import Zephyr.PB.OIDB
 import Zephyr.PB.OIDB.OIDB0x88D
-import ProtoLite
+import Zephyr.ProtoLite
 import Control.Monad.Trans.Except
 import Text.Printf (printf)
 import Data.Int

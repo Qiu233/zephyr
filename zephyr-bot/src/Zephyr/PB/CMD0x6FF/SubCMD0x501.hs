@@ -1,8 +1,8 @@
 {-# LANGUAGE DataKinds #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.PB.CMD0x6FF.SubCMD0x501 where
-import ProtoLite
-import ProtoLite.Aliases
+import Zephyr.ProtoLite
+import Zephyr.ProtoLite.Aliases
 import GHC.Generics
 
 newtype C501ReqBody = C501ReqBody {

@@ -20,7 +20,7 @@ import Zephyr.Packet.Internal
 import Zephyr.Core.Transport
 import qualified Zephyr.Packet.TLV.Prim as Prim
 import Zephyr.Packet.Wrapper (wenergy)
-import ProtoLite as PL
+import Zephyr.ProtoLite as PL
 import Zephyr.PB.Data as PBData
 import Zephyr.Binary.OP
 import Zephyr.Binary.Put

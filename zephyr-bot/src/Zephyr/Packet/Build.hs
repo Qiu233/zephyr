@@ -28,7 +28,7 @@ import qualified Zephyr.Encrypt.QQTea as QQTea
 import Zephyr.Core.AppVersion
 import Zephyr.Core.Device.Types
 import Zephyr.Packet.Wrapper (wsign)
-import ProtoLite as PL
+import Zephyr.ProtoLite as PL
 import qualified Zephyr.Packet.Oicq as Oicq
 import Zephyr.PB.Data
 import Data.Int
