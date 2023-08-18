@@ -1,7 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeApplications #-}
 module Zephyr.Packet.Parse where
 import qualified Data.ByteString.Lazy as B
 import Control.Lens

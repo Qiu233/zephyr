@@ -1,6 +1,5 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
 module Zephyr.Packet.Internal where
 import Zephyr.Utils.Binary
 import qualified Data.ByteString.Lazy as B

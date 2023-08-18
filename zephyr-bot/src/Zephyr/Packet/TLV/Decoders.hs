@@ -1,4 +1,3 @@
-{-# LANGUAGE TypeApplications #-}
 module Zephyr.Packet.TLV.Decoders (
     decodeT130,
     decodeT119,

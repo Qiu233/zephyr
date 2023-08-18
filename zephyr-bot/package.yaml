@@ -65,6 +65,7 @@ library:
     - OverloadedRecordDot
     - DeriveGeneric
     - DuplicateRecordFields
+    - TypeApplications
 
 executables:
   zephyr-bot-exe:

@@ -1,6 +1,5 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeApplications #-}
 module Zephyr.Packet.Data.ReqPush where
 import Data.Int
 import qualified Data.ByteString.Lazy as B

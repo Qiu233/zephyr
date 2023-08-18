@@ -1,4 +1,3 @@
-{-# LANGUAGE TypeApplications #-}
 module Zephyr.Encrypt.QQTea (
     tea16EmptyKey,
     tea16Encrypt,
