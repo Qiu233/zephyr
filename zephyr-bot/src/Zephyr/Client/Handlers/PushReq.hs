@@ -82,6 +82,6 @@ handlePushReqPacket client (QQPacket _ _ bs) = do
                             ]
                     appendAddrs hw addrs3
                     client._logger.logInfo "Appended addresses:"
-                    client._logger.logInfo $ show $ fmap (\(ip_, port_) -> formatIP ip_ ++ ":" ++ show port_) addrs3
+                    client._logger.logInfo $ show $ fmap (\(ip_, port_) -> formatIPv4 ip_ ++ ":" ++ show port_) addrs3
             resp <- lift $ withContext (buildConfPushRespPacket (fromIntegral t) seq_ jceBuf) client
             lift $ sendPacket resp client

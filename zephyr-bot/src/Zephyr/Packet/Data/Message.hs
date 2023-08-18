@@ -1,6 +1,5 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TemplateHaskellQuotes #-}
 {-# LANGUAGE QuasiQuotes #-}
 module Zephyr.Packet.Data.Message where
@@ -14,7 +13,7 @@ import qualified Data.ByteString.Lazy as B
 import Zephyr.Utils.Binary
 import Zephyr.PB.Msg.ObjMsg
 import qualified Codec.Compression.Zlib as ZLib
-import Zephyr.Utils.Common (utf8FromBytes, encodeHex)
+import Zephyr.Utils.Common (utf8FromBytes, encodeHex, utf8ToBytes)
 import Data.Int
 import Zephyr.PB.Msg.TextMsgExt
 import Control.Monad.Cont
@@ -24,6 +23,7 @@ import Text.Printf
 import Zephyr.Message.Image
 import qualified Data.HashMap
 import Zephyr.Message.Face
+import Zephyr.Utils.Codec.JSON
 
 
 parseAt :: Int64 -> Maybe String -> AtType -> MessageElement
@@ -53,6 +53,15 @@ newRichXml template_ s_id_ = do
             _content = template_,
             _sub_type = "xml"
         }
+
+newRichJson :: String -> MessageElement
+newRichJson json_ = do
+    ServiceElement $ ServiceElementArgs {
+            _id = 1,
+            _content = json_,
+            _sub_type = "json"
+        }
+
 
 data ParseContext = ParseContext {
     _break :: [MessageElement] -> ContT [MessageElement] Identity (),
@@ -161,6 +170,8 @@ tryParseRichMessage (ParseContext _break _yield _continue x) = do
                 _continue
             when ("<?xml" `isInfixOf` content_) $ do
                 _yield $ newRichXml content_ $ fromIntegral sid
+            when (validateJSON $ utf8ToBytes content_) $ do
+                _yield $ newRichJson content_
             -- TODO: handle json
             _yield $ TextElement content_
 
