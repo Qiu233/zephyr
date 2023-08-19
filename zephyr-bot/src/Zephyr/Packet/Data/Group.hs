@@ -119,30 +119,30 @@ buildGroupInfoRequest code = do
 decodeGroupInfoResponse :: B.ByteString -> ExceptT String IO GroupInfoDetailed
 decodeGroupInfoResponse bs = do
     let rspO = decode bs :: OIDBSSOPkg D88DRspBody
-    let rst_ = rspO._result.optOrDef
+    let rst_ = rspO._result.unwrap
     when (rst_ /= 0) $ do
         throwE $ printf "oidb result unsuccessful: %d msg: %s"
-                (rspO._result.optOrDef.variantF) (rspO._error_msg.optOrDef)
-    let rspM = optional $ rspO._body
+                rspO._result.unwrap.variantF rspO._error_msg.unwrap
+    let rspM = optional rspO._body
     when (isNothing rspM) $ do
         throwE "oidb result unsuccessful: body is empty"
     let rsp = optOrDef rspM
     let infos = rsp._rsp_group_info.pv.repeatedF
     when (null infos) $ do
-        throwE rsp._str_error_info.optOrDef
+        throwE rsp._str_error_info.unwrap
     let info = head infos
-    let i = info._group_info.optOrDef
+    let i = info._group_info.unwrap
 
     pure $ GroupInfoDetailed {
-        _create_time = i._group_create_time.optOrDefV,
-        _group_level = i._group_level.optOrDefV,
-        _last_msg_seq = fromIntegral $ i._group_cur_msg_seq.optOrDefV,
+        _create_time = i._group_create_time.unwrapV,
+        _group_level = i._group_level.unwrapV,
+        _last_msg_seq = fromIntegral $ i._group_cur_msg_seq.unwrapV,
         _basic_info = GroupInfo {
-            _uin = fromIntegral $ i._group_uin.optOrDefV,
-            _code = fromIntegral $ info._group_code.optOrDefV,
-            _name = i._group_name.optOrDef,
-            _owner_uin = fromIntegral $ i._group_owner.optOrDefV,
-            _member_count = fromIntegral $ i._group_member_num.optOrDefV,
-            _max_member_count = fromIntegral $ i._group_member_max_num.optOrDefV
+            _uin = fromIntegral $ i._group_uin.unwrapV,
+            _code = fromIntegral $ info._group_code.unwrapV,
+            _name = i._group_name.unwrap,
+            _owner_uin = fromIntegral $ i._group_owner.unwrapV,
+            _member_count = fromIntegral $ i._group_member_num.unwrapV,
+            _max_member_count = fromIntegral $ i._group_member_max_num.unwrapV
         }
     }

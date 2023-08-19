@@ -78,19 +78,19 @@ type MsgParser = ParseContext -> ContT [MessageElement] Identity ()
 
 tryParseReply :: MsgParser
 tryParseReply (ParseContext _break _yield _continue x) = do
-    when (isJust x._src_msg.pv && not (null x._src_msg.optOrDef._orig_seqs.pv.repeatedF)) $ do
+    when (isJust x._src_msg.pv && not (null x._src_msg.unwrap._orig_seqs.pv.repeatedF)) $ do
         _yield $ ReplyElement $ ReplyElementArgs {
-            _reply_seq = head $ repeatedV' x._src_msg.optOrDef._orig_seqs,
-            _time = x._src_msg.optOrDef._time.optOrDefV,
-            _sender = fromIntegral x._src_msg.optOrDef._sender_uin.optOrDefV,
-            _group_id = fromIntegral x._src_msg.optOrDef._to_uin.optOrDefV,
-            _elements = parseMessageElems $ repeated' x._src_msg.optOrDef._elems
+            _reply_seq = head x._src_msg.unwrap._orig_seqs.unwrapV,
+            _time = x._src_msg.unwrap._time.unwrapV,
+            _sender = fromIntegral x._src_msg.unwrap._sender_uin.unwrapV,
+            _group_id = fromIntegral x._src_msg.unwrap._to_uin.unwrapV,
+            _elements = parseMessageElems x._src_msg.unwrap._elems.unwrap
         }
 
 tryParseQFile :: MsgParser
 tryParseQFile (ParseContext _break _yield _continue x) = do
-    when (isJust x._trans_elem_info.pv && x._trans_elem_info.optOrDef._elem_type.optOrDef == 24) $ do
-        let ev = x._trans_elem_info.optOrDef._elem_value.optOrDef
+    when (isJust x._trans_elem_info.pv && x._trans_elem_info.unwrap._elem_type.unwrap == 24) $ do
+        let ev = x._trans_elem_info.unwrap._elem_value.unwrap
         when (B.length ev > 3) $ do
             let (h_, pb_) = flip runGet ev $ do
                     h <- get8
@@ -102,18 +102,18 @@ tryParseQFile (ParseContext _break _yield _continue x) = do
                 let infos_ = omsg._msg_content_info.pv.repeatedF
                 unless (null infos_) $ do
                     let info = head infos_
-                    let mf = info._msg_file.optOrDef
+                    let mf = info._msg_file.unwrap
                     _yield $ GroupFileElement $ GroupFileElementArgs {
-                        _name = mf._file_name.optOrDef,
-                        _size = mf._file_size.optOrDefV,
-                        _path = mf._file_path.optOrDef,
-                        _bus_id = mf._bus_id.optOrDefV
+                        _name = mf._file_name.unwrap,
+                        _size = mf._file_size.unwrapV,
+                        _path = mf._file_path.unwrap,
+                        _bus_id = mf._bus_id.unwrapV
                     }
 
 tryParseLightApp :: MsgParser
 tryParseLightApp (ParseContext _break _yield _continue x) = do
-    when (isJust x._light_app.pv && B.length x._light_app.optOrDef._data.optOrDef > 1) $ do
-        let data_ = x._light_app.optOrDef._data.optOrDef
+    when (isJust x._light_app.pv && B.length x._light_app.unwrap._data.unwrap > 1) $ do
+        let data_ = x._light_app.unwrap._data.unwrap
         let content_ = if B.head data_ == 0
             then B.tail data_
             else ZLib.decompress $ B.tail data_
@@ -124,29 +124,29 @@ tryParseShortVideo :: MsgParser
 tryParseShortVideo (ParseContext _break _yield _continue x) = do
     when (isJust x._video_file.pv) $ do
         _yield $ ShortVideoElement $ ShortVideoElementArgs {
-            _name = x._video_file.optOrDef._file_name.optOrDef,
-            _uuid = x._video_file.optOrDef._file_uuid.optOrDef,
-            _size = x._video_file.optOrDef._file_size.optOrDefV,
-            _thumb_size = x._video_file.optOrDef._thumb_file_size.optOrDefV,
-            _md5 = x._video_file.optOrDef._file_md5.optOrDef,
-            _thumb_md5 = x._video_file.optOrDef._thumb_file_md5.optOrDef
+            _name = x._video_file.unwrap._file_name.unwrap,
+            _uuid = x._video_file.unwrap._file_uuid.unwrap,
+            _size = x._video_file.unwrap._file_size.unwrapV,
+            _thumb_size = x._video_file.unwrap._thumb_file_size.unwrapV,
+            _md5 = x._video_file.unwrap._file_md5.unwrap,
+            _thumb_md5 = x._video_file.unwrap._thumb_file_md5.unwrap
         }
 
 tryParseText :: MsgParser
 tryParseText (ParseContext _break _yield _continue x) = do
     when (isJust x._text.pv) $ do
-        let text_ = x._text.optOrDef
+        let text_ = x._text.unwrap
         let str_ = text_._str.pv
-        when (B.length text_._attr6_buf.optOrDef > 0) $ do
-            let target_ = fromIntegral $ flip runGet text_._attr6_buf.optOrDef $ skip 7 >> get32be
+        when (B.length text_._attr6_buf.unwrap > 0) $ do
+            let target_ = fromIntegral $ flip runGet text_._attr6_buf.unwrap $ skip 7 >> get32be
             _yield $ parseAt target_ str_ AT_GroupMember
-        when (B.length text_._pb_reserve.optOrDef > 0) $ do
-            let resv = decode text_._pb_reserve.optOrDef :: TextResvAttr
-            when (resv._at_type.optOrDef == 2) $ do
-                let v_ = fromIntegral resv._at_member_tiny_id.optOrDefV
+        when (B.length text_._pb_reserve.unwrap > 0) $ do
+            let resv = decode text_._pb_reserve.unwrap :: TextResvAttr
+            when (resv._at_type.unwrap == 2) $ do
+                let v_ = fromIntegral resv._at_member_tiny_id.unwrapV
                 _yield $ parseAt v_ str_ AT_GuildMember
-            when (resv._at_type.optOrDef == 4) $ do
-                let v_ = fromIntegral resv._at_channel_info.optOrDef._channel_id.optOrDefV
+            when (resv._at_type.unwrap == 4) $ do
+                let v_ = fromIntegral resv._at_channel_info.unwrap._channel_id.unwrapV
                 _yield $ parseAt v_ str_ AT_GuildChannel
         let str__ = optOrDef str_
         let v = if '\r' `elem` str__ && not ("\r\n" `Data.List.isInfixOf` str__) then do
@@ -158,13 +158,13 @@ tryParseText (ParseContext _break _yield _continue x) = do
 tryParseRichMessage :: MsgParser
 tryParseRichMessage (ParseContext _break _yield _continue x) = do
     when (isJust x._rich_msg.pv) $ do
-        let temp = x._rich_msg.optOrDef._template1.optOrDef
+        let temp = x._rich_msg.unwrap._template1.unwrap
         let content_ = utf8FromBytes $ case B.head temp of
                 0 -> B.tail temp
                 1 -> ZLib.decompress $ B.tail temp
                 _ -> B.empty
         unless (null content_) $ do
-            let sid = x._rich_msg.optOrDef._service_id.optOrDefV
+            let sid = x._rich_msg.unwrap._service_id.unwrapV
             when (sid == 35) $ do
                 let s = forwardInfoFromXML content_
                 maybe _continue _yield s
@@ -179,73 +179,73 @@ tryParseRichMessage (ParseContext _break _yield _continue x) = do
 tryParseCustomFace :: MsgParser
 tryParseCustomFace (ParseContext _break _yield _continue x) = do
     when (isJust x._custom_face.pv) $ do
-        let face_ = x._custom_face.optOrDef
-        when (B.null face_._md5.optOrDef) $ do
+        let face_ = x._custom_face.unwrap
+        when (B.null face_._md5.unwrap) $ do
             _continue
-        let url = if null face_._orig_url.optOrDef
-                then printf "https://gchat.qpic.cn/gchatpic_new/0/0-0-%s/0?term=2" $ encodeHex face_._md5.optOrDef
-                else "https://gchat.qpic.cn" ++ face_._orig_url.optOrDef
-        when ("qmeet" `isInfixOf` face_._orig_url.optOrDef) $ do
+        let url = if null face_._orig_url.unwrap
+                then printf "https://gchat.qpic.cn/gchatpic_new/0/0-0-%s/0?term=2" $ encodeHex face_._md5.unwrap
+                else "https://gchat.qpic.cn" ++ face_._orig_url.unwrap
+        when ("qmeet" `isInfixOf` face_._orig_url.unwrap) $ do
             -- guild
             undefined
-        let biz_type_ = if B.null face_._pb_reserve.optOrDef
+        let biz_type_ = if B.null face_._pb_reserve.unwrap
             then UnknownBizType
             else
-                let attr = decode face_._pb_reserve.optOrDef :: ResvAttr
-                in toEnum $ fromIntegral attr._image_biz_type.optOrDef
+                let attr = decode face_._pb_reserve.unwrap :: ResvAttr
+                in toEnum $ fromIntegral attr._image_biz_type.unwrap
         _yield $ GroupImageElement GroupImageElementArgs {
-            _file_id = fromIntegral face_._file_id.optOrDefV,
-            _image_id = face_._file_path.optOrDef,
-            _size = face_._size.optOrDefV,
-            _width = face_._width.optOrDefV,
-            _height = face_._height.optOrDefV,
+            _file_id = fromIntegral face_._file_id.unwrapV,
+            _image_id = face_._file_path.unwrap,
+            _size = face_._size.unwrapV,
+            _width = face_._width.unwrapV,
+            _height = face_._height.unwrapV,
             _url = url,
             _image_biz_type = biz_type_,
-            _md5 = face_._md5.optOrDef
+            _md5 = face_._md5.unwrap
         }
 
 tryParseMarketFace :: MsgParser
 tryParseMarketFace (ParseContext _break _yield _continue x) = do
     when (isJust x._market_face.pv) $ do
-        let face_ = x._market_face.optOrDef
+        let face_ = x._market_face.unwrap
         _yield $ MarketFaceElement $ MarketFaceElementArgs {
-            _name = utf8FromBytes face_._face_name.optOrDef,
-            _face_id = face_._face_id.optOrDef,
-            _tab_id = face_._tab_id.optOrDefV,
-            _item_type = face_._item_type.optOrDefV,
-            _sub_type = face_._sub_type.optOrDefV,
-            _media_type = face_._media_type.optOrDefV,
-            _encrypt_key = face_._key.optOrDef,
-            _content = utf8FromBytes face_._mobile_param.optOrDef
+            _name = utf8FromBytes face_._face_name.unwrap,
+            _face_id = face_._face_id.unwrap,
+            _tab_id = face_._tab_id.unwrapV,
+            _item_type = face_._item_type.unwrapV,
+            _sub_type = face_._sub_type.unwrapV,
+            _media_type = face_._media_type.unwrapV,
+            _encrypt_key = face_._key.unwrap,
+            _content = utf8FromBytes face_._mobile_param.unwrap
         }
 
 tryParseOfflineImage :: MsgParser
 tryParseOfflineImage (ParseContext _break _yield _continue x) = do
     when (isJust x._not_online_image.pv) $ do
-        let img = x._not_online_image.optOrDef
-        let url | isJust img._pb_reserve.pv && not (null img._pb_reserve.optOrDef._url.optOrDef) = printf "https://c2cpicdw.qpic.cn%s&spec=0&rf=naio" img._pb_reserve.optOrDef._url.optOrDef
-                | not (null img._orig_url.optOrDef) = "https://c2cpicdw.qpic.cn" ++ img._orig_url.optOrDef
+        let img = x._not_online_image.unwrap
+        let url | isJust img._pb_reserve.pv && not (null img._pb_reserve.unwrap._url.unwrap) = printf "https://c2cpicdw.qpic.cn%s&spec=0&rf=naio" img._pb_reserve.unwrap._url.unwrap
+                | not (null img._orig_url.unwrap) = "https://c2cpicdw.qpic.cn" ++ img._orig_url.unwrap
                 | otherwise =
-                    let dp = img._download_path.optOrDef
-                        dp_ = if null dp then img._res_id.optOrDef else dp
+                    let dp = img._download_path.unwrap
+                        dp_ = if null dp then img._res_id.unwrap else dp
                         dp__ = if "/" `isPrefixOf` dp_ then tail dp_ else dp_
                     in "https://c2cpicdw.qpic.cn/offpic_new/0/" ++ dp__ ++ "/0?term=3"
         _yield $ FriendImageElement $ FriendImageElementArgs {
-            _image_id = img._file_path.optOrDef,
-            _size = img._file_len.optOrDefV,
+            _image_id = img._file_path.unwrap,
+            _size = img._file_len.unwrapV,
             _url = url,
-            _md5 = img._pic_md5.optOrDef
+            _md5 = img._pic_md5.unwrap
         }
 
 tryParseQQWalletMessage :: MsgParser
 tryParseQQWalletMessage (ParseContext _break _yield _continue x) = do
     when (isJust x._qq_wallet_msg.pv) $ do
-        let msg = x._qq_wallet_msg.optOrDef
+        let msg = x._qq_wallet_msg.unwrap
         when (isJust msg._aio_body.pv) $ do
-            let body_ = msg._aio_body.optOrDef
-            let msg_type_ = body_._msg_type.optOrDefV
+            let body_ = msg._aio_body.unwrap
+            let msg_type_ = body_._msg_type.unwrapV
             when (msg_type_ <= 1000 && isJust body_._red_type.pv) $ do
-                _break [RedBagElement (toEnum $ fromIntegral msg_type_) $ utf8FromBytes body_._receiver.optOrDef._title.optOrDef]
+                _break [RedBagElement (toEnum $ fromIntegral msg_type_) $ utf8FromBytes body_._receiver.unwrap._title.unwrap]
 
 newFace :: Int32 -> MessageElement
 newFace idx = do
@@ -258,44 +258,44 @@ newFace idx = do
 tryParseFace :: MsgParser
 tryParseFace (ParseContext _break _yield _continue x) = do
     when (isJust x._face.pv) $ do
-        _yield $ newFace x._face.optOrDef._index.optOrDefV
+        _yield $ newFace x._face.unwrap._index.unwrapV
 
 tryParseCommonElem :: MsgParser
 tryParseCommonElem (ParseContext _break _yield _continue x) = do
     when (isJust x._common_elem.pv) $ do
-        let ce = x._common_elem.optOrDef
-        let stype = ce._service_type.optOrDefV
+        let ce = x._common_elem.unwrap
+        let stype = ce._service_type.unwrapV
         case stype of
             3 -> do
-                let flash = decode ce._pb_elem.optOrDef :: MsgElemInfoServtype3
+                let flash = decode ce._pb_elem.unwrap :: MsgElemInfoServtype3
                 when (isJust flash._flash_troop_pic.pv) $ do
-                    let tr = flash._flash_troop_pic.optOrDef
+                    let tr = flash._flash_troop_pic.unwrap
                     _break [GroupImageElement $ GroupImageElementArgs {
-                        _file_id = fromIntegral tr._file_id.optOrDefV,
-                        _image_id = tr._file_path.optOrDef,
+                        _file_id = fromIntegral tr._file_id.unwrapV,
+                        _image_id = tr._file_path.unwrap,
                         _image_biz_type = UnknownBizType,
-                        _size = tr._size.optOrDefV,
-                        _width = tr._width.optOrDefV,
-                        _height = tr._height.optOrDefV,
-                        _md5 = tr._md5.optOrDef,
-                        _url = tr._orig_url.optOrDef
+                        _size = tr._size.unwrapV,
+                        _width = tr._width.unwrapV,
+                        _height = tr._height.unwrapV,
+                        _md5 = tr._md5.unwrap,
+                        _url = tr._orig_url.unwrap
                     }]
                 when (isJust flash._flash_c2c_pic.pv) $ do
-                    let c2c = flash._flash_c2c_pic.optOrDef
+                    let c2c = flash._flash_c2c_pic.unwrap
                     _break [FriendImageElement $ FriendImageElementArgs {
-                        _image_id = c2c._file_path.optOrDef,
-                        _size = c2c._file_len.optOrDefV,
-                        _md5 = c2c._pic_md5.optOrDef,
-                        _url = c2c._orig_url.optOrDef
+                        _image_id = c2c._file_path.unwrap,
+                        _size = c2c._file_len.unwrapV,
+                        _md5 = c2c._pic_md5.unwrap,
+                        _url = c2c._orig_url.unwrap
                     }]
             33 -> do
-                let sub = decode ce._pb_elem.optOrDef :: MsgElemInfoServtype33
-                _yield $ newFace $ fromIntegral sub._index.optOrDefV
+                let sub = decode ce._pb_elem.unwrap :: MsgElemInfoServtype33
+                _yield $ newFace $ fromIntegral sub._index.unwrapV
             37 -> do
-                let sub = decode ce._pb_elem.optOrDef :: MsgElemInfoServtype37
-                let s = sub._text.optOrDef
+                let sub = decode ce._pb_elem.unwrap :: MsgElemInfoServtype37
+                let s = sub._text.unwrap
                 let s_ = if "/" `isPrefixOf` s then tail s else s
-                _break [AnimatedSticker (fromIntegral sub._qsid.optOrDefV) s_]
+                _break [AnimatedSticker (fromIntegral sub._qsid.unwrapV) s_]
             _ -> pure ()
 
 

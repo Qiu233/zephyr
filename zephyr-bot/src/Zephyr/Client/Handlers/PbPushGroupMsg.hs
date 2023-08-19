@@ -12,7 +12,7 @@ handleGroupMessagePacket :: Client -> QQPacket -> IO ()
 handleGroupMessagePacket client packet = do
     let m = decode packet._pkt_body :: PushMessagePacket
     -- client._logger.logInfo $ "Group message packet: " ++ show m
-    let s = repeated' m._message.optOrDef._body.optOrDef._rich_text.optOrDef._elems
+    let s = m._message.unwrap._body.unwrap._rich_text.unwrap._elems.unwrap
     let es = parseMessageElems s
     client._logger.logInfo $ printf "Parsed message elements:  %s" $ concatMap (\x -> (printf "{%s} " $ show x) :: String) es
     --undefined

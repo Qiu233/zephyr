@@ -67,13 +67,13 @@ handlePushReqPacket client (QQPacket _ _ bs) = do
                     let addrs_ = (optOrDef rspbody_)._c501_addrs.pv.repeatedF
                     let addrs2_  = concat [y |
                             x <- addrs_,
-                            x._service_type.optOrDef == 10,
+                            x._service_type.unwrap == 10,
                             let y = x._addrs.pv.repeatedF
                             ]
                     let addrs3 = [(ip_,port_) |
                             z <- addrs2_,
-                            let ip_ = z._ip.optOrDef,
-                            let port_ = fromIntegral z._port.optOrDef.variantF
+                            let ip_ = z._ip.unwrap,
+                            let port_ = fromIntegral z._port.unwrap.variantF
                             ]
                     appendAddrs hw addrs3
                     client._logger.logInfo "Appended addresses:"

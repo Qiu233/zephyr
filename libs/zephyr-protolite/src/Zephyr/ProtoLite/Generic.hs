@@ -12,7 +12,7 @@ module Zephyr.ProtoLite.Generic (
     Optional, Repeated(..), Packed(..), Variant(..), SInt32(..), SInt64(..),
     ProtoField(..), ProtoBuf(pdef), encode, decode, optOrDef, optOrDefV,
     optJust, optJustV, optNothing, packed, packedV, repeated, repeatedV,
-    optional, packed', packedV', repeated', repeatedV', pfield
+    optional, pfield
 ) where
 import GHC.Generics
 import Zephyr.ProtoLite.Types
@@ -44,12 +44,25 @@ newtype Variant t = Variant { variantF :: t } deriving (Show, Eq, Num, Ord, Real
 newtype SInt32 = SInt32 Int32 deriving (Show, Eq, Num, Ord, Real, Enum, Integral, Bits)
 newtype SInt64 = SInt64 Int64 deriving (Show, Eq, Num, Ord, Real, Enum, Integral, Bits)
 
-instance (ProtoData a) => HasField "optOrDef" (ProtoField (Optional a) n) a where
+instance (ProtoData a) => HasField "unwrap" (ProtoField (Optional a) n) a where
     getField (ProtoField (Just a)) = a
     getField (ProtoField Nothing) = defpd
-instance (VariantValue a) => HasField "optOrDefV" (ProtoField (Optional (Variant a)) n) a where
+
+instance (VariantValue a) => HasField "unwrapV" (ProtoField (Optional (Variant a)) n) a where
     getField (ProtoField (Just (Variant a))) = a
     getField (ProtoField Nothing) = vvdef
+
+instance HasField "unwrap" (ProtoField (Packed a) n) [a] where
+    getField (ProtoField (Packed a)) = a
+
+instance HasField "unwrapV" (ProtoField (Packed (Variant a)) n) [a] where
+    getField (ProtoField (Packed a)) = map variantF a
+
+instance HasField "unwrap" (ProtoField (Repeated a) n) [a] where
+    getField (ProtoField (Repeated a)) = a
+
+instance HasField "unwrapV" (ProtoField (Repeated (Variant a)) n) [a] where
+    getField (ProtoField (Repeated a)) = map variantF a
 
 optOrDef :: ProtoData a => Optional a -> a
 optOrDef = \case
@@ -79,23 +92,11 @@ packed = ProtoField . Packed
 packedV :: [a] -> ProtoField (Packed (Variant a)) n
 packedV = ProtoField . Packed . map Variant
 
-packed' :: ProtoField (Packed a) n -> [a]
-packed' = packedF . pv
-
-packedV' :: ProtoField (Packed (Variant a)) n -> [a]
-packedV' = map variantF . packedF . pv
-
 repeated :: [a] -> ProtoField (Repeated a) n
 repeated = ProtoField . Repeated
 
 repeatedV :: [a] -> ProtoField (Repeated (Variant a)) n
 repeatedV = ProtoField . Repeated . map Variant
-
-repeated' :: ProtoField (Repeated a) n -> [a]
-repeated' = repeatedF . pv
-
-repeatedV' :: ProtoField (Repeated (Variant a)) n -> [a]
-repeatedV' = map variantF . repeatedF . pv
 
 pfield :: t -> ProtoField t n
 pfield = ProtoField
