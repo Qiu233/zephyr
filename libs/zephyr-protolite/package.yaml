@@ -37,6 +37,8 @@ library:
   exposed-modules:
     - Zephyr.ProtoLite
     - Zephyr.ProtoLite.Aliases
+  default-extensions:
+    - DataKinds
 
 tests:
   protolite-test:

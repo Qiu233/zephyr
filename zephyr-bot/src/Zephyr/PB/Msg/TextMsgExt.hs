@@ -1,5 +1,4 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
-{-# LANGUAGE DataKinds #-}
 module Zephyr.PB.Msg.TextMsgExt where
 import Zephyr.ProtoLite
 import Zephyr.ProtoLite.Aliases

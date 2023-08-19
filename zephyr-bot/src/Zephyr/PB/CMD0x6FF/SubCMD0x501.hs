@@ -1,4 +1,3 @@
-{-# LANGUAGE DataKinds #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.PB.CMD0x6FF.SubCMD0x501 where
 import Zephyr.ProtoLite

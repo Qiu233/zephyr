@@ -1,4 +1,3 @@
-{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Zephyr.Utils.Common where
 import qualified Data.ByteString.Lazy as B

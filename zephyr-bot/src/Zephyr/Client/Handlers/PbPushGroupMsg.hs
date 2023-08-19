@@ -1,5 +1,4 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
-{-# LANGUAGE DataKinds #-}
 module Zephyr.Client.Handlers.PbPushGroupMsg where
 import Zephyr.Client.Types
 import Zephyr.ProtoLite
