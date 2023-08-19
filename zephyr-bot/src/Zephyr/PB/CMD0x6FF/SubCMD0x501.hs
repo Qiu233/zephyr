@@ -15,14 +15,14 @@ newtype C501RspBody = C501RspBody {
 instance ProtoBuf C501RspBody
 
 data SubCmd0X501ReqBody = SubCmd0X501ReqBody {
-    _uin               :: ProtoFieldOptional VUInt64 1,
-    _idc_id            :: ProtoFieldOptional VUInt32 2,
-    _appid             :: ProtoFieldOptional VUInt32 3,
-    _login_sig_type    :: ProtoFieldOptional VUInt32 4,
+    _uin               :: ProtoFieldOptional UInt64 1,
+    _idc_id            :: ProtoFieldOptional UInt32 2,
+    _appid             :: ProtoFieldOptional UInt32 3,
+    _login_sig_type    :: ProtoFieldOptional UInt32 4,
     _login_sig_ticket  :: ProtoFieldOptional Bytes   5,
-    _request_flag      :: ProtoFieldOptional VUInt32 6,
-    _service_types     :: ProtoFieldRepeated VUInt32 7,
-    _bid               :: ProtoFieldOptional VUInt32 8
+    _request_flag      :: ProtoFieldOptional UInt32 6,
+    _service_types     :: ProtoFieldRepeated UInt32 7,
+    _bid               :: ProtoFieldOptional UInt32 8
 } deriving (Show, Generic)
 instance ProtoBuf SubCmd0X501ReqBody
 
@@ -34,15 +34,15 @@ data SubCmd0X501RspBody = SubCmd0X501RspBody {
 instance ProtoBuf SubCmd0X501RspBody
 
 data SrvAddrs = SrvAddrs {
-    _service_type  :: ProtoFieldOptional VUInt32   1,
+    _service_type  :: ProtoFieldOptional UInt32   1,
     _addrs :: ProtoFieldRepeated SrvIPAddr 2
 } deriving (Show, Generic)
 instance ProtoBuf SrvAddrs
 
 data SrvIPAddr = SrvIPAddr {
-    _type :: ProtoFieldOptional VUInt32 1,
-    _ip   :: ProtoFieldOptional Fixed32 2,
-    _port :: ProtoFieldOptional VUInt32 3,
-    _area :: ProtoFieldOptional VUInt32 4
+    _type :: ProtoFieldOptional UInt32 1,
+    _ip   :: ProtoFieldOptional UFixed32 2,
+    _port :: ProtoFieldOptional UInt32 3,
+    _area :: ProtoFieldOptional UInt32 4
 } deriving (Show, Generic)
 instance ProtoBuf SrvIPAddr

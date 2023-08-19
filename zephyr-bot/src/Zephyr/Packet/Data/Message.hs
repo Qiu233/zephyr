@@ -80,10 +80,10 @@ tryParseReply :: MsgParser
 tryParseReply (ParseContext _break _yield _continue x) = do
     when (isJust x._src_msg.pv && not (null x._src_msg.unwrap._orig_seqs.pv.repeatedF)) $ do
         _yield $ ReplyElement $ ReplyElementArgs {
-            _reply_seq = head x._src_msg.unwrap._orig_seqs.unwrapV,
-            _time = x._src_msg.unwrap._time.unwrapV,
-            _sender = fromIntegral x._src_msg.unwrap._sender_uin.unwrapV,
-            _group_id = fromIntegral x._src_msg.unwrap._to_uin.unwrapV,
+            _reply_seq = head x._src_msg.unwrap._orig_seqs.unwrap,
+            _time = x._src_msg.unwrap._time.unwrap,
+            _sender = fromIntegral x._src_msg.unwrap._sender_uin.unwrap,
+            _group_id = fromIntegral x._src_msg.unwrap._to_uin.unwrap,
             _elements = parseMessageElems x._src_msg.unwrap._elems.unwrap
         }
 
@@ -105,9 +105,9 @@ tryParseQFile (ParseContext _break _yield _continue x) = do
                     let mf = info._msg_file.unwrap
                     _yield $ GroupFileElement $ GroupFileElementArgs {
                         _name = mf._file_name.unwrap,
-                        _size = mf._file_size.unwrapV,
+                        _size = mf._file_size.unwrap,
                         _path = mf._file_path.unwrap,
-                        _bus_id = mf._bus_id.unwrapV
+                        _bus_id = mf._bus_id.unwrap
                     }
 
 tryParseLightApp :: MsgParser
@@ -126,8 +126,8 @@ tryParseShortVideo (ParseContext _break _yield _continue x) = do
         _yield $ ShortVideoElement $ ShortVideoElementArgs {
             _name = x._video_file.unwrap._file_name.unwrap,
             _uuid = x._video_file.unwrap._file_uuid.unwrap,
-            _size = x._video_file.unwrap._file_size.unwrapV,
-            _thumb_size = x._video_file.unwrap._thumb_file_size.unwrapV,
+            _size = x._video_file.unwrap._file_size.unwrap,
+            _thumb_size = x._video_file.unwrap._thumb_file_size.unwrap,
             _md5 = x._video_file.unwrap._file_md5.unwrap,
             _thumb_md5 = x._video_file.unwrap._thumb_file_md5.unwrap
         }
@@ -143,10 +143,10 @@ tryParseText (ParseContext _break _yield _continue x) = do
         when (B.length text_._pb_reserve.unwrap > 0) $ do
             let resv = decode text_._pb_reserve.unwrap :: TextResvAttr
             when (resv._at_type.unwrap == 2) $ do
-                let v_ = fromIntegral resv._at_member_tiny_id.unwrapV
+                let v_ = fromIntegral resv._at_member_tiny_id.unwrap
                 _yield $ parseAt v_ str_ AT_GuildMember
             when (resv._at_type.unwrap == 4) $ do
-                let v_ = fromIntegral resv._at_channel_info.unwrap._channel_id.unwrapV
+                let v_ = fromIntegral resv._at_channel_info.unwrap._channel_id.unwrap
                 _yield $ parseAt v_ str_ AT_GuildChannel
         let str__ = optOrDef str_
         let v = if '\r' `elem` str__ && not ("\r\n" `Data.List.isInfixOf` str__) then do
@@ -164,7 +164,7 @@ tryParseRichMessage (ParseContext _break _yield _continue x) = do
                 1 -> ZLib.decompress $ B.tail temp
                 _ -> B.empty
         unless (null content_) $ do
-            let sid = x._rich_msg.unwrap._service_id.unwrapV
+            let sid = x._rich_msg.unwrap._service_id.unwrap
             when (sid == 35) $ do
                 let s = forwardInfoFromXML content_
                 maybe _continue _yield s
@@ -194,11 +194,11 @@ tryParseCustomFace (ParseContext _break _yield _continue x) = do
                 let attr = decode face_._pb_reserve.unwrap :: ResvAttr
                 in toEnum $ fromIntegral attr._image_biz_type.unwrap
         _yield $ GroupImageElement GroupImageElementArgs {
-            _file_id = fromIntegral face_._file_id.unwrapV,
+            _file_id = fromIntegral face_._file_id.unwrap,
             _image_id = face_._file_path.unwrap,
-            _size = face_._size.unwrapV,
-            _width = face_._width.unwrapV,
-            _height = face_._height.unwrapV,
+            _size = face_._size.unwrap,
+            _width = face_._width.unwrap,
+            _height = face_._height.unwrap,
             _url = url,
             _image_biz_type = biz_type_,
             _md5 = face_._md5.unwrap
@@ -211,10 +211,10 @@ tryParseMarketFace (ParseContext _break _yield _continue x) = do
         _yield $ MarketFaceElement $ MarketFaceElementArgs {
             _name = utf8FromBytes face_._face_name.unwrap,
             _face_id = face_._face_id.unwrap,
-            _tab_id = face_._tab_id.unwrapV,
-            _item_type = face_._item_type.unwrapV,
-            _sub_type = face_._sub_type.unwrapV,
-            _media_type = face_._media_type.unwrapV,
+            _tab_id = face_._tab_id.unwrap,
+            _item_type = face_._item_type.unwrap,
+            _sub_type = face_._sub_type.unwrap,
+            _media_type = face_._media_type.unwrap,
             _encrypt_key = face_._key.unwrap,
             _content = utf8FromBytes face_._mobile_param.unwrap
         }
@@ -232,7 +232,7 @@ tryParseOfflineImage (ParseContext _break _yield _continue x) = do
                     in "https://c2cpicdw.qpic.cn/offpic_new/0/" ++ dp__ ++ "/0?term=3"
         _yield $ FriendImageElement $ FriendImageElementArgs {
             _image_id = img._file_path.unwrap,
-            _size = img._file_len.unwrapV,
+            _size = img._file_len.unwrap,
             _url = url,
             _md5 = img._pic_md5.unwrap
         }
@@ -243,7 +243,7 @@ tryParseQQWalletMessage (ParseContext _break _yield _continue x) = do
         let msg = x._qq_wallet_msg.unwrap
         when (isJust msg._aio_body.pv) $ do
             let body_ = msg._aio_body.unwrap
-            let msg_type_ = body_._msg_type.unwrapV
+            let msg_type_ = body_._msg_type.unwrap
             when (msg_type_ <= 1000 && isJust body_._red_type.pv) $ do
                 _break [RedBagElement (toEnum $ fromIntegral msg_type_) $ utf8FromBytes body_._receiver.unwrap._title.unwrap]
 
@@ -258,25 +258,25 @@ newFace idx = do
 tryParseFace :: MsgParser
 tryParseFace (ParseContext _break _yield _continue x) = do
     when (isJust x._face.pv) $ do
-        _yield $ newFace x._face.unwrap._index.unwrapV
+        _yield $ newFace x._face.unwrap._index.unwrap
 
 tryParseCommonElem :: MsgParser
 tryParseCommonElem (ParseContext _break _yield _continue x) = do
     when (isJust x._common_elem.pv) $ do
         let ce = x._common_elem.unwrap
-        let stype = ce._service_type.unwrapV
+        let stype = ce._service_type.unwrap
         case stype of
             3 -> do
                 let flash = decode ce._pb_elem.unwrap :: MsgElemInfoServtype3
                 when (isJust flash._flash_troop_pic.pv) $ do
                     let tr = flash._flash_troop_pic.unwrap
                     _break [GroupImageElement $ GroupImageElementArgs {
-                        _file_id = fromIntegral tr._file_id.unwrapV,
+                        _file_id = fromIntegral tr._file_id.unwrap,
                         _image_id = tr._file_path.unwrap,
                         _image_biz_type = UnknownBizType,
-                        _size = tr._size.unwrapV,
-                        _width = tr._width.unwrapV,
-                        _height = tr._height.unwrapV,
+                        _size = tr._size.unwrap,
+                        _width = tr._width.unwrap,
+                        _height = tr._height.unwrap,
                         _md5 = tr._md5.unwrap,
                         _url = tr._orig_url.unwrap
                     }]
@@ -284,18 +284,18 @@ tryParseCommonElem (ParseContext _break _yield _continue x) = do
                     let c2c = flash._flash_c2c_pic.unwrap
                     _break [FriendImageElement $ FriendImageElementArgs {
                         _image_id = c2c._file_path.unwrap,
-                        _size = c2c._file_len.unwrapV,
+                        _size = c2c._file_len.unwrap,
                         _md5 = c2c._pic_md5.unwrap,
                         _url = c2c._orig_url.unwrap
                     }]
             33 -> do
                 let sub = decode ce._pb_elem.unwrap :: MsgElemInfoServtype33
-                _yield $ newFace $ fromIntegral sub._index.unwrapV
+                _yield $ newFace $ fromIntegral sub._index.unwrap
             37 -> do
                 let sub = decode ce._pb_elem.unwrap :: MsgElemInfoServtype37
                 let s = sub._text.unwrap
                 let s_ = if "/" `isPrefixOf` s then tail s else s
-                _break [AnimatedSticker (fromIntegral sub._qsid.unwrapV) s_]
+                _break [AnimatedSticker (fromIntegral sub._qsid.unwrap) s_]
             _ -> pure ()
 
 

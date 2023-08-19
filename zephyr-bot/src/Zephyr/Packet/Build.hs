@@ -260,8 +260,8 @@ packOIDBPackage cmd srv_type (buf :: a) = do
     v <- asks (._transport._app_version._sort_version)
     let def = pdef :: (OIDBSSOPkg a)
     pure $ PL.encode $ def {
-            _command = optJustV cmd,
-            _service_type = optJustV srv_type,
+            _command = optJust cmd,
+            _service_type = optJust srv_type,
             _client_version = optJust $ "Android " ++ v,
             _body = optJust buf
             }

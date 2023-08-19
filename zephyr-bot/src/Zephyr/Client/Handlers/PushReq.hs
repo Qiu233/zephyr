@@ -72,8 +72,8 @@ handlePushReqPacket client (QQPacket _ _ bs) = do
                             ]
                     let addrs3 = [(ip_,port_) |
                             z <- addrs2_,
-                            let ip_ = z._ip.unwrap,
-                            let port_ = fromIntegral z._port.unwrap.variantF
+                            let ip_ = z._ip.unwrap.fixed,
+                            let port_ = fromIntegral z._port.unwrap
                             ]
                     appendAddrs hw addrs3
                     client._logger.logInfo "Appended addresses:"

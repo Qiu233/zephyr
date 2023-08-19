@@ -201,12 +201,12 @@ t144 = do
             (optJust  $ d ^. bootloader)
             (optJust  $ d ^. proc_version)
             (optJust  $ d ^. os_version . codeName)
-            (optJustV $ d ^. os_version . incremental)
+            (optJust $ d ^. os_version . incremental)
             (optJust  $ d ^. fingerprint)
             (optJust  $ d ^. boot_id)
             (optJust  $ d ^. android_id)
             (optJust  $ d ^. base_band)
-            (optJustV $ d ^. os_version . incremental)
+            (optJust $ d ^. os_version . incremental)
     Prim.t144_ imei_ pb os_type_ release_ sim_ apn_ False True False guidFlag model_ guid_ brand_ tgtgt_key_
 
 t145 :: ContextRM B.ByteString

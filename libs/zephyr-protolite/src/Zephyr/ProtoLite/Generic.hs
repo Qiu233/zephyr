@@ -7,11 +7,12 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE LambdaCase #-}
 module Zephyr.ProtoLite.Generic (
-    Optional, Repeated(..), Packed(..), Variant(..), SInt32(..), SInt64(..),
-    ProtoField(..), ProtoBuf(pdef), encode, decode, optOrDef, optOrDefV,
-    optJust, optJustV, optNothing, packed, packedV, repeated, repeatedV,
+    Optional, Repeated(..), Packed(..), SInt32(..), SInt64(..), Fixed32(..), Fixed64(..),
+    ProtoField(..), ProtoBuf(pdef), encode, decode, optOrDef,
+    optJust, optNothing, packed, repeated,
     optional, pfield
 ) where
 import GHC.Generics
@@ -24,7 +25,7 @@ import Zephyr.ProtoLite.Decode
 import Data.Proxy
 import qualified Data.ByteString.Lazy as B
 import Data.Int
-import GHC.Float (castWord32ToFloat, castWord64ToDouble)
+import GHC.Float
 import GHC.IsList (IsList)
 import Data.String
 import Data.ByteString.Lazy.UTF8 (toString)
@@ -35,50 +36,38 @@ import Zephyr.Binary
 import Zephyr.Binary.Put
 import Zephyr.Binary.Get
 
-
-
 type Optional = Maybe
 newtype Repeated t = Repeated { repeatedF :: [t] } deriving (Show, Eq, IsList)
 newtype Packed t = Packed { packedF :: [t] } deriving (Show, Eq, IsList)
-newtype Variant t = Variant { variantF :: t } deriving (Show, Eq, Num, Ord, Real, Enum, Integral, Bits)
 newtype SInt32 = SInt32 Int32 deriving (Show, Eq, Num, Ord, Real, Enum, Integral, Bits)
 newtype SInt64 = SInt64 Int64 deriving (Show, Eq, Num, Ord, Real, Enum, Integral, Bits)
+newtype Fixed32 t = Fixed32 t deriving (Show, Eq, Num, Ord, Real, Enum, Integral, Bits)
+newtype Fixed64 t = Fixed64 t deriving (Show, Eq, Num, Ord, Real, Enum, Integral, Bits)
+
+
+instance HasField "fixed" (Fixed32 a) a where
+    getField (Fixed32 a) = a
+
+instance HasField "fixed" (Fixed64 a) a where
+    getField (Fixed64 a) = a
 
 instance (ProtoData a) => HasField "unwrap" (ProtoField (Optional a) n) a where
     getField (ProtoField (Just a)) = a
     getField (ProtoField Nothing) = defpd
 
-instance (VariantValue a) => HasField "unwrapV" (ProtoField (Optional (Variant a)) n) a where
-    getField (ProtoField (Just (Variant a))) = a
-    getField (ProtoField Nothing) = vvdef
-
 instance HasField "unwrap" (ProtoField (Packed a) n) [a] where
     getField (ProtoField (Packed a)) = a
 
-instance HasField "unwrapV" (ProtoField (Packed (Variant a)) n) [a] where
-    getField (ProtoField (Packed a)) = map variantF a
-
 instance HasField "unwrap" (ProtoField (Repeated a) n) [a] where
     getField (ProtoField (Repeated a)) = a
-
-instance HasField "unwrapV" (ProtoField (Repeated (Variant a)) n) [a] where
-    getField (ProtoField (Repeated a)) = map variantF a
 
 optOrDef :: ProtoData a => Optional a -> a
 optOrDef = \case
     Nothing -> defpd
     Just a -> a
 
-optOrDefV :: VariantValue a => Optional (Variant a) -> a
-optOrDefV = \case
-    Nothing -> vvdef
-    Just (Variant a) -> a
-
 optJust :: a -> ProtoField (Optional a) n
 optJust = ProtoField . Just
-
-optJustV :: a -> ProtoField (Optional (Variant a)) n
-optJustV = ProtoField . Just . Variant
 
 optNothing :: ProtoField (Optional a) n
 optNothing = ProtoField Nothing
@@ -89,14 +78,8 @@ optional = pv
 packed :: [a] -> ProtoField (Packed a) n
 packed = ProtoField . Packed
 
-packedV :: [a] -> ProtoField (Packed (Variant a)) n
-packedV = ProtoField . Packed . map Variant
-
 repeated :: [a] -> ProtoField (Repeated a) n
 repeated = ProtoField . Repeated
-
-repeatedV :: [a] -> ProtoField (Repeated (Variant a)) n
-repeatedV = ProtoField . Repeated . map Variant
 
 pfield :: t -> ProtoField t n
 pfield = ProtoField
@@ -188,48 +171,6 @@ instance (ProtoBuf a) => (ProtoData a) where
         [pget rs
             | PVLenPrefixed s <- ts, let rs = runGet getMessage s]
 
-instance {-# OVERLAPPING #-} ProtoData Word32 where
-    defpd = 0
-    putpd n v = putEntry $ putFixedU32 n v
-    getpd n vs = do
-        let ts = plookupAll n vs
-        [s | PVI32 s <- ts]
-
-instance {-# OVERLAPPING #-} ProtoData Int32 where
-    defpd = 0
-    putpd n v = putEntry $ putFixedI32 n v
-    getpd n vs = do
-        let ts = plookupAll n vs
-        [fromIntegral s | PVI32 s <- ts]
-
-instance {-# OVERLAPPING #-} ProtoData Float where
-    defpd = 0
-    putpd n v = putEntry $ putFixedF32 n v
-    getpd n vs = do
-        let ts = plookupAll n vs
-        [castWord32ToFloat s | PVI32 s <- ts]
-
-instance {-# OVERLAPPING #-} ProtoData Word64 where
-    defpd = 0
-    putpd n v = putEntry $ putFixedU64 n v
-    getpd n vs = do
-        let ts = plookupAll n vs
-        [s | PVI64 s <- ts]
-
-instance {-# OVERLAPPING #-} ProtoData Int64 where
-    defpd = 0
-    putpd n v = putEntry $ putFixedI64 n v
-    getpd n vs = do
-        let ts = plookupAll n vs
-        [fromIntegral s | PVI64 s <- ts]
-
-instance {-# OVERLAPPING #-} ProtoData Double where
-    defpd = 0
-    putpd n v = putEntry $ putFixedF64 n v
-    getpd n vs = do
-        let ts = plookupAll n vs
-        [castWord64ToDouble s | PVI64 s <- ts]
-
 instance {-# OVERLAPPING #-} ProtoData String where
     defpd = ""
     putpd n v = putEntry $ putLenPrefixed n (fromString v)
@@ -262,7 +203,7 @@ instance VariantValue Word32 where{ vvdef = 0; vvto = pvIntDirect'; vvfrom = pvI
 instance VariantValue Word64 where{ vvdef = 0; vvto = pvIntDirect'; vvfrom = pvIntDirect }
 instance VariantValue Int32 where{ vvdef = 0; vvto = pvIntDirect'; vvfrom = pvIntDirect }
 instance VariantValue Int64 where{ vvdef = 0; vvto = pvIntDirect'; vvfrom = pvIntDirect }
-instance VariantValue SInt32 where{ vvdef = 0; vvto = pvIntDirect'; vvfrom = pvIntDirect }
+instance VariantValue SInt32 where{ vvdef = 0; vvto = pvSInt'; vvfrom = pvSInt }
 instance VariantValue SInt64 where{ vvdef = 0; vvto = pvSInt'; vvfrom = pvSInt }
 instance VariantValue Bool where
     vvdef = False
@@ -274,12 +215,34 @@ instance VariantValue Bool where
         PVInt 1 -> True
         _ -> error "not a bool"
 
-instance {-# OVERLAPPING #-} VariantValue t => ProtoData (Variant t) where
-    defpd = Variant vvdef
-    putpd n (Variant v) = putEntry $ putPVIntIndex n (vvto v)
-    getpd n vs = do
-        let ts = plookupAll n vs
-        [Variant $ vvfrom s | PVVariant s <- ts]
+instance {-# OVERLAPPING #-} ProtoData Word32 where
+    defpd = vvdef
+    putpd n v = putEntry $ putPVIntIndex n (vvto v)
+    getpd n vs = [vvfrom s | PVVariant s <- ts] where ts = plookupAll n vs
+instance {-# OVERLAPPING #-} ProtoData Word64 where
+    defpd = vvdef
+    putpd n v = putEntry $ putPVIntIndex n (vvto v)
+    getpd n vs = [vvfrom s | PVVariant s <- ts] where ts = plookupAll n vs
+instance {-# OVERLAPPING #-} ProtoData Int32 where
+    defpd = vvdef
+    putpd n v = putEntry $ putPVIntIndex n (vvto v)
+    getpd n vs = [vvfrom s | PVVariant s <- ts] where ts = plookupAll n vs
+instance {-# OVERLAPPING #-} ProtoData Int64 where
+    defpd = vvdef
+    putpd n v = putEntry $ putPVIntIndex n (vvto v)
+    getpd n vs = [vvfrom s | PVVariant s <- ts] where ts = plookupAll n vs
+instance {-# OVERLAPPING #-} ProtoData SInt32 where
+    defpd = vvdef
+    putpd n v = putEntry $ putPVIntIndex n (vvto v)
+    getpd n vs = [vvfrom s | PVVariant s <- ts] where ts = plookupAll n vs
+instance {-# OVERLAPPING #-} ProtoData SInt64 where
+    defpd = vvdef
+    putpd n v = putEntry $ putPVIntIndex n (vvto v)
+    getpd n vs = [vvfrom s | PVVariant s <- ts] where ts = plookupAll n vs
+instance {-# OVERLAPPING #-} ProtoData Bool where
+    defpd = False
+    putpd n v = putEntry $ putPVIntIndex n (if v then pvIntDirect' (1 :: Int32) else pvIntDirect' (0 :: Int32))
+    getpd n vs = [(s /= 0) && ((s == 1) || error "not a bool") | PVVariant (PVInt s) <- ts] where ts = plookupAll n vs
 
 getMany :: Get a -> Get [a]
 getMany getter = do
@@ -290,66 +253,83 @@ getMany getter = do
             xs <- getMany getter
             return (x:xs)
 
-instance {-# OVERLAPPING #-} (KnownNat n) => ProtoBuf (ProtoField (Packed Word32) n) where
+instance {-# OVERLAPPING #-} (KnownNat n, BinPut t, BinGet t) => ProtoBuf (ProtoField (Packed (Fixed64 t)) n) where
     pput (ProtoField (Packed ts)) = do
         let n = fromIntegral $ natVal (Proxy :: Proxy n)
-        putEntry $ putLenPrefixed n $ runPut $ mapM_ putle ts
+        putEntry $ putLenPrefixed n $ runPut $ mapM_ (putle . (.fixed)) ts
     pget vs = do
         let n = fromIntegral $ natVal (Proxy :: Proxy n)
-        ProtoField $ Packed $ concat [runGet (getMany getle) s | PVLenPrefixed s <- plookupAll n vs]
+        ProtoField $ Packed $ concat [runGet (getMany (Fixed64 <$> getle)) s | PVLenPrefixed s <- plookupAll n vs]
     pdef = ProtoField $ Packed []
-
-instance {-# OVERLAPPING #-} (KnownNat n) => ProtoBuf (ProtoField (Packed Word64) n) where
+instance {-# OVERLAPPING #-} (KnownNat n, BinPut t, BinGet t) => ProtoBuf (ProtoField (Packed (Fixed32 t)) n) where
     pput (ProtoField (Packed ts)) = do
         let n = fromIntegral $ natVal (Proxy :: Proxy n)
-        putEntry $ putLenPrefixed n $ runPut $ mapM_ putle ts
+        putEntry $ putLenPrefixed n $ runPut $ mapM_ (putle . (.fixed)) ts
     pget vs = do
         let n = fromIntegral $ natVal (Proxy :: Proxy n)
-        ProtoField $ Packed $ concat [runGet (getMany getle) s | PVLenPrefixed s <- plookupAll n vs]
+        ProtoField $ Packed $ concat [runGet (getMany (Fixed32 <$> getle)) s | PVLenPrefixed s <- plookupAll n vs]
     pdef = ProtoField $ Packed []
 
-instance {-# OVERLAPPING #-} (KnownNat n) => ProtoBuf (ProtoField (Packed Int32) n) where
-    pput (ProtoField (Packed ts)) = do
-        let n = fromIntegral $ natVal (Proxy :: Proxy n)
-        putEntry $ putLenPrefixed n $ runPut $ mapM_ putle ts
-    pget vs = do
-        let n = fromIntegral $ natVal (Proxy :: Proxy n)
-        ProtoField $ Packed $ concat [runGet (getMany getle) s | PVLenPrefixed s <- plookupAll n vs]
-    pdef = ProtoField $ Packed []
-
-instance {-# OVERLAPPING #-} (KnownNat n) => ProtoBuf (ProtoField (Packed Int64) n) where
-    pput (ProtoField (Packed ts)) = do
-        let n = fromIntegral $ natVal (Proxy :: Proxy n)
-        putEntry $ putLenPrefixed n $ runPut $ mapM_ putle ts
-    pget vs = do
-        let n = fromIntegral $ natVal (Proxy :: Proxy n)
-        ProtoField $ Packed $ concat [runGet (getMany getle) s | PVLenPrefixed s <- plookupAll n vs]
-    pdef = ProtoField $ Packed []
-
-instance {-# OVERLAPPING #-} (KnownNat n) => ProtoBuf (ProtoField (Packed Float) n) where
-    pput (ProtoField (Packed ts)) = do
-        let n = fromIntegral $ natVal (Proxy :: Proxy n)
-        putEntry $ putLenPrefixed n $ runPut $ mapM_ putle ts
-    pget vs = do
-        let n = fromIntegral $ natVal (Proxy :: Proxy n)
-        ProtoField $ Packed $ concat [runGet (getMany getle) s | PVLenPrefixed s <- plookupAll n vs]
-    pdef = ProtoField $ Packed []
-
-instance {-# OVERLAPPING #-} (KnownNat n) => ProtoBuf (ProtoField (Packed Double) n) where
-    pput (ProtoField (Packed ts)) = do
-        let n = fromIntegral $ natVal (Proxy :: Proxy n)
-        putEntry $ putLenPrefixed n $ runPut $ mapM_ putle ts
-    pget vs = do
-        let n = fromIntegral $ natVal (Proxy :: Proxy n)
-        ProtoField $ Packed $ concat [runGet (getMany getle) s | PVLenPrefixed s <- plookupAll n vs]
-    pdef = ProtoField $ Packed []
-
-instance {-# OVERLAPPING #-} (KnownNat n, VariantValue t) => ProtoBuf (ProtoField (Packed (Variant t)) n) where
+instance {-# OVERLAPPING #-} (KnownNat n, VariantValue t) => ProtoBuf (ProtoField (Packed t) n) where
     pput (ProtoField (Packed vs)) = do
         let n = fromIntegral $ natVal (Proxy :: Proxy n)
-        putEntry $ putLenPrefixed n $ runPut $ mapM_ (\(Variant v) -> putPVInt . vvto $ v) vs
+        putEntry $ putLenPrefixed n $ runPut $ mapM_ (putPVInt . vvto) vs
     pget vs = do
         let n = fromIntegral $ natVal (Proxy :: Proxy n)
-        let rs = Variant . vvfrom <$> concat [runGet (getMany getPVInt) s | PVLenPrefixed s <- plookupAll n vs]
+        let rs = vvfrom <$> concat [runGet (getMany getPVInt) s | PVLenPrefixed s <- plookupAll n vs]
         ProtoField $ Packed rs
     pdef = ProtoField $ Packed []
+
+class FixedV32 t where
+    f32def :: t
+    f32to :: t -> Word32
+    f32from :: Word32 -> t
+
+class FixedV64 t where
+    f64def :: t
+    f64to :: t -> Word64
+    f64from :: Word64 -> t
+
+instance FixedV32 Float where
+    f32def = 0
+    f32to = castFloatToWord32
+    f32from = castWord32ToFloat
+
+instance FixedV64 Double where
+    f64def = 0
+    f64to = castDoubleToWord64
+    f64from = castWord64ToDouble
+
+instance FixedV32 Word32 where
+    f32def = 0
+    f32to = id
+    f32from = id
+
+instance FixedV64 Word64 where
+    f64def = 0
+    f64to = id
+    f64from = id
+
+instance FixedV32 Int32 where
+    f32def = 0
+    f32to = fromIntegral
+    f32from = fromIntegral
+
+instance FixedV64 Int64 where
+    f64def = 0
+    f64to = fromIntegral
+    f64from = fromIntegral
+
+instance {-# OVERLAPPING #-} (FixedV32 t) => ProtoData (Fixed32 t) where
+    defpd = Fixed32 f32def
+    putpd n (Fixed32 v) = putEntry $ putFixedU32 n (f32to v)
+    getpd n vs = do
+        let ts = plookupAll n vs
+        [Fixed32 $ f32from s | PVI32 s <- ts]
+
+instance {-# OVERLAPPING #-} (FixedV64 t) => ProtoData (Fixed64 t) where
+    defpd = Fixed64 f64def
+    putpd n (Fixed64 v) = putEntry $ putFixedU64 n (f64to v)
+    getpd n vs = do
+        let ts = plookupAll n vs
+        [Fixed64 $ f64from s | PVI64 s <- ts]

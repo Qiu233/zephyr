@@ -80,36 +80,36 @@ buildGroupInfoRequest :: Int64 -> ContextRM Request
 buildGroupInfoRequest code = do
     av <- asks (._transport._app_version)
     let body = D88DReqBody {
-            _app_id = optJustV $ av._sub_id,
+            _app_id = optJust $ av._sub_id,
             _pc_client_version = optJust 0,
             _req_group_info = repeated [pdef {
-                _group_code = optJustV $ fromIntegral code,
+                _group_code = optJust $ fromIntegral code,
                 _st_group_info = optJust $ pdef {
-                    _group_owner = optJustV 0,
-                    _group_uin = optJustV 0,
-                    _group_create_time = optJustV 0,
-                    _group_flag = optJustV 0,
-                    _group_member_max_num = optJustV 0,
-                    _group_member_num = optJustV 0,
-                    _group_option = optJustV 0,
-                    _group_level = optJustV 0,
-                    _group_face = optJustV 0,
+                    _group_owner = optJust 0,
+                    _group_uin = optJust 0,
+                    _group_create_time = optJust 0,
+                    _group_flag = optJust 0,
+                    _group_member_max_num = optJust 0,
+                    _group_member_num = optJust 0,
+                    _group_option = optJust 0,
+                    _group_level = optJust 0,
+                    _group_face = optJust 0,
                     _group_name = optJust "",
                     _group_memo = optJust B.empty,
                     _group_finger_memo = optJust B.empty,
-                    _group_last_msg_time = optJustV 0,
-                    _group_cur_msg_seq = optJustV 0,
+                    _group_last_msg_time = optJust 0,
+                    _group_cur_msg_seq = optJust 0,
                     _group_question = optJust B.empty,
                     _group_answer = optJust B.empty,
-                    _group_grade = optJustV 0,
-                    _active_member_num = optJustV 0,
-                    _head_portrait_seq = optJustV 0,
+                    _group_grade = optJust 0,
+                    _active_member_num = optJust 0,
+                    _head_portrait_seq = optJust 0,
                     --_msg_head_portrait = optJust pdef
                     --_st_group_ex_info
-                    _group_sec_level = optJustV 0,
-                    _cmduin_privilege = optJustV 0,
-                    _no_finger_open_flag = optJustV 0,
-                    _no_code_finger_open_flag = optJustV 0
+                    _group_sec_level = optJust 0,
+                    _cmduin_privilege = optJust 0,
+                    _no_finger_open_flag = optJust 0,
+                    _no_code_finger_open_flag = optJust 0
                 }
             }]
     }
@@ -122,7 +122,7 @@ decodeGroupInfoResponse bs = do
     let rst_ = rspO._result.unwrap
     when (rst_ /= 0) $ do
         throwE $ printf "oidb result unsuccessful: %d msg: %s"
-                rspO._result.unwrap.variantF rspO._error_msg.unwrap
+                rspO._result.unwrap rspO._error_msg.unwrap
     let rspM = optional rspO._body
     when (isNothing rspM) $ do
         throwE "oidb result unsuccessful: body is empty"
@@ -134,15 +134,15 @@ decodeGroupInfoResponse bs = do
     let i = info._group_info.unwrap
 
     pure $ GroupInfoDetailed {
-        _create_time = i._group_create_time.unwrapV,
-        _group_level = i._group_level.unwrapV,
-        _last_msg_seq = fromIntegral $ i._group_cur_msg_seq.unwrapV,
+        _create_time = i._group_create_time.unwrap,
+        _group_level = i._group_level.unwrap,
+        _last_msg_seq = fromIntegral $ i._group_cur_msg_seq.unwrap,
         _basic_info = GroupInfo {
-            _uin = fromIntegral $ i._group_uin.unwrapV,
-            _code = fromIntegral $ info._group_code.unwrapV,
+            _uin = fromIntegral $ i._group_uin.unwrap,
+            _code = fromIntegral $ info._group_code.unwrap,
             _name = i._group_name.unwrap,
-            _owner_uin = fromIntegral $ i._group_owner.unwrapV,
-            _member_count = fromIntegral $ i._group_member_num.unwrapV,
-            _max_member_count = fromIntegral $ i._group_member_max_num.unwrapV
+            _owner_uin = fromIntegral $ i._group_owner.unwrap,
+            _member_count = fromIntegral $ i._group_member_num.unwrap,
+            _max_member_count = fromIntegral $ i._group_member_max_num.unwrap
         }
     }
