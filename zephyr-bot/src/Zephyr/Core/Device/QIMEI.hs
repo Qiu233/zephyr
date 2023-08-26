@@ -16,7 +16,6 @@ import Crypto.Cipher.Types
 
 import qualified Zephyr.Core.Device.Types as Dev
 import qualified Crypto.PubKey.RSA as RSA
-import qualified OpenSSL.RSA as ORSA
 import Data.Word
 import qualified Zephyr.Core.AppVersion as CA
 import Control.Lens
@@ -25,13 +24,11 @@ import qualified Data.ByteString.Lazy as B
 import qualified Data.ByteString.Base64.Lazy as Base64
 import qualified Data.ByteString as SB
 import Zephyr.Utils.Common
-import Data.Maybe (fromJust)
+import Data.Maybe (fromJust, listToMaybe)
 import Crypto.Error (throwCryptoError)
 import Zephyr.Utils.Random
 import qualified Data.List as List
 import Text.Printf (printf)
-import qualified OpenSSL.PEM as PEM
-import qualified OpenSSL.EVP.PKey as PKey
 import Data.Aeson ((.:))
 import Control.Monad.IO.Class
 import Zephyr.Utils.Time
@@ -44,6 +41,8 @@ import Control.Monad (guard)
 import Data.Either (isRight, fromRight)
 import Zephyr.Utils.MTL
 import Zephyr.Binary.OP
+import qualified Crypto.Store.X509 as X509
+import qualified Data.X509 as DX509
 
 aesEncrypt :: B.ByteString -> B.ByteString -> B.ByteString
 aesEncrypt src' key' = do
@@ -195,18 +194,12 @@ rsaKey = "-----BEGIN PUBLIC KEY-----\n\
 \9NMbHddGSAUmRTCrHQIDAQAB\n\
 \-----END PUBLIC KEY-----"
 
-
 readPublicKey :: String -> IO RSA.PublicKey
 readPublicKey str = do
-  pem <- PKey.toPublicKey <$> PEM.readPublicKey str :: IO (Maybe ORSA.RSAPubKey)
-  case pem of
-    Just key -> do
-        pure $ RSA.PublicKey {
-            RSA.public_size = ORSA.rsaSize key,
-            RSA.public_n = ORSA.rsaN key,
-            RSA.public_e = ORSA.rsaE key
-            }
-    _ -> error "Invalid PEM file"
+    let pem = listToMaybe $ X509.readPubKeyFileFromMemory $ B.toStrict $ utf8ToBytes str
+    case pem of
+        Just (DX509.PubKeyRSA k) -> pure k
+        _ -> error "Invalid PEM file"
 
 
 randHexl :: MonadIO m => Int -> m String

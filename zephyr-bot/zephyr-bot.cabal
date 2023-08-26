@@ -98,8 +98,7 @@ library
       DataKinds
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
-      HsOpenSSL
-    , aeson
+      aeson
     , aeson-pretty
     , array
     , async
@@ -107,6 +106,7 @@ library
     , base64-bytestring
     , bytestring
     , cryptonite
+    , cryptostore
     , hashable
     , hashmap
     , http-client
@@ -123,6 +123,7 @@ library
     , time
     , transformers
     , utf8-string
+    , x509
     , zephyr-binary
     , zephyr-jce
     , zephyr-protolite
@@ -137,8 +138,7 @@ executable zephyr-bot-exe
       app
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      HsOpenSSL
-    , aeson
+      aeson
     , aeson-pretty
     , array
     , async
@@ -146,6 +146,7 @@ executable zephyr-bot-exe
     , base64-bytestring
     , bytestring
     , cryptonite
+    , cryptostore
     , hashable
     , hashmap
     , http-client
@@ -162,6 +163,7 @@ executable zephyr-bot-exe
     , time
     , transformers
     , utf8-string
+    , x509
     , zephyr-binary
     , zephyr-bot
     , zephyr-jce
@@ -183,8 +185,7 @@ test-suite zephyr-bot-test
       test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      HsOpenSSL
-    , aeson
+      aeson
     , aeson-pretty
     , array
     , async
@@ -192,6 +193,7 @@ test-suite zephyr-bot-test
     , base64-bytestring
     , bytestring
     , cryptonite
+    , cryptostore
     , hashable
     , hashmap
     , hspec
@@ -210,6 +212,7 @@ test-suite zephyr-bot-test
     , time
     , transformers
     , utf8-string
+    , x509
     , zephyr-binary
     , zephyr-bot
     , zephyr-jce

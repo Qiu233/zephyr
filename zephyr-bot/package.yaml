@@ -41,12 +41,13 @@ dependencies:
 - cryptonite
 - stm
 - network
-- HsOpenSSL
 - http-client
 - http-client-tls
 - zephyr-binary
 - zephyr-protolite
 - zephyr-jce
+- cryptostore
+- x509
 
 ghc-options:
 - -Wall
