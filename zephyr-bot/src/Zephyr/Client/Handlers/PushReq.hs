@@ -44,10 +44,8 @@ handlePushReqPacket client (QQPacket _ _ bs) = do
                                 s <- servers_,
                                 ".com" `Data.List.isInfixOf` s._server.jval
                                 ]
-                        hs <- readTVarIO client._events._server_updated
-                        let ea = ServerUpdatedEventArgs servers2__
-                        rs <- sequence [h ea | h <- hs]
-                        when (and rs) $ atomically $
+                        dispatch client._events._server_updated $ ServerUpdatedEventArgs servers2__
+                        atomically $
                             modifyTVar client._servers (++ map (\x ->(x._server.jval, fromIntegral x._port.jval)) servers2__)
                         srvs <- readTVarIO client._servers
                         client._logger.logInfo "Total servers:"

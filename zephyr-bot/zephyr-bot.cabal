@@ -30,6 +30,7 @@ library
       Zephyr.Client.Init
       Zephyr.Client.Internal
       Zephyr.Client.Log
+      Zephyr.Client.TimeoutCache
       Zephyr.Client.Types
       Zephyr.Client.Works.Group
       Zephyr.Client.Works.Login
@@ -71,6 +72,8 @@ library
       Zephyr.PB.Msg
       Zephyr.PB.Msg.ObjMsg
       Zephyr.PB.Msg.TextMsgExt
+      Zephyr.PB.MsgType0x210.SubMsgType0x27
+      Zephyr.PB.Notify.Group0x857
       Zephyr.PB.OIDB
       Zephyr.PB.OIDB.OIDB0x88D
       Zephyr.Utils.Codec

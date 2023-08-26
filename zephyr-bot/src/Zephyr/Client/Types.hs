@@ -11,6 +11,7 @@ import Data.Word
 import Zephyr.Client.Highway
 import Zephyr.Client.Events
 import Zephyr.Client.Log
+import Zephyr.Client.TimeoutCache
 
 data QQPacket = QQPacket {
     _pkt_seq :: Word16,
@@ -18,13 +19,6 @@ data QQPacket = QQPacket {
     _pkt_body :: B.ByteString
 } deriving (Eq, Show)
 $(makeLenses ''QQPacket)
-
-data Events = Events {
-    _server_updated :: TVar [ServerUpdatedEventArgs -> IO Bool]
-}
-
-emptyEvents :: IO Events
-emptyEvents = Events <$> newTVarIO []
 
 data Client = Client {
     _context :: TMVar QQContext,
@@ -37,6 +31,7 @@ data Client = Client {
 
     _out_buffer :: TMVar B.ByteString,
     _promises :: TMVar(Map Word16 (TMVar QQPacket)),
+    _online_push_cache :: TimeoutCache String (),
 
     _events :: Events,
     _handlers :: TVar (Map String (QQPacket -> IO ())),
@@ -48,3 +43,9 @@ isClientOnline :: Client -> IO Bool
 isClientOnline client = do
     let c = client._online
     readTVarIO c
+
+getUIN :: Client -> IO Word64
+getUIN client = do
+    let c = client._context
+    ctx <- atomically $ readTMVar c
+    pure ctx._uin

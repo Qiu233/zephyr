@@ -17,6 +17,7 @@ extra-source-files:
 library
   exposed-modules:
       Zephyr.Binary
+      Zephyr.Binary.FixedBytes
       Zephyr.Binary.Get
       Zephyr.Binary.OP
       Zephyr.Binary.Put

@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NumericUnderscores #-}
+{-# LANGUAGE RecordWildCards #-}
 module Zephyr.Client.Init where
 import Zephyr.Core.QQContext
 import Network.Socket
@@ -26,6 +27,8 @@ import Control.Concurrent
 import Zephyr.Core.Request
 import Control.Monad.Except
 import Zephyr.Client.Works.Login
+import Zephyr.Client.TimeoutCache
+import Zephyr.Client.Events
 
 runTCPClient :: HostName -> ServiceName -> (Socket -> IO a) -> IO a
 runTCPClient host port client = withSocketsDo $ do
@@ -48,18 +51,19 @@ clientMain ctx clientMainInner = do
 
 newClient :: QQContext -> Socket -> IO Client
 newClient ctx sock = do
-    let handlers_ = newTVarIO emptyHandlers
-    c <- Client <$>
-            newTMVarIO ctx <*>
-            pure defaultLogger <*>
-            pure sock <*>
-            newTVarIO [] <*>
-            newTVarIO False <*>
-            newTVarIO False <*>
-            newEmptyTMVarIO <*> newTMVarIO Data.HashMap.empty <*>
-            emptyEvents <*>
-            handlers_ <*>
-            defaultHighwaySession (ctx ^. uin) (fromIntegral $ ctx ^. transport . app_version . sub_id)
+    _context <- newTMVarIO ctx
+    let _logger = defaultLogger
+    let _socket = sock
+    _servers <- newTVarIO []
+    _online <- newTVarIO False
+    _net_loop <- newTVarIO False
+    _out_buffer <- newTMVarIO B.empty
+    _online_push_cache <- newTimeoutCache
+    _promises <- newTMVarIO Data.HashMap.empty
+    _events <- emptyEvents
+    _handlers <- newTVarIO emptyHandlers
+    _highway_session <- defaultHighwaySession (ctx ^. uin) (fromIntegral $ ctx ^. transport . app_version . sub_id)
+    let c = Client {..}
     setDefaultHandlers c
     pure c
 
