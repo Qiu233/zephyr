@@ -41,8 +41,8 @@ newtype Repeated t = Repeated { repeatedF :: [t] } deriving (Show, Eq, IsList)
 newtype Packed t = Packed { packedF :: [t] } deriving (Show, Eq, IsList)
 newtype SInt32 = SInt32 Int32 deriving (Show, Eq, Num, Ord, Real, Enum, Integral, Bits)
 newtype SInt64 = SInt64 Int64 deriving (Show, Eq, Num, Ord, Real, Enum, Integral, Bits)
-newtype Fixed32 t = Fixed32 t deriving (Show, Eq, Num, Ord, Real, Enum, Integral, Bits)
-newtype Fixed64 t = Fixed64 t deriving (Show, Eq, Num, Ord, Real, Enum, Integral, Bits)
+newtype Fixed32 t = Fixed32 t deriving (Show, Eq, Num, Ord, Real, Enum, Integral, Bits, Fractional)
+newtype Fixed64 t = Fixed64 t deriving (Show, Eq, Num, Ord, Real, Enum, Integral, Bits, Fractional)
 
 
 instance HasField "fixed" (Fixed32 a) a where

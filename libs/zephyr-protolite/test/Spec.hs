@@ -1,8 +1,9 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE DataKinds #-}
 import Test.Hspec
 import Zephyr.ProtoLite
-import Data.Word
+import Zephyr.ProtoLite.Aliases
 import GHC.Generics
 import qualified Data.ByteString.Lazy as B
 import Text.Printf
@@ -10,22 +11,22 @@ import Data.Int
 
 
 data ProtoFixed = ProtoFixed {
-    fixedu32 :: ProtoField Word32 1,
-    fixedu64 :: ProtoField Word64 2,
-    fixedi32 :: ProtoField Int32 3,
-    fixedi64 :: ProtoField Int64 4,
-    fixedf32 :: ProtoField Float 5,
-    fixedf64 :: ProtoField Double 6
+    fixedu32 :: ProtoField UFixed32 1,
+    fixedu64 :: ProtoField UFixed64 2,
+    fixedi32 :: ProtoField SFixed32 3,
+    fixedi64 :: ProtoField SFixed64 4,
+    fixedf32 :: ProtoField FFixed32 5,
+    fixedf64 :: ProtoField FFixed64 6
 } deriving (Show, Eq, Generic)
 instance ProtoBuf ProtoFixed
 
 data ProtoVariant = ProtoVariant {
-    varu32 :: ProtoField (Variant Word32) 1,
-    varu64 :: ProtoField (Variant Word64) 2,
-    vars32 :: ProtoField (Variant SInt32) 3,
-    vars64 :: ProtoField (Variant SInt64) 4,
-    var32 :: ProtoField (Variant Int32) 5,
-    var64 :: ProtoField (Variant Int64) 6
+    varu32 :: ProtoField UInt32 1,
+    varu64 :: ProtoField UInt64 2,
+    vars32 :: ProtoField SInt32 3,
+    vars64 :: ProtoField SInt64 4,
+    var32 :: ProtoField Int32 5,
+    var64 :: ProtoField Int64 6
 } deriving (Show, Eq, Generic)
 instance ProtoBuf ProtoVariant
 
@@ -36,33 +37,33 @@ data ProtoNested = ProtoNested {
 instance ProtoBuf ProtoNested
 
 data ProtoSkipped = ProtoSkipped {
-    skipped1 :: ProtoField Word32 1,
-    skipped2 :: ProtoField (Optional Word32) 3,
+    skipped1 :: ProtoField UFixed32 1,
+    skipped2 :: ProtoField (Optional UFixed32) 3,
     skipped3 :: ProtoField (Optional String) 10
 } deriving (Show, Eq, Generic)
 instance ProtoBuf ProtoSkipped
 
 data ProtoOptional = ProtoOptional {
-    optfu32 :: ProtoField (Optional Word32) 1,
-    optvs32 :: ProtoField (Optional (Variant SInt32)) 2
+    optfu32 :: ProtoField (Optional UFixed32) 1,
+    optvs32 :: ProtoField (Optional SInt32) 2
 } deriving (Show, Eq, Generic)
 instance ProtoBuf ProtoOptional
 
 data ProtoListTest = ProtoListTest {
-    listu32 :: ProtoField (Repeated Word32) 1,
-    listv32 :: ProtoField (Repeated (Variant Word32)) 2
+    listu32 :: ProtoField (Repeated UFixed32) 1,
+    listv32 :: ProtoField (Repeated UInt32) 2
 } deriving (Show, Eq, Generic)
 instance ProtoBuf ProtoListTest
 
 data ProtoPacked = ProtoPacked {
-    packedu32 :: ProtoField (Packed Word32) 1,
-    packedv32 :: ProtoField (Packed (Variant SInt64)) 2
+    packedu32 :: ProtoField (Packed UFixed32) 1,
+    packedv32 :: ProtoField (Packed SInt64) 2
 } deriving (Show, Eq, Generic)
 instance ProtoBuf ProtoPacked
 
 data ProtoFloat = ProtoFloat {
-    float32 :: ProtoField Float 1,
-    float64 :: ProtoField Double 2
+    float32 :: ProtoField FFixed32 1,
+    float64 :: ProtoField FFixed64 2
 } deriving (Show, Eq, Generic)
 instance ProtoBuf ProtoFloat
 
@@ -146,7 +147,7 @@ main = hspec $ do
             print v
             printHex bs
             print v'
-            print $ v.optfu32.optOrDef
+            print $ v.optfu32.unwrap
             v' `shouldBe` v
         it "list" $ do
             let v = ProtoListTest {
@@ -172,8 +173,8 @@ main = hspec $ do
             v' `shouldBe` v
         it "float" $ do
             let v = ProtoFloat {
-                    float32 = 0.123456,
-                    float64 = 0.12345678910
+                    float32 = pfield 0.123456,
+                    float64 = pfield 0.12345678910
             }
             let bs = encode v
             let v' = decode bs :: ProtoFloat
