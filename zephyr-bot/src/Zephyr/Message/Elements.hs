@@ -68,7 +68,8 @@ data GroupImageElementArgs = GroupImageElementArgs {
     _width :: Int32,
     _height :: Int32,
     _md5 :: B.ByteString,
-    _url :: String
+    _url :: String,
+    _flash :: Bool
 } deriving (Eq, Show)
 
 data AtType = AT_GroupMember | AT_GuildMember | AT_GuildChannel
@@ -97,7 +98,8 @@ data FriendImageElementArgs = FriendImageElementArgs {
     _image_id :: String,
     _md5 :: B.ByteString,
     _size :: Int32,
-    _url :: String
+    _url :: String,
+    _flash :: Bool
 } deriving (Eq, Show)
 
 data MessageElement =

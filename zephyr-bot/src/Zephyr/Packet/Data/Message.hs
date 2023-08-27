@@ -201,7 +201,8 @@ tryParseCustomFace (ParseContext _break _yield _continue x) = do
             _height = face_._height.unwrap,
             _url = url,
             _image_biz_type = biz_type_,
-            _md5 = face_._md5.unwrap
+            _md5 = face_._md5.unwrap,
+            _flash = False
         }
 
 tryParseMarketFace :: MsgParser
@@ -234,7 +235,8 @@ tryParseOfflineImage (ParseContext _break _yield _continue x) = do
             _image_id = img._file_path.unwrap,
             _size = img._file_len.unwrap,
             _url = url,
-            _md5 = img._pic_md5.unwrap
+            _md5 = img._pic_md5.unwrap,
+            _flash = False
         }
 
 tryParseQQWalletMessage :: MsgParser
@@ -278,7 +280,8 @@ tryParseCommonElem (ParseContext _break _yield _continue x) = do
                         _width = tr._width.unwrap,
                         _height = tr._height.unwrap,
                         _md5 = tr._md5.unwrap,
-                        _url = tr._orig_url.unwrap
+                        _url = tr._orig_url.unwrap,
+                        _flash = True
                     }]
                 when (isJust flash._flash_c2c_pic.pv) $ do
                     let c2c = flash._flash_c2c_pic.unwrap
@@ -286,7 +289,8 @@ tryParseCommonElem (ParseContext _break _yield _continue x) = do
                         _image_id = c2c._file_path.unwrap,
                         _size = c2c._file_len.unwrap,
                         _md5 = c2c._pic_md5.unwrap,
-                        _url = c2c._orig_url.unwrap
+                        _url = c2c._orig_url.unwrap,
+                        _flash = True
                     }]
             33 -> do
                 let sub = decode ce._pb_elem.unwrap :: MsgElemInfoServtype33
