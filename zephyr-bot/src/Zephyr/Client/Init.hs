@@ -104,6 +104,10 @@ beginHeartbeat client = do
                     modifyIORef times (+1)
                     t <- readIORef times
                     when (t >= 7) $ do
-                        registerClient client
+                        registerClient client >>= \case
+                            Nothing -> pure ()
+                            Just e -> do
+                                client._logger.logError "客户端注册失败: "
+                                client._logger.logError e
                         writeIORef times 0
             k
