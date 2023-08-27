@@ -9,7 +9,6 @@ import Data.Int
 import Control.Monad (replicateM, forM_, replicateM_)
 import Control.Monad.Fix
 import Zephyr.Jce.JceMap
-import GHC.Stack
 import Zephyr.Binary
 import Zephyr.Binary.Get
 import Zephyr.Binary.Put
@@ -188,7 +187,7 @@ getJBytes tag = do
 
 class JceData a where
     gjput :: Word8 -> a -> Put
-    gjget :: HasCallStack => Word8 -> Get a
+    gjget :: Word8 -> Get a
     gjdef :: a
 
 

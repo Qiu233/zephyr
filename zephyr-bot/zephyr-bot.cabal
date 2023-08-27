@@ -21,6 +21,8 @@ source-repository head
 
 library
   exposed-modules:
+      Zephyr.Client.Actions.Group
+      Zephyr.Client.Actions.Login
       Zephyr.Client.Events
       Zephyr.Client.Handlers
       Zephyr.Client.Handlers.PbPushGroupMsg
@@ -32,8 +34,6 @@ library
       Zephyr.Client.Log
       Zephyr.Client.TimeoutCache
       Zephyr.Client.Types
-      Zephyr.Client.Works.Group
-      Zephyr.Client.Works.Login
       Zephyr.Core.AppVersion
       Zephyr.Core.Codec
       Zephyr.Core.Device

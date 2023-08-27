@@ -26,7 +26,7 @@ import Control.Monad
 import Control.Concurrent
 import Zephyr.Core.Request
 import Control.Monad.Except
-import Zephyr.Client.Works.Login
+import Zephyr.Client.Actions.Login
 import Zephyr.Client.TimeoutCache
 import Zephyr.Client.Events
 

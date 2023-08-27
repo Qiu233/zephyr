@@ -18,7 +18,6 @@ import Data.Kind
 import Data.String (IsString(..))
 import GHC.IsList (IsList)
 import Zephyr.Binary
-import GHC.Stack
 
 
 newtype JceField (t :: Type) (n :: Natural) = JceField { jval :: t }
@@ -30,7 +29,7 @@ instance Show t => Show (JceField t n) where
 
 class GJce f where
     gput :: f a -> Put
-    gget :: HasCallStack => Get (f a)
+    gget :: Get (f a)
     gdef :: f a
 
 class Jce a where
@@ -38,8 +37,8 @@ class Jce a where
     default jput :: (Generic a, GJce (Rep a)) => a -> Put
     jput = gput . from
 
-    jget :: HasCallStack => Get a
-    default jget :: (Generic a, GJce (Rep a), HasCallStack) => Get a
+    jget :: Get a
+    default jget :: (Generic a, GJce (Rep a)) => Get a
     jget = to <$> gget
 
     jdef :: a

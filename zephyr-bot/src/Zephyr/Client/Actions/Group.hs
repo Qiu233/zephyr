@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
-module Zephyr.Client.Works.Group where
+module Zephyr.Client.Actions.Group where
 import Zephyr.Client.Types
 import Zephyr.Packet.Data.Group
 import qualified Data.ByteString.Lazy as B

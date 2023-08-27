@@ -11,8 +11,6 @@ import Data.Int
 import GHC.Float
 import qualified Data.ByteString.Lazy.UTF8 as UTF8
 import Control.Monad (replicateM)
-import GHC.Stack (HasCallStack, callStack)
-import GHC.Exception
 import Data.Functor (void)
 import Zephyr.Binary.OP
 
@@ -47,8 +45,8 @@ runGet_ (Get f) bs = case f bs of
     DError e -> Left e
     TooFewBytes -> Left "Too few bytes"
 
-runGet :: HasCallStack => Get a -> B.ByteString -> a
-runGet f bs = either (error . (++ prettyCallStack callStack)) id (runGet_ f bs)
+runGet :: Get a -> B.ByteString -> a
+runGet f bs = either error id (runGet_ f bs)
 
 {-# INLINE get8 #-}
 {-# INLINE get16le #-}

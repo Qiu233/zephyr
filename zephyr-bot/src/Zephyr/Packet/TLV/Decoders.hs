@@ -21,7 +21,6 @@ import Zephyr.Utils.Time
 import Zephyr.Binary
 import Zephyr.Utils.Codec
 import Zephyr.Core.Device
-import GHC.Stack (HasCallStack)
 import Control.Monad.IO.Class
 import Zephyr.Utils.Map
 import Zephyr.Binary.Put
@@ -59,7 +58,7 @@ readT512 bs = do
     let b = fromList $ fmap (\(d, _, t) -> (d, t)) ls
     (a, b)
 
-decodeT119 :: HasCallStack => B.ByteString -> B.ByteString -> ContextOPM ()
+decodeT119 :: B.ByteString -> B.ByteString -> ContextOPM ()
 decodeT119 data_ ek_ = do
     let d = B.drop 2 $ QQTea.qqteaDecrypt ek_ data_
     let es = flip runGet d $ getTLVEntries (Proxy @Word16) :: Map Word16 B.ByteString

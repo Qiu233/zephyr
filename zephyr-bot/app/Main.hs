@@ -14,13 +14,13 @@ import Control.Monad.State
 import Zephyr.Utils.Codec (md5OfU8)
 import qualified Data.ByteString.Lazy as B
 import Zephyr.Client.Types
-import Zephyr.Client.Works.Login
+import Zephyr.Client.Actions.Login
 import Zephyr.Client.Internal
 import Zephyr.Client.Init
 import Control.Monad.Except (runExceptT)
 import Control.Concurrent.Async
 import Zephyr.Client.Log
-import Zephyr.Client.Works.Group
+import Zephyr.Client.Actions.Group
 import Zephyr.Core.Entity.Group
 
 
