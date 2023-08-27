@@ -12,7 +12,6 @@ import Zephyr.Jce.Generic
 import Data.Int
 import Zephyr.Packet.Data.ReqPush
 import Zephyr.Client.Internal
-import Zephyr.Client.Log
 import Zephyr.Packet.JceStructs
 import Data.Foldable
 import Control.Monad.Cont
@@ -233,8 +232,7 @@ msg0x210Sub0x44 client bs = do
     let s44 = decode bs :: Sub44
     guard (isJust s44._group_sync_msg.pv)
     let group_sync_msg_ = s44._group_sync_msg.unwrap
-    pure ()
-    -- TODO: dispatch group member joined event. 
+    dispatch client._events._group_members_sync group_sync_msg_._grp_code.unwrap
 
 handleReqPush :: Client -> QQPacket -> IO ()
 handleReqPush client pkt = do

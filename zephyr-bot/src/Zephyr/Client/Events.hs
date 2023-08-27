@@ -96,7 +96,8 @@ data Events = Events {
     _friend_new :: Event FriendNewEventArgs,
     _group_left :: Event Int64,
     _group_renamed :: Event GroupRenamedEventArgs,
-    _friend_deleted :: Event Int64
+    _friend_deleted :: Event Int64,
+    _group_members_sync :: Event Int64
 }
 
 emptyEvents :: IO Events
@@ -104,6 +105,7 @@ emptyEvents = Events
     <$> newTVarIO [] <*> newTVarIO [] <*> newTVarIO [] <*> newTVarIO []
     <*> newTVarIO [] <*> newTVarIO [] <*> newTVarIO [] <*> newTVarIO []
     <*> newTVarIO [] <*> newTVarIO [] <*> newTVarIO [] <*> newTVarIO []
+    <*> newTVarIO []
 
 dispatch :: Event a -> a -> IO ()
 dispatch e a = do
